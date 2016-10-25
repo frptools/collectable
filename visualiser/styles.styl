@@ -1,0 +1,295 @@
+body
+  font-family: 'Lato', sans-serif
+  font-size: 12px
+  margin: 0
+
+.app
+  display: flex
+  justify-content: flex-end
+
+.timeline
+  background-color: #f3f3f3
+  max-width: 450px
+
+  .version
+    display: flex
+    box-sizing: border-box
+    padding: 5px
+    text-decoration: none
+    font-size: 12px
+    font-weight: 700
+    color: #333
+
+    .index
+      width: 30px
+    .message
+      flex: 1
+      font-weight: 400
+
+    &:hover
+      color: #f60
+
+    &.active
+      background-color: #f60
+      color: white
+      cursor: default
+
+      + .version
+        border-left-color: #f3f3f3
+
+    + .active.version
+      border-left-color: #f3f3f3
+
+    + .version
+      border-left: 1px solid #e7e7e7
+
+    &.done:not(.active)
+      color: white
+      background-color: #333
+      &:hover
+        color: #f60
+
+.list-container
+  position: fixed
+  top: 0
+  right: 0
+  bottom: 0
+  overflow: auto
+  padding: 20px
+  &:not(.done)
+    background-color: #ffe5a0
+
+  .message
+    margin-bottom: 10px
+    color: #333
+    font-size: 24px
+    font-style: italic
+    &.done
+      color: #96c128
+
+  .lists
+    padding-right: 20px
+    display: inline-flex
+
+#edges
+  position: absolute
+  top: 0
+  left: 0
+  width: 100%
+  height: 100%
+  pointer-events: none
+
+.list
+  display: inline-flex
+  flex-direction: column
+  align-items: flex-start
+
+  > .props
+    font-size: 16px
+    font-weight: 400
+    margin-bottom: 20px
+
+  + .list
+    margin-left: 20px
+
+.branch-container
+  font-family: 'Scada', sans-serif
+  font-size: 8px
+  display: flex
+  + .branch-container
+    margin-left: 5px
+    padding-left: 5px
+    border-left: 2px dotted rgba(black, 0.15)
+
+.branch
+  display: flex
+  flex-direction: column
+  align-items: center
+  + .branch
+    margin-left: 5px
+  &.is-dummy.is-leaf + &.is-node.is-leaf
+    margin-left: 30px
+
+.branch-children
+  display: flex
+  justify-content: center
+  margin-top: 50px
+
+.node-view-container
+  display: inline-flex
+  align-items: center
+  &.has-view
+    margin: -4px 0
+    padding: 2px
+    border: 2px dotted #03A9F4
+    border-radius: 5px
+    background-color: #b7dfff
+    .node
+      border-color: #03A9F4
+      + .node
+        margin-left: 2px
+
+.view
+  margin-left: 2px
+  .id:before
+    content: 'ID'
+  .group:before
+    content: 'grp'
+  .slotIndex:before
+    content: 'idx'
+  .parentId:before
+    content: 'pv-id'
+  .slotId:before
+    content: 'slot-id'
+  > .props
+    display: flex
+    flex-direction: column
+    align-items: stretch
+    .value
+      flex: 1
+      margin-left: 2px
+      padding: 2px
+      text-align: right
+    > .prop
+      flex: auto
+      display: flex
+      text-align: center
+      &:before
+        display: block
+        padding: 2px 1px
+        text-transform: uppercase
+        font-weight: 700
+      &:first-child:before
+        border-top-left-radius: 3px
+      &:last-child:before
+        border-top-right-radius: 3px
+  + .view
+    padding-left: 2px
+    border-left: 2px solid #c00
+    color: #c00
+
+.node
+  border: 2px solid #333
+  border-radius: 3px
+  background-color: white
+  &.dummy
+    filter: grayscale(100%) blur(1px) opacity(50%)
+  &.leaf
+    > .props
+      > .invalidSlotsCount
+      > .cumulativeRange
+        display: none
+  + .node
+    margin-left: 5px
+  > .props
+    display: flex
+    .value
+      padding: 2px
+      flex: 1
+    .prop
+      flex: auto
+      display: flex
+      flex-direction: column
+      align-items: stretch
+      text-align: center
+      &:before
+        display: block
+        padding: 2px 1px
+        background-color: #e7e7e7
+        text-transform: uppercase
+        font-weight: 700
+      + span
+        border-left: 1px solid #ccc
+      &:first-child:before
+        border-top-left-radius: 3px
+      &:last-child:before
+        border-top-right-radius: 3px
+    .id:before
+      content: 'ID'
+    .group:before
+      content: 'grp'
+    .slotCount:before
+      content: 'cnt'
+    .invalidSlotsCount:before
+      content: 'inv'
+    .cumulativeRange:before
+      content: 'rng'
+
+.slots
+  display: flex
+  border-top: 2px solid #ccc
+  overflow: hidden
+  .slot
+    flex: auto
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    text-align: center
+    + .slot
+      border-left: 1px solid #ccc
+    &.leaf
+      padding: 2px
+      color: #313819
+      background-color: #e3f3bb
+      font-weight: 700
+      font-size: 12px
+    &.void
+      color: #c00
+      background-color: #f3cccc
+      font-weight: 700
+      &.leaf
+        font-weight: 400
+      .slot-index:before
+        color: #c00
+    &.dummy
+      background-color: #ccc
+      color: #666
+      align-items: flex-start
+    &.void
+    &.dummy
+      flex-direction: row
+
+    &.relaxed
+      .slot-index
+        background-color: #ffff94
+      .slot-prop
+        background-color: #f3f38f
+
+    .slot-prop
+      align-self: stretch
+      padding: 2px
+      border-top: 1px solid #e7e7e7
+      font-weight: 400
+      color: #600
+      background-color: #f3f3f3
+      &.count:before
+        content: '+'
+        font-size: 12px
+        line-height: 8px
+        color: #666
+      &.range:before
+        content: '→'
+        font-weight: 700
+      &.range.invalid
+        content: '?'
+        color: #c00
+        background-color: #f3cccc
+
+    .slot-index
+      align-self: stretch
+      padding: 2px
+      font-size: 12px
+      font-weight: 700
+      &:before
+        content: '#'
+        font-size: 8px
+        font-weight: 400
+        color: #666
+
+#end
+  align-self: flex-end
+  display: block
+  width: 1px
+  height: 1px
+  overflow: hidden

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "target": "es6",
+    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+    "removeComments": true,
+    "lib": ["es5", "es6"]
+  },
+  "include": [
+    "./src/**/*.ts"
+  ]
+}
