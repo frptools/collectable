@@ -2,13 +2,17 @@ import Cycle from '@cycle/most-run';
 import {fromEvent} from 'most';
 import {create} from '@most/create'
 import {a, h, div, span, thunk, makeDOMDriver} from '@motorcycle/dom';
-import {List, setCallback, getProp} from '../lib/collectable/list';
+import {List, setCallback} from '../lib/collectable/list';
 import Immutable from 'immutable';
 import CJ from 'circular-json';
 
 require('./styles.styl');
 
 var nextId = 0;
+
+function getChildSlotCount(slot) {
+  return slot && slot.slots ? slot.slots.length : void 0;
+}
 
 function viewSlotIndex(view) {
   return view.meta & 3;
@@ -93,11 +97,11 @@ function renderTimeline(DOM, model) {
 }
 
 function isLeafNode(slot) {
-  return slot && (slot.shift === 0 || slot.group === 1);
+  return !slot || !slot.slots || slot.slots.length === 0 || !slot.slots[0] || !slot.slots[0].slots;
 }
 
 function isDummyNode(slot) {
-  return slot && slot.group === 1;
+  return slot && slot.slots && slot.slots.length === 0;
 }
 
 var containers = [];
@@ -294,17 +298,17 @@ function renderView(listIndex, {view, isCorrectSlotRef}, index) {
 }
 
 function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branchId, parentBranchId}, slotIndex) {
-  var invalidSlotsCount = getProp('invalidSlotsCount', slot);
+  var invalidSlotsCount = slot.recompute;
 
   var slots = isLeaf || hasChildren
     ? slot.slots.map((value, i) => !value
     ? div('.slot.void', {class: {leaf: isLeaf}}, [span('.slot-index', i.toString())]) : isLeaf
       ? div('.slot.leaf', value) : isDummyNode(value)
       ? div(`.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy`, [span('.slot-index', i.toString())])
-      : div(`.slot-${listIndex}-${value.id}-${i}.slot.mid`, {class: {relaxed: getProp('isRelaxed', slot)}}, [
+      : div(`.slot-${listIndex}-${value.id}-${i}.slot.mid`, {class: {relaxed: slot.count}}, [
         span('.slot-index', i.toString()),
-        span('.slot-prop.count', getProp('slotCount', value)),
-        span('.slot-prop.range', {invalid: slot.slots.length - invalidSlotsCount >= i}, getProp('cumulativeRange', value)),
+        span('.slot-prop.count', getChildSlotCount(value)),
+        span('.slot-prop.range', {invalid: slot.slots.length - invalidSlotsCount >= i}, slot.sum),
       ]))
     : [span('.no-slots', 'Empty')];
 
@@ -313,9 +317,9 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
       div('.props', [
         span('.prop.id', [span('.value', [slot.id])]),
         span('.prop.group', [span('.value', {style: chooseStyle(slot.group)}, [slot.group])]),
-        span('.prop.slotCount', [span('.value', [getProp('slotCount', slot)])]),
+        span('.prop.slotCount', [span('.value', [getChildSlotCount(slot)])]),
         span('.prop.invalidSlotsCount', [span('.value', invalidSlotsCount.toString())]),
-        span('.prop.cumulativeRange', [span('.value', [getProp('cumulativeRange', slot)])]),
+        span('.prop.cumulativeRange', [span('.value', [slot.sum])]),
       ]),
       div('.slots', slots)
     ])
@@ -607,10 +611,10 @@ function chooseStyle(id) {
 // -----------------------------------------------------------------------------
 
 (function() {
-  var list = listOf(69);
   Cycle.run(main, {
     DOM: makeDOMDriver('#app-root')
   });
+  var list = listOf(69);
   list = list.append('FOO', 'BAR', 'BAZ');
 })();
 
