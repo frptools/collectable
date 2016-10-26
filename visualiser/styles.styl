@@ -132,11 +132,17 @@ body
 .view
   margin-left: 2px
   .id:before
-    content: 'ID'
+    content: 'view id'
   .group:before
-    content: 'grp'
+    content: 'group'
   .slotIndex:before
-    content: 'idx'
+    content: 'index'
+  .start:before
+    content: 'start'
+  .end:before
+    content: 'end'
+  .sizeDelta:before
+    content: 'size Δ'
   .parentId:before
     content: 'pv-id'
   .slotId:before
@@ -148,7 +154,7 @@ body
     .value
       flex: 1
       margin-left: 2px
-      padding: 2px
+      padding: 0 2px
       text-align: right
     > .prop
       flex: auto
@@ -156,9 +162,10 @@ body
       text-align: center
       &:before
         display: block
-        padding: 2px 1px
+        padding: 0 2px
         text-transform: uppercase
         font-weight: 700
+        white-space: nowrap
       &:first-child:before
         border-top-left-radius: 3px
       &:last-child:before
@@ -173,11 +180,19 @@ body
   border-radius: 3px
   background-color: white
   &.dummy
-    filter: grayscale(100%) blur(1px) opacity(50%)
+    filter: grayscale(100%) opacity(50%)
+    border-color: rgba(black, 0.25)
+    .prop:nth-child(2)
+      font-weight: 700
+      filter: initial
+    .prop
+    .slots
+      filter: blur(1px)
   &.leaf
     > .props
-      > .invalidSlotsCount
-      > .cumulativeRange
+      > .recompute
+      > .sum
+      > .count
         display: none
   + .node
     margin-left: 5px
@@ -204,28 +219,35 @@ body
         border-top-left-radius: 3px
       &:last-child:before
         border-top-right-radius: 3px
-    .id:before
-      content: 'ID'
-    .group:before
-      content: 'grp'
-    .slotCount:before
-      content: 'cnt'
-    .invalidSlotsCount:before
+    .id
+      .value
+        font-weight: 700
+      &:before
+        content: 'ID'
+    .group
+      .value
+        font-weight: 700
+      &:before
+        content: 'grp'
+    .size:before
+      content: 'siz'
+    .sum:before
+      content: 'sum'
+    .recompute:before
       content: 'inv'
-    .cumulativeRange:before
-      content: 'rng'
 
 .slots
   display: flex
   border-top: 2px solid #ccc
   overflow: hidden
   .slot
-    flex: auto
+    flex: 1
     display: flex
     flex-direction: column
     align-items: center
     justify-content: center
     text-align: center
+    // background-color: #c00 !important
     + .slot
       border-left: 1px solid #ccc
     &.leaf
@@ -246,8 +268,14 @@ body
       background-color: #ccc
       color: #666
       align-items: flex-start
+      .slot-prop
+        background-color: #ddd
+        border-top-color: #bbb
+        &.sum.invalid
+          background-color: #ca2f0f
+        &.size
+          background-color: #ccc
     &.void
-    &.dummy
       flex-direction: row
 
     &.relaxed
@@ -258,7 +286,7 @@ body
 
     .slot-prop
       align-self: stretch
-      padding: 2px
+      padding: 1px 2px
       border-top: 1px solid #e7e7e7
       font-weight: 400
       color: #600
@@ -268,13 +296,21 @@ body
         font-size: 12px
         line-height: 8px
         color: #666
-      &.range:before
+      &.sum:before
         content: '→'
         font-weight: 700
-      &.range.invalid
+      &.sum.invalid
         content: '?'
-        color: #c00
-        background-color: #f3cccc
+        color: #ffe6ac
+        background-color: #f13811
+      &.size
+        &:before
+          content: '{'
+          color: #999
+        &:after
+          content: '}'
+          color: #999
+        background-color: white
 
     .slot-index
       align-self: stretch

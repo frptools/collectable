@@ -14,17 +14,13 @@ function getChildSlotCount(slot) {
   return slot && slot.slots ? slot.slots.length : void 0;
 }
 
-function viewSlotIndex(view) {
-  return view.meta & 3;
-}
-
 function getViewSlotKey() {
   var id, index;
   if(arguments.length === 1) {
     var view = arguments[0];
     if(!view.parent.parent) return null;
     id = view.parent.slot.id;
-    index = viewSlotIndex(view);
+    index = view.slotIndex;
   }
   else {
     id = arguments[0];
@@ -101,7 +97,7 @@ function isLeafNode(slot) {
 }
 
 function isDummyNode(slot) {
-  return slot && slot.slots && slot.slots.length === 0;
+  return !!slot && slot.slots && !slot.group;
 }
 
 var containers = [];
@@ -284,7 +280,10 @@ function renderView(listIndex, {view, isCorrectSlotRef}, index) {
   var props = [
     span('.prop.id', [span('.value', view.id.toString())]),
     span('.prop.group', [span('.value', {style: chooseStyle(view.group)}, [view.group])]),
-    span('.prop.slotIndex', [span('.value', viewSlotIndex(view).toString())])
+    span('.prop.slotIndex', [span('.value', view.slotIndex.toString())]),
+    span('.prop.start', [span('.value', view.start.toString())]),
+    span('.prop.end', [span('.value', view.end.toString())]),
+    span('.prop.sizeDelta', [span('.value', (view.sizeDelta > 0 ? '+' : '') + view.sizeDelta)]),
   ];
   if(index === -1) {
     props.push(
@@ -298,28 +297,27 @@ function renderView(listIndex, {view, isCorrectSlotRef}, index) {
 }
 
 function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branchId, parentBranchId}, slotIndex) {
-  var invalidSlotsCount = slot.recompute;
-
+  var recompute = slot.recompute;
   var slots = isLeaf || hasChildren
     ? slot.slots.map((value, i) => !value
     ? div('.slot.void', {class: {leaf: isLeaf}}, [span('.slot-index', i.toString())]) : isLeaf
-      ? div('.slot.leaf', value) : isDummyNode(value)
-      ? div(`.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy`, [span('.slot-index', i.toString())])
-      : div(`.slot-${listIndex}-${value.id}-${i}.slot.mid`, {class: {relaxed: slot.count}}, [
+      ? div('.slot.leaf', value)
+      : div(isDummyNode(value) ? `.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy` : `.slot-${listIndex}-${value.id}-${i}.slot.mid`, {class: {relaxed: slot.count}}, [
         span('.slot-index', i.toString()),
+        span('.slot-prop.size', value.size.toString()),
         span('.slot-prop.count', getChildSlotCount(value)),
-        span('.slot-prop.range', {invalid: slot.slots.length - invalidSlotsCount >= i}, slot.sum),
+        span('.slot-prop.sum', {class: {invalid: i >= slot.slots.length - recompute}}, slot.sum),
       ]))
     : [span('.no-slots', 'Empty')];
 
   const nodeViews = [
     div(`${isDummy ? `.dummy-${listIndex}-${parentBranchId}-${slotIndex}` : `.node-${listIndex}-${slot.id}`}.node`, {class: {leaf: isLeaf, dummy: isDummy}}, [
       div('.props', [
-        span('.prop.id', [span('.value', [slot.id])]),
-        span('.prop.group', [span('.value', {style: chooseStyle(slot.group)}, [slot.group])]),
-        span('.prop.slotCount', [span('.value', [getChildSlotCount(slot)])]),
-        span('.prop.invalidSlotsCount', [span('.value', invalidSlotsCount.toString())]),
-        span('.prop.cumulativeRange', [span('.value', [slot.sum])]),
+        span('.prop.group', [span('.value', {style: chooseStyle(slot.group)}, [slot.group.toString()])]),
+        span('.prop.id', [span('.value', [slot.id.toString()])]),
+        span('.prop.size', [span('.value', [slot.size.toString()])]),
+        span('.prop.sum', [span('.value', [slot.sum.toString()])]),
+        span('.prop.recompute', [span('.value', recompute.toString())]),
       ]),
       div('.slots', slots)
     ])
@@ -333,23 +331,23 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
   return div('.node-view-container', {class: {'has-view': !!views}}, nodeViews);
 }
 
-function matchViewsToSlot(listIndex, slot, parent, parentSlotIndex, parentBranchId, parentViewId, views, unusedViews) {
+function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, parentBranchId, parentViewId, views, unusedViews) {
   var viewsBySlotIndex = parent && views.byLocation.get(getViewSlotKey(parent.id, parentSlotIndex));
   var viewsBySlotId = slot && views.bySlotId.get(slot.id);
-  var viewsByParentId = parentSlotIndex === -1 && parentViewId && views.byParentId.get(parentViewId);
+  var viewsByParentId = (parentSlotIndex === -1 || slot.group === 0) && parentViewId && views.byParentId.get(parentViewId);
   var slotRefs = new Set();
   var viewRefs = new Set();
   var items = [];
-  var isInputSlotDummy = !!slot && isDummyNode(slot);
+  var isInputSlotDummy = isDummyNode(slot);
   var makeItem = (slot, views) => {
-    var isLeaf = isLeafNode(slot);
+    var isLeaf = level === 0 && isLeafNode(slot);
     var item = {
       branchId: ++nextId,
       parentBranchId,
       slot,
       views,
       isLeaf,
-      isDummy: !!slot && isDummyNode(slot),
+      isDummy: isDummyNode(slot),
       hasChildren: !isLeaf && !!slot.slots && slot.slots.length > 0
     };
     return item;
@@ -404,13 +402,14 @@ function renderNodeContainer(listIndex, slot, parent, parentSlotIndex, views, un
     }
   }
 
-  var items = matchViewsToSlot(listIndex, slot, parent, parentSlotIndex, parentBranchId, parentView && parentView.id, views, unusedViews);
+  var items = matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, parentBranchId, parentView && parentView.id, views, unusedViews);
   if(parentSlotIndex >= 0 && items.length > 1 && items[0].isDummy && items[1].views) {
     edges.push([
       {type: 'dummy', listIndex, branch: items[0].parentBranchId, index: parentSlotIndex},
       {type: 'node', listIndex, id: items[1].slot.id}
     ]);
   }
+
   var branches = [], firstView = null;
   items.forEach((item, i) => {
     if(!item.slot) return;
@@ -430,7 +429,7 @@ function renderNodeContainer(listIndex, slot, parent, parentSlotIndex, views, un
       renderNode(listIndex, item, parentSlotIndex),
       item.hasChildren || !item.isLeaf
         ? div('.branch-children', childSlots.map((slot, i) =>
-            renderNodeContainer(listIndex, slot, item.slot, orphaned ? -1 : i, views, unusedViews, level + 1, item.branchId, firstView)))
+            renderNodeContainer(listIndex, slot, item.slot, orphaned ? -1 : i, views, unusedViews, level - 1, item.branchId, firstView)))
         : ''
     ]));
   });
@@ -465,8 +464,12 @@ function renderList(model) {
   var lists = entry.lists.map(({list, views}, i) => {
     var root = list._views[list._views.length - 1];
     var unusedViews = new Set(views.all.values());
-    while(root.parent.parent) root = root.parent;
-    var nodeContainer = renderNodeContainer(i, root.slot, null, 0, views, unusedViews, 0, 0);
+    var level = 0;
+    while(root.parent.parent) {
+      root = root.parent;
+      level++;
+    }
+    var nodeContainer = renderNodeContainer(i, root.slot, null, 0, views, unusedViews, level, 0);
     return div('.list', [
       div('.props', [
         div('.size', 'list size: ' + list.size)
@@ -510,14 +513,14 @@ function main({DOM, events}) {
     .map(ev => {
       var fn;
       switch(ev.which) {
-        case 36:  /* home */ fn = model => { model.index = 0; }; break;
-        case 35:  /* end  */ fn = model => { model.index = model.timeline.size - 1; }; break;
-        case 188: /*  ,   */ fn = model => { if(model.index > 0) model.index--; }; break;
-        case 190: /*  .   */ fn = model => { if(model.index + 1 < model.timeline.size) model.index++; }; break;
-        case 107: /*  +   */ fn = model => { if(model.zoom < 1) model.zoom = Math.min(1, model.zoom + 0.1); }; break;
-        case 109: /*  -   */ fn = model => { if(model.zoom > 0.1) model.zoom = Math.max(0.1, Math.round((model.zoom - 0.1)*10)/10); }; break;
-        case 88:  /*  x   */ console.clear(); fn = false; break;
-        case 33:  /* pgup */ fn = model => {
+        case 36:  /* home  */ fn = model => { model.index = 0; }; break;
+        case 35:  /* end   */ fn = model => { model.index = model.timeline.size - 1; }; break;
+        case 37:  /* left  */ fn = model => { if(model.index > 0) model.index--; }; break;
+        case 39:  /* right */ fn = model => { if(model.index + 1 < model.timeline.size) model.index++; }; break;
+        case 107: /* +     */ fn = model => { if(model.zoom < 1) model.zoom = Math.min(1, model.zoom + 0.1); }; break;
+        case 109: /* -     */ fn = model => { if(model.zoom > 0.1) model.zoom = Math.max(0.1, Math.round((model.zoom - 0.1)*10)/10); }; break;
+        case 88:  /* x     */ console.clear(); fn = false; break;
+        case 33:  /* pgup  */ fn = model => {
             for(var i = model.index - 1; i >= 0; i--) {
               if(model.timeline.get(i).done) return (model.index = i);
             }
@@ -538,7 +541,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 1;
+        var startIndex = 25;
         if(model.timeline.size > startIndex && model.index !== startIndex) {
           console.clear();
           model.index = startIndex;
@@ -596,17 +599,17 @@ function safe(id) {
 }
 
 const colorWheelSize = 12;
-function chooseStyle(id) {
+function chooseStyle(id, textOnly) {
   var number;
   if(id === null || id === void 0) number = 0;
   else if(typeof id !== 'number') number = hashString(safe(id));
   else number = id;
   var index = number % colorWheelSize;
   var isMid = number % (colorWheelSize*2) > colorWheelSize;
-  var isInverse = number % (colorWheelSize*4) > colorWheelSize*2;
-  return isInverse ? colorFillInv(index, isMid) : colorFill(index, isMid);
+  return textOnly ? colorText(index, isMid) : colorFill(index, isMid);
+  // var isInverse = number % (colorWheelSize*4) > colorWheelSize*2;
+  // return isInverse ? colorFillInv(index, isMid) : colorFill(index, isMid);
 }
-
 
 // -----------------------------------------------------------------------------
 
@@ -614,7 +617,8 @@ function chooseStyle(id) {
   Cycle.run(main, {
     DOM: makeDOMDriver('#app-root')
   });
-  var list = listOf(69);
+  // var list = List.empty().append('foo').append('bar')
+  var list = listOf(195);
   list = list.append('FOO', 'BAR', 'BAZ');
 })();
 

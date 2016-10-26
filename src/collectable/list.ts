@@ -1,6 +1,9 @@
 var __publishCallback: Function;
 function publish(...args: any[]): void
 function publish(): void {
+  if(arguments[0] && arguments[0].length === 1 && arguments[0][0] && arguments[0][0].length === 1073741824) {
+    debugger;
+  }
   if(__publishCallback) __publishCallback.apply(null, arguments);
 }
 export function setCallback(callback: Function): void {
@@ -40,47 +43,47 @@ const enum CONST {
   BRANCH_INDEX_MASK = BRANCH_FACTOR - 1,
   BRANCH_INDEX_RESET = ~BRANCH_INDEX_MASK,
 
-  // We store the child slot count as metadata for each slot, even though the child slot array, whose length the value
-  // represents, is a sibling property of the slot metadata, because when uncommitted changes are pending for a child
-  // node, the slot array is emptied to avoid hanging onto obsolete data that is no longer referenced by the uncommitted
-  // child node that hasn't yet been written to the parent slot, but the old slot count is still needed when committing.
-  SLOT_COUNT_BITCOUNT = BRANCH_INDEX_BITCOUNT + 1, // 0 - 32 (inclusive)
-  SLOT_COUNT_MASK = (1 << SLOT_COUNT_BITCOUNT) - 1,
-  SLOT_COUNT_RESET = ~SLOT_COUNT_MASK,
+  // // We store the child slot count as metadata for each slot, even though the child slot array, whose length the value
+  // // represents, is a sibling property of the slot metadata, because when uncommitted changes are pending for a child
+  // // node, the slot array is emptied to avoid hanging onto obsolete data that is no longer referenced by the uncommitted
+  // // child node that hasn't yet been written to the parent slot, but the old slot count is still needed when committing.
+  // SLOT_COUNT_BITCOUNT = BRANCH_INDEX_BITCOUNT + 1, // 0 - 32 (inclusive)
+  // SLOT_COUNT_MASK = (1 << SLOT_COUNT_BITCOUNT) - 1,
+  // SLOT_COUNT_RESET = ~SLOT_COUNT_MASK,
 
-  // Accumulated count of the number of child slots that a given slot points at. The range value for the first slot of a
-  // given node is equal to the number of child slots for that slot. The second slot's range count works the same way
-  // but adds to the accumulated total ranges of all the slots to its left, within that node.
-  SLOT_RANGE_BITCOUNT = BRANCH_INDEX_BITCOUNT << 1,
-  SLOT_RANGE_OFFSET = SLOT_COUNT_BITCOUNT,
-  SLOT_RANGE_MASK = (1 << SLOT_RANGE_BITCOUNT) - 1,
-  SLOT_RANGE_RESET = ~(SLOT_RANGE_MASK << SLOT_RANGE_OFFSET),
+  // // Accumulated count of the number of child slots that a given slot points at. The range value for the first slot of a
+  // // given node is equal to the number of child slots for that slot. The second slot's range count works the same way
+  // // but adds to the accumulated total ranges of all the slots to its left, within that node.
+  // SLOT_RANGE_BITCOUNT = BRANCH_INDEX_BITCOUNT << 1,
+  // SLOT_RANGE_OFFSET = SLOT_COUNT_BITCOUNT,
+  // SLOT_RANGE_MASK = (1 << SLOT_RANGE_BITCOUNT) - 1,
+  // SLOT_RANGE_RESET = ~(SLOT_RANGE_MASK << SLOT_RANGE_OFFSET),
 
-  // Invalidation is a count of the total number of slots (counted from the right) for which the associated RANGE values
-  // need to be recomputed before being used in any calculations. When appending a slot to a relaxed node, this value
-  // should be incremented.
-  SLOT_INVALIDSLOTS_BITCOUNT = BRANCH_INDEX_BITCOUNT,
-  SLOT_INVALIDSLOTS_OFFSET = SLOT_RANGE_OFFSET + SLOT_RANGE_BITCOUNT,
-  SLOT_INVALIDSLOTS_MASK = (1 << SLOT_INVALIDSLOTS_BITCOUNT) - 1,
-  SLOT_INVALIDSLOTS_RESET = ~(SLOT_INVALIDSLOTS_MASK << SLOT_INVALIDSLOTS_OFFSET),
+  // // Invalidation is a count of the total number of slots (counted from the right) for which the associated RANGE values
+  // // need to be recomputed before being used in any calculations. When appending a slot to a relaxed node, this value
+  // // should be incremented.
+  // SLOT_INVALIDSLOTS_BITCOUNT = BRANCH_INDEX_BITCOUNT,
+  // SLOT_INVALIDSLOTS_OFFSET = SLOT_RANGE_OFFSET + SLOT_RANGE_BITCOUNT,
+  // SLOT_INVALIDSLOTS_MASK = (1 << SLOT_INVALIDSLOTS_BITCOUNT) - 1,
+  // SLOT_INVALIDSLOTS_RESET = ~(SLOT_INVALIDSLOTS_MASK << SLOT_INVALIDSLOTS_OFFSET),
 
-  // Bitwise flag indicating that the slot represents a relaxed node, as per the RRB tree data structure extensions.
-  SLOT_ISRELAXED_OFFSET = SLOT_INVALIDSLOTS_OFFSET + 1,
-  SLOT_ISRELAXED_MASK = 1 << SLOT_ISRELAXED_OFFSET,
-  SLOT_ISRELAXED_RESET = ~SLOT_ISRELAXED_MASK,
+  // // Bitwise flag indicating that the slot represents a relaxed node, as per the RRB tree data structure extensions.
+  // SLOT_ISRELAXED_OFFSET = SLOT_INVALIDSLOTS_OFFSET + 1,
+  // SLOT_ISRELAXED_MASK = 1 << SLOT_ISRELAXED_OFFSET,
+  // SLOT_ISRELAXED_RESET = ~SLOT_ISRELAXED_MASK,
 
-  VIEW_LEVELSHIFT_BITCOUNT = 6,
-  VIEW_LEVELSHIFT_OFFSET = BRANCH_INDEX_BITCOUNT,
-  VIEW_LEVELSHIFT_MASK = (1 << VIEW_LEVELSHIFT_BITCOUNT) - 1,
-  VIEW_LEVELSHIFT_RESET = ~(VIEW_LEVELSHIFT_MASK << VIEW_LEVELSHIFT_OFFSET),
+  // VIEW_LEVELSHIFT_BITCOUNT = 6,
+  // VIEW_LEVELSHIFT_OFFSET = BRANCH_INDEX_BITCOUNT,
+  // VIEW_LEVELSHIFT_MASK = (1 << VIEW_LEVELSHIFT_BITCOUNT) - 1,
+  // VIEW_LEVELSHIFT_RESET = ~(VIEW_LEVELSHIFT_MASK << VIEW_LEVELSHIFT_OFFSET),
 
-  VIEW_ISROOT_OFFSET = VIEW_LEVELSHIFT_OFFSET + VIEW_LEVELSHIFT_BITCOUNT,
-  VIEW_ISROOT_MASK = 1 << VIEW_ISROOT_OFFSET,
-  VIEW_ISROOT_RESET = ~VIEW_ISROOT_MASK,
+  // VIEW_ISROOT_OFFSET = VIEW_LEVELSHIFT_OFFSET + VIEW_LEVELSHIFT_BITCOUNT,
+  // VIEW_ISROOT_MASK = 1 << VIEW_ISROOT_OFFSET,
+  // VIEW_ISROOT_RESET = ~VIEW_ISROOT_MASK,
 
-  VIEW_ISWRITEMODE_OFFSET = VIEW_ISROOT_OFFSET + 1,
-  VIEW_ISWRITEMODE_MASK = 1 << VIEW_ISWRITEMODE_OFFSET,
-  VIEW_ISWRITEMODE_RESET = ~VIEW_ISWRITEMODE_MASK,
+  // VIEW_ISWRITEMODE_OFFSET = VIEW_ISROOT_OFFSET + 1,
+  // VIEW_ISWRITEMODE_MASK = 1 << VIEW_ISWRITEMODE_OFFSET,
+  // VIEW_ISWRITEMODE_RESET = ~VIEW_ISWRITEMODE_MASK,
 }
 
 const enum ACTION {
@@ -95,29 +98,11 @@ const enum ACTION {
   DELETE = 9
 }
 
-export function getProp(prop, target): any {
-  if(target.slots) { // slot
-    switch(prop) {
-      case 'slotCount': return target.meta & CONST.SLOT_COUNT_MASK;
-      case 'isRelaxed': (target.meta & CONST.SLOT_ISRELAXED_MASK) === CONST.SLOT_ISRELAXED_MASK;
-      case 'invalidSlotsCount': return (target.meta >>> CONST.SLOT_INVALIDSLOTS_OFFSET) & CONST.SLOT_INVALIDSLOTS_MASK;
-      case 'cumulativeRange': return (target.meta >>> CONST.SLOT_RANGE_OFFSET) & CONST.SLOT_RANGE_MASK;
-    }
-  }
-  else { // view
-    switch(prop) {
-      case 'slotIndex': return target.meta & CONST.BRANCH_INDEX_MASK;
-      case 'writeMode': return (target.meta & CONST.SLOT_ISRELAXED_MASK) === CONST.SLOT_ISRELAXED_MASK;
-      case 'shift': return (target.meta >>> CONST.VIEW_LEVELSHIFT_OFFSET) & CONST.VIEW_LEVELSHIFT_MASK;
-    }
-  }
-}
-
 class Slot<T> {
   public id: number;
   constructor(
     public group: number,
-    public count: number, // the total number of descendent elements
+    public size: number, // the total number of descendent elements
     public sum: number, // the total accumulated size at this slot
     public recompute: number, // the number of child slots for which the sum must be recalculated
     public slots: (Slot<T>|T)[]
@@ -130,29 +115,14 @@ class View<T> {
   public id: number;
   constructor(
     public group: number,
-    public meta: number, // writeMode|isRoot|levelShift|slotIndex
     public start: number,
     public end: number,
+    public slotIndex: number,
+    public sizeDelta: number,
     public parent: View<T>,
     public slot: Slot<T>
   ) {
     this.id = ++nextId;
-  }
-
-  get $slotIndex(): number {
-    return this.meta & CONST.BRANCH_INDEX_MASK;
-  }
-
-  set $slotIndex(value: number) {
-    this.meta = (this.meta & CONST.BRANCH_INDEX_RESET) | value;
-  }
-
-  get $shift(): number {
-    return (this.meta >>> CONST.VIEW_LEVELSHIFT_OFFSET) & CONST.VIEW_LEVELSHIFT_MASK;
-  }
-
-  set $shift(value: number) {
-    this.meta = (this.meta & CONST.VIEW_LEVELSHIFT_RESET) | (value << CONST.VIEW_LEVELSHIFT_OFFSET);
   }
 }
 
@@ -228,13 +198,11 @@ class MutableList<T> {
 
   // transient mutation state properties
   _changed = false;
-  _extraCapacity = 0;
+  // _extraCapacity = 0;
   _leftViewIndex = -1;
   _rightViewIndex = -1;
   _leftItemEnd = -1;
   _rightItemStart = -1;
-
-  constructor(private _isBatchMode: boolean) {}
 
   _reset(list: List<T>): MutableList<T> {
     this._id = ++nextId;
@@ -258,14 +226,14 @@ class MutableList<T> {
       return this._list;
     }
 
-    if(this._isBatchMode) {
-      this._changed = false;
-      this._id = ++nextId;
-      var views = copyArray(this._views);
-      var tail = views[views.length - 1];
-      tail.slot.slots.length = tail.end - tail.start;
-      return this._list = new List<T>(++nextId, this.size, 0, views);
-    }
+    // if(this._isBatchMode) {
+    //   this._changed = false;
+    //   this._id = ++nextId;
+    //   var views = copyArray(this._views);
+    //   var tail = views[views.length - 1];
+    //   tail.slot.slots.length = tail.end - tail.start;
+    //   return this._list = new List<T>(++nextId, this.size, 0, views);
+    // }
 
     // non-batched, so release resources
     var list = new List<T>(this._id, this.size, 0, this._views);
@@ -319,12 +287,15 @@ log(`${'###'} set value "${values[i]}" in node ${nodeIndex}, slot ${slotIndex}`)
         slot = view.slot,
         slots: (T|Slot<T>)[] = slot.slots,
         remainingCapacityToAdd = increaseBy,
+        capacityAdded = 0,
         totalRequiredAdditionalSlots = increaseBy,
         level = 0,
         shift = 0,
         group = this._id,
         nodes: T[][] = <any>void 0,
         nodeIndex = 0;
+
+    // TODO: remove batch mode. It's not needed. If the user wants to batch add elements, use concat, or append(x, x, ...).
 
     var views: View<T>[] = [];
 
@@ -333,103 +304,163 @@ log(`${'###'} set value "${values[i]}" in node ${nodeIndex}, slot ${slotIndex}`)
     // deals with one level of the tree, starting at the base level (leaf nodes).
 
     do {
-log(`[increaseCapacity] ITERATE LOOP (remainingCapacityToAdd: ${remainingCapacityToAdd}, totalRequiredAdditionalSlots: ${totalRequiredAdditionalSlots}, level: ${level}, shift: ${shift}, nodeIndex: ${nodeIndex})`);
       var slotCount = slot.slots.length;
       var nextSlotIndex = slotCount;
+log(`[increaseCapacity] ITERATE LOOP (remainingCapacityToAdd: ${remainingCapacityToAdd}, totalRequiredAdditionalSlots: ${totalRequiredAdditionalSlots}, level: ${level}, shift: ${shift}, nodeIndex: ${nodeIndex}, nextSlotIndex: ${nextSlotIndex})`);
       var willOverflowRight = slotCount + totalRequiredAdditionalSlots > CONST.BRANCH_FACTOR;
-      var unallocatedSlotCapacity = CONST.BRANCH_FACTOR - slotCount;
+      var expandCurrentNode = CONST.BRANCH_FACTOR - slotCount > 0;
       var isLeafLevel = level === 0, isParentLevel = !isLeafLevel;
-      var numberOfAddedSlots: number, numberOfAddedElements: number = 0;
+      var numberOfAddedSlots: number, delta: number;
 log(`will overflow right?`, willOverflowRight);
+
       if(view.group !== group) {
-var temp = `replace view ${view.id} (having slot index ${view.$slotIndex}) with new view `;
-        view = new View<T>(group, view.meta, view.start, view.end, view.parent, slot);
+var temp = `replace view ${view.id} (having slot index ${view.slotIndex}) with new view `;
+        view = new View<T>(group, view.start, view.end, view.slotIndex, view.sizeDelta, view.parent, slot);
 log(temp + view.id);
         if(isLeafLevel) {
           this._views[this._views.length - 1] = view;
         }
-      }
-      if(isParentLevel) {
-        childView.parent = view;
+        else {
+          childView.parent = view;
+        }
       }
       views.push(view);
-      if(unallocatedSlotCapacity > 0) {
 
-        // -------------------------------------------------------------------------------------------------------------
-        // CALCULATE THE DEGREE TO WHICH THE NODE AT THIS LEVEL SHOULD BE EXPANDED
-
-        numberOfAddedSlots = willOverflowRight ? unallocatedSlotCapacity : totalRequiredAdditionalSlots;
+      if(expandCurrentNode) {
+        numberOfAddedSlots = willOverflowRight ? CONST.BRANCH_FACTOR - slotCount : totalRequiredAdditionalSlots;
         slotCount += numberOfAddedSlots;
-        var slotArraySize = CONST.BRANCH_FACTOR - ((isLeafLevel && this._isBatchMode) || willOverflowRight ?
-                                                    0 : unallocatedSlotCapacity - totalRequiredAdditionalSlots);
-        // -------------------------------------------------------------------------------------------------------------
-        // UPDATE OR REPLACE THE SLOT SO THAT IT HAS THE REQUIRED SIZE
-
-        if(slot.group === group) {
-          if(slots.length < slotArraySize) {
-            slots.length = slotArraySize;
-          }
-        }
-        else {
-log(`clone slot object (old id: ${slot.id}, group ${slot.group} => ${group}, slot array changed in size from ${slot.slots.length} to ${slotArraySize})`);
-          slot = new Slot<T>(group, 0, 0, 0, slots = copyToFixedArray(slots, slotArraySize));
-          view.slot = slot;
-          if(isParentLevel) {
-log(`ASSIGN CHILD SLOT (view: ${childView.id}) TO PARENT SLOT (view: ${view.id}) @ INDEX ${childView.$slotIndex}`);
-            slots[childView.$slotIndex] = childView.slot;
-          }
-//           if(view.parent !== voidView) {
-// log(`ASSIGN CHILD SLOT (view: ${view.id}) TO PARENT SLOT (view: ${view.parent.id}) @ INDEX ${view.$slotIndex}`);
-//             view.parent.slot.slots[view.$slotIndex] = slot;
-//           }
-
-          // todo: refresh left views, and ensure that we own the view at this level (write to _views)
-        }
-
-        // -------------------------------------------------------------------------------------------------------------
-        // COLLECT LEAF NODE SLOT ARRAYS AND RECURSIVELY CONSTRUCT SUBTREES TO POPULATE ANY NEWLY-ADDED SLOTS
-
-        if(isLeafLevel) {
-          numberOfAddedElements = numberOfAddedSlots;
-          remainingCapacityToAdd -= numberOfAddedElements;
-          nodes = new Array<T[]>(shiftDownRoundUp(remainingCapacityToAdd, CONST.BRANCH_INDEX_BITCOUNT));
-          nodes[0] = <T[]>slots;
-          nodeIndex = 1;
-log('leaf level');
-        }
-        else {
-          numberOfAddedElements += min(numberOfAddedSlots << shift, remainingCapacityToAdd);
-          nodeIndex = this._populateSubtrees(views, nodes, nodeIndex, level, nextSlotIndex, remainingCapacityToAdd);
-          remainingCapacityToAdd -= numberOfAddedElements;
-        }
+        delta = min(numberOfAddedSlots << shift, remainingCapacityToAdd);
+        capacityAdded += delta;
+        remainingCapacityToAdd -= delta;
       }
       else {
         numberOfAddedSlots = 0;
-        numberOfAddedElements = 0;
-        if(isLeafLevel) {
-          nodes = new Array<T[]>(shiftDownRoundUp(remainingCapacityToAdd, CONST.BRANCH_INDEX_BITCOUNT));
-          nodeIndex = 0;
+        delta = 0;
+      }
+
+      if(isParentLevel || expandCurrentNode) {
+        if(slot.group !== group) {
+log(`clone slot object (old id: ${slot.id}, group ${slot.group} => ${group}, slot array changed in size from ${slot.slots.length} to ${slotCount})`);
+          slots = copyToFixedArray(slots, slotCount);
+          slot = new Slot<T>(group, slot.size, 0, 0, slots);
+          view.slot = slot;
         }
-        else if(willOverflowRight) {
-          if(isParentLevel) {
-log(`ASSIGN CHILD SLOT (view: ${childView.id}) TO PARENT SLOT (view: ${view.id}) @ INDEX ${childView.$slotIndex}`);
-            slots[childView.$slotIndex] = childView.slot;
-          }
+        else if(expandCurrentNode) {
+          slots.length = slotCount;
+log(`slotCount is now: ${slotCount}`);
         }
       }
 
       if(isParentLevel) {
-        if(isRelaxed(slot)) { // VERIFY: changed slot.$isRelaxed to isRelaxed(slot)
-          // VERIFY: changed arg #1 from slot.$slotCount to slots.length
-          slot.recompute = max(slot.recompute, slots.length - childView.$slotIndex);
+        slots[childView.slotIndex] = childView.slot;
+        if(view.parent !== voidView) {
+          view.sizeDelta += childView.sizeDelta;
         }
+log(`slot size (${slot.size}) increased by child size delta (${childView.sizeDelta}) to ${slot.size + childView.sizeDelta}`);
+        slot.size += childView.sizeDelta;
+        view.end += childView.sizeDelta;
+        childView.sizeDelta = 0;
+
+        nodeIndex = this._populateSubtrees(views, nodes, nodeIndex, level, nextSlotIndex, remainingCapacityToAdd + delta);
       }
       else {
-        view.end += numberOfAddedElements;
-        if(this._isBatchMode) { // record the number of additional allocated slots beyond what was requested with the `increaseBy` argument
-          this._extraCapacity = willOverflowRight
-            ? CONST.BRANCH_FACTOR - ((totalRequiredAdditionalSlots - unallocatedSlotCapacity) % CONST.BRANCH_FACTOR)
-            : slots.length - slotCount;
+        view.sizeDelta = numberOfAddedSlots;
+        nodes = new Array<T[]>(shiftDownRoundUp(remainingCapacityToAdd, CONST.BRANCH_INDEX_BITCOUNT));
+        if(expandCurrentNode) {
+          nodes[0] = <T[]>slots;
+          nodeIndex = 1;
+        }
+      }
+
+      // capacityAdded += min(numberOfAddedSlots << shift, remainingCapacityToAdd);
+      // remainingCapacityToAdd = increaseBy - capacityAdded;
+        // -------------------------------------------------------------------------------------------------------------
+        // CALCULATE THE DEGREE TO WHICH THE NODE AT THIS LEVEL SHOULD BE EXPANDED
+
+//       if(expandCurrentNode) {
+// //         numberOfAddedSlots = willOverflowRight ? unallocatedSlotCapacity : totalRequiredAdditionalSlots;
+// //         slotCount += numberOfAddedSlots;
+// //         // var slotArraySize = willOverflowRight ? CONST.BRANCH_FACTOR : - (willOverflowRight ?
+// //         //                                             0 : unallocatedSlotCapacity - totalRequiredAdditionalSlots);
+// // log(`slotCount is now: ${slotCount}`);
+// //         // -------------------------------------------------------------------------------------------------------------
+// //         // UPDATE OR REPLACE THE SLOT SO THAT IT HAS THE REQUIRED SIZE
+
+// //         if(slot.group === group) {
+// //           if(slots.length < slotCount) {
+// //             slots.length = slotCount;
+// //             // TODO: update the slot size
+// //           }
+// //         }
+// //         else {
+// // log(`clone slot object (old id: ${slot.id}, group ${slot.group} => ${group}, slot array changed in size from ${slot.slots.length} to ${slotCount})`);
+// //           slot = new Slot<T>(group, slot.size, 0, 0, slots = copyToFixedArray(slots, slotCount));
+// //           // TODO: update the slot size
+// //           view.slot = slot;
+// //           if(isParentLevel) {
+// // log(`[A] ASSIGN CHILD SLOT (view: ${childView.id}) TO PARENT SLOT (view: ${view.id}) @ INDEX ${childView.slotIndex}`);
+// //             slots[childView.slotIndex] = childView.slot;
+// //             view.sizeDelta += childView.sizeDelta;
+// //             slot.size += childView.sizeDelta;
+// //             childView.sizeDelta = 0;
+// //           }
+
+// //           // todo: refresh left views, and ensure that we own the view at this level (write to _views)
+// //         }
+//         // slot.size += willOverflowRight ? numberOfAddedSlots << shift : remainingCapacityToAdd;
+
+//         // -------------------------------------------------------------------------------------------------------------
+//         // COLLECT LEAF NODE SLOT ARRAYS AND RECURSIVELY CONSTRUCT SUBTREES TO POPULATE ANY NEWLY-ADDED SLOTS
+
+//         if(isLeafLevel) {
+//           numberOfAddedElements = numberOfAddedSlots;
+//           remainingCapacityToAdd -= numberOfAddedElements;
+//           nodes = new Array<T[]>(shiftDownRoundUp(remainingCapacityToAdd, CONST.BRANCH_INDEX_BITCOUNT));
+//           nodes[0] = <T[]>slots;
+//           nodeIndex = 1;
+// log(`leaf level`);
+//         }
+//         else {
+//           numberOfAddedElements += min(numberOfAddedSlots << shift, remainingCapacityToAdd);
+//           nodeIndex = this._populateSubtrees(views, nodes, nodeIndex, level, nextSlotIndex, remainingCapacityToAdd);
+//           remainingCapacityToAdd -= numberOfAddedElements;
+//         }
+//         capacityAdded += numberOfAddedElements;
+// // log(`increasing slot size by ${capacityAdded}, from ${slot.size} to ${slot.size + capacityAdded}`);
+//         // slot.size += capacityAdded;
+// log(`number of added elements: ${numberOfAddedElements}, number of added slots: ${numberOfAddedSlots}, remaining capacity to add: ${remainingCapacityToAdd}, node index: ${nodeIndex}`);
+// log(slots);
+//       }
+//       else {
+//         numberOfAddedSlots = 0;
+//         numberOfAddedElements = increaseBy - remainingCapacityToAdd;
+//         if(isLeafLevel) {
+//           nodes = new Array<T[]>(shiftDownRoundUp(remainingCapacityToAdd, CONST.BRANCH_INDEX_BITCOUNT));
+//           nodeIndex = 0;
+//         }
+//         else if(willOverflowRight) {
+// log(`[B] ASSIGN CHILD SLOT (view: ${childView.id}) TO PARENT SLOT (view: ${view.id}) @ INDEX ${childView.slotIndex}`);
+//           slots[childView.slotIndex] = childView.slot;
+//           view.sizeDelta += childView.sizeDelta;
+//           slot.size += childView.sizeDelta;
+//           childView.sizeDelta = 0;
+//         }
+//       }
+
+      if(capacityAdded > 0) {
+        // if(slot.group !== group) {
+        //   slot = new Slot<T>(group, slot.size, slot.sum, slot.recompute, copyArray(slot.slots));
+        // }
+// log(`increasing slot size by ${capacityAdded}, from ${slot.size} to ${slot.size + capacityAdded}`);
+//         slot.size += capacityAdded;
+log(`level: ${level}, slot.size: ${slot.size}, capacityAdded: ${capacityAdded}`);
+        if(isLeafLevel) {
+          slot.size += capacityAdded;
+          view.end += capacityAdded;
+          view.sizeDelta = capacityAdded;
+        }
+        else if(isRelaxed(slot)) {
+          slot.recompute = max(slot.recompute, slots.length - childView.slotIndex);
         }
       }
 
@@ -441,9 +472,8 @@ log(`ASSIGN CHILD SLOT (view: ${childView.id}) TO PARENT SLOT (view: ${view.id})
 
         if(view.parent === voidView) { // then the tree is full; grow it by adding an additional level above the current root
 log('GROW');
-          slot = new Slot<T>(group, 0, 0, 0, [slot]);
-          view = new View<T>(group, 0, view.start, view.end, voidView, slot);
-          view.$shift = shift;
+          slot = new Slot<T>(group, slot.size - view.sizeDelta, 0, 0, [slot]);
+          view = new View<T>(group, view.start, view.end - view.sizeDelta, 0, 0, voidView, slot);
         }
         else {
           view = view.parent;
@@ -453,11 +483,20 @@ log('GROW');
         childView.parent = view;
       }
 
-      publish(this, false, `level ${level - 1} capacity applied`);
+publish(this, false, `level ${level - (willOverflowRight ? 1 : 0)} capacity applied`);
 
     } while(willOverflowRight);
 
+    if(view.parent === voidView) {
+  log(`this is the root, so the current view delta will be reset to 0`);
+      view.sizeDelta = 0;
+    }
+
     return <T[][]>nodes;
+  }
+
+  _commitSlot(parentSlot: Slot<T>, childView: View<T>) {
+    var oldSlot = parentSlot.slots[childView.slotIndex];
   }
 
   _populateSubtrees<T>(views: View<T>[], nodes: T[][], nodeIndex: number, level: number, firstSlotIndex: number, remaining: number): number {
@@ -473,30 +512,57 @@ log('GROW');
     var slotIndices = new Array<number>(views.length);
     var slotCounts = new Array<number>(views.length);
     var currentEnd = view.end;
+    var delta = 0;
     slotIndices[levelIndex] = slotIndex;
     slotCounts[levelIndex] = slotCount;
 
 log(`BEGIN POPULATE SUBTREES (from level: ${level}, firstSlotIndex: ${firstSlotIndex})`);
 
     do {
-log(`[populateSubtrees] ITERATE LOOP (remaining: ${remaining}, levelIndex: ${levelIndex}, slotIndex: ${slotIndex}, slotCount: ${slotCount})`);
+log(`[populateSubtrees] ITERATE LOOP (remaining: ${remaining}, levelIndex: ${levelIndex}, slotIndex: ${slotIndex}, slotCount: ${slotCount}, current view id: ${view.id})`);
       // ---------------------------------------------------------------------------------------------------------------
       // IF THE CURRENT SUBTREE IS FULLY POPULATED, ASCEND TO THE NEXT TREE LEVEL TO POPULATE THE NEXT ADJACENT SUBTREE
 
       if(slotIndex === slotCount) {
+log(`ASCEND; end value for view ${view.id} changed to ${currentEnd}`);
+log(`child size delta is ${view.sizeDelta}`, view);
+        // var delta = view.sizeDelta;
+        if(levelIndex === 1) {
+          view.slot.size += delta;
+          if(levelIndex < level) {
+            delta += view.sizeDelta;
+            // view.sizeDelta = 0;
+          }
+          else {
+            view.sizeDelta += delta;
+          }
+log(`levelIndex is 1, so view slot size is increased by its own delta to ${view.slot.size}`);
+        }
         levelIndex++;
         view.end = currentEnd;
+
         if(remaining === 0) {
-          slots[slots.length - 1] = emptySlot; // set the last slot as uncommitted
+          var lastSlot = <Slot<T>>last(slots);
+          slots[slots.length - 1] = new Slot<T>(0, lastSlot.size, lastSlot.sum, lastSlot.recompute, new Array<T>(lastSlot.slots.length)); // set the last slot as uncommitted
         }
-log(`ASCEND; end value for view ${view.id} changed to ${currentEnd}`);
         if(levelIndex <= level) {
+log(`slot index from slotIndices[${levelIndex}] changed from ${slotIndices[levelIndex]} to ${slotIndices[levelIndex]+1}`);
           slotIndex = ++slotIndices[levelIndex];
+log(`[A] slotIndex changed to: ${slotIndex}`);
           slotCount = slotCounts[levelIndex];
           shift += CONST.BRANCH_INDEX_BITCOUNT;
+log(`reset child view delta to 0`);
+          view.sizeDelta = 0;
           view = views[levelIndex];
+          view.sizeDelta += delta;
+log(`view for levelIndex ${levelIndex} has id ${view.id}, and will have its slot size increased from ${view.slot.size} to ${view.slot.size + delta}`);
+          view.slot.size += delta;
           slots = view.slot.slots;
         }
+//         else if(view.parent === voidView) {
+// log(`this is the root, so the current view delta will be reset to 0`);
+//           view.sizeDelta = 0;
+//         }
       }
 
       // ---------------------------------------------------------------------------------------------------------------
@@ -507,10 +573,10 @@ log(`ASCEND; end value for view ${view.id} changed to ${currentEnd}`);
 log(`levelIndex: ${levelIndex}, remaining: ${remaining}`);
         if(levelIndex === 1) {
           var elementCount: number, leafSlots: T[];
+
           if(remaining <= CONST.BRANCH_FACTOR) {
             elementCount = remaining;
-            leafSlots = new Array<T>(this._isBatchMode ? CONST.BRANCH_FACTOR : remaining);
-            this._extraCapacity = leafSlots.length - remaining;
+            leafSlots = new Array<T>(remaining);
             remaining = 0;
           }
           else {
@@ -519,16 +585,17 @@ log(`levelIndex: ${levelIndex}, remaining: ${remaining}`);
             remaining -= CONST.BRANCH_FACTOR;
           }
 log(`leafSlots assigned array of length ${leafSlots.length}`);
-log(nodes);
 log(`new element count will be ${elementCount}`);
 
           nodes[nodeIndex++] = leafSlots;
 log(`slots.length: ${slots.length}; assigning leafSlots to slot index ${slotIndex}`);
-          slots[slotIndex] = new Slot<T>(group, 0, 0, 0, leafSlots);
-          leafView.$slotIndex = slotIndex;
+          slots[slotIndex] = leafView.slot = new Slot<T>(group, elementCount, 0, 0, leafSlots);
+          leafView.slotIndex = slotIndex;
           leafView.start = leafView.end;
           leafView.end += elementCount;
-          leafView.slot = <Slot<T>>slots[slotIndex++];
+          delta += elementCount;
+          slotIndex++;
+log(`[B] slotIndex changed to: ${slotIndex}`);
           currentEnd = leafView.end;
 log(`currentEnd changed to: ${currentEnd}`);
         }
@@ -537,7 +604,7 @@ log(`currentEnd changed to: ${currentEnd}`);
         else {
           shift -= CONST.BRANCH_INDEX_BITCOUNT;
           view = views[--levelIndex];
-
+          delta = 0;
 log(`DESCEND; remaining: ${remaining}, shift: ${shift}, levelIndex: ${levelIndex}`);
 
           slotCount = remaining >>> shift;
@@ -553,13 +620,15 @@ log(`DESCEND; remaining: ${remaining}, shift: ${shift}, levelIndex: ${levelIndex
 log(`view ${view.id} end changed to: ${view.end} (slot count: ${slotCount} + remainder: ${remainder})`);
           if(remainder > 0) slotCount++;
           view.slot = new Slot<T>(group, 0, 0, 0, new Array<T>(slotCount));
-          view.$slotIndex++;
+          view.slotIndex = slotIndex;
+log(`view ${view.id} slot index is now: ${view.slotIndex}`);
 log(`assigned new slot (id: ${view.slot.id}) to view: new slotcount is: ${slotCount}`);
           slots[slotIndex] = view.slot;
           slots = view.slot.slots;
           slotCounts[levelIndex] = slotCount;
           slotIndices[levelIndex] = 0;
           slotIndex = 0;
+          // addedCounts[levelIndex] = added = 0;
         }
       }
       publish(this, false, `subtree population completed for level ${level} (remaining: ${remaining})`);
@@ -869,7 +938,7 @@ class CommitState {
 
 
 function mutableList<T>(list: List<T>, batched: boolean): MutableList<T> {
-  return batched ? new MutableList<T>(true)._reset(list) : _mutableList._reset(list);
+  return batched ? new MutableList<T>()._reset(list) : _mutableList._reset(list);
 }
 
 function shiftDownRoundUp(value: number, shift: number): number {
@@ -931,14 +1000,14 @@ function last<T>(array: T[]): T {
 }
 
 function isRelaxed<T>(slot: Slot<T>): boolean {
-  return slot.count !== 0;
+  return slot.sum !== 0;
 }
 
 var emptySlot = new Slot<any>(++nextId, 0, 0, 0, []);
-var voidView = new View<any>(++nextId, 0, 0, 0, <any>void 0, emptySlot);
-var emptyView = new View<any>(++nextId, CONST.VIEW_ISWRITEMODE_MASK, 0, 0, voidView, emptySlot);
+var voidView = new View<any>(++nextId, 0, 0, 0, 0, <any>void 0, emptySlot);
+var emptyView = new View<any>(++nextId, 0, 0, 0, 0, voidView, emptySlot);
 var emptyList = new List<any>(++nextId, 0, 0, [emptyView]);
-var _mutableList = new MutableList<any>(false);
+var _mutableList = new MutableList<any>();
 
 function log(...args: any[])
 function log() {

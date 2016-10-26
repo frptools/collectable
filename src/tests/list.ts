@@ -120,7 +120,6 @@ describe('[List]', () => {
       var h2Count = Math.pow(CONST.BRANCH_FACTOR, 2) + CONST.BRANCH_FACTOR + 1;
       var h3Count = Math.pow(CONST.BRANCH_FACTOR, 3) + CONST.BRANCH_FACTOR + 1;
       var h4Count = Math.pow(CONST.BRANCH_FACTOR, 4) + CONST.BRANCH_FACTOR + 1;
-      show(listH4plusBFplus1._views[0].slot)
       assert.strictEqual(listH2plusBFplus1.size, h2Count);
       assert.strictEqual(listH3plusBFplus1.size, h3Count);
       assert.strictEqual(listH4plusBFplus1.size, h4Count);
@@ -660,9 +659,9 @@ function display(slot, indent, views: any[]) {
   var s = '';
   if(viewIndex > -1) {
     var view = views[viewIndex];
-    s += chalk.magenta(`${spacer}{View #${viewIndex}:${chalk.bold.white.bgBlue(view.id)}, group: ${val(view.group, true)}, shift: ${val(view.$shift)}, START: ${val(view.start, true)}, END: ${val(view.end, true)}, parent: ${view.parent.parent?chalk.bold.white.bgBlue(view.parent.id):'void'}, meta: ${val(view.meta, true)}}\n`);
+    s += chalk.magenta(`${spacer}{View #${viewIndex}:${chalk.bold.white.bgBlue(view.id)}, group: ${val(view.group, true)}, shift: ${val(view.shift)}, START: ${val(view.start, true)}, END: ${val(view.end, true)}, parent: ${view.parent.parent?chalk.bold.white.bgBlue(view.parent.id):'void'}, meta: ${val(view.meta, true)}}\n`);
   }
-  s += `${spacer}[Slot group: ${val(slot.group)}, shift: ${val(slot.shift)}, meta: ${val(slot.meta)}, id: ${val(slot.id)}, count: ${slot.$slotCount}]`;
+  s += `${spacer}[Slot group: ${val(slot.group)}, shift: ${val(slot.shift)}, meta: ${val(slot.meta)}, id: ${val(slot.id)}, count: ${slot.slotCount}]`;
   if(slot.slots && slot.slots.length) {
     if(!slot.slots[0] || !slot.slots[0].slots) {
       s += ` [ ${slot.slots.map(v => chalk.green(v)).join(', ')} ]`;
@@ -717,7 +716,7 @@ function tailSize<T>(list: List<T>): number {
 }
 
 function headSize<T>(list: List<T>): number {
-  return headSlot(list).$slotCount;
+  return headSlot(list).slots.length;
 }
 
 function slotValues(viewOrSlot: any): string[] {
