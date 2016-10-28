@@ -10,8 +10,61 @@ require('./styles.styl');
 
 var nextId = 0;
 
-function getChildSlotCount(slot) {
-  return slot && slot.slots ? slot.slots.length : void 0;
+var colors = {
+  0: ['white', '#7fbad8', '#0075b2'],
+  1: ['white', '#91a0ce', '#24429e'],
+  2: ['white', '#ab86e0', '#570ec1'],
+  3: ['white', '#c693cb', '#8d2798'],
+  4: ['white', '#e17fa2', '#c30045'],
+  5: ['white', '#ee8c7f', '#de1900'],
+  6: ['white', '#eeb27f', '#de6500'],
+  7: ['black', '#6f4900', '#de9200'],
+  8: ['black', '#6f5f00', '#debe00'],
+  9: ['black', '#6c7200', '#d9e400'],
+  10: ['white', '#b8e08d', '#72c11b'],
+  11: ['white', '#94d4a9', '#2aaa54'],
+  12: ['black', '#797a7a', '#f2f4f4'],
+  13: ['black', '#333339', '#676773'],
+  main: i => colors[i][2],
+  inverse: i => colors[i][0],
+  mid: i => colors[i][1],
+};
+
+function colorText(i, mid = false) {
+  return {color: mid ? colors.mid(i) : colors.main(i)};
+}
+
+function colorFill(i, mid = false) {
+  return {color: mid ? colors.mid(i) : colors.inverse(i), 'background-color': colors.main(i)};
+}
+
+function colorFillInv(i, mid = false) {
+  return {color: mid ? colors.mid(i) : colors.main(i), 'background-color': colors.inverse(i)};
+}
+
+function hashString(str) {
+  var hash = 5381, i = str.length;
+  while(i) hash = (hash * 33) ^ str.charCodeAt(--i);
+  return hash >>> 0;
+}
+
+function safe(id) {
+  return typeof id === 'symbol'
+    ? id.toString().substr(7, id.toString().length - 8)
+    : id;
+}
+
+const colorWheelSize = 12;
+function chooseStyle(id, textOnly) {
+  var number;
+  if(id === null || id === void 0) number = 0;
+  else if(typeof id !== 'number') number = hashString(safe(id));
+  else number = id;
+  var index = number % colorWheelSize;
+  var isMid = number % (colorWheelSize*2) > colorWheelSize;
+  return textOnly ? colorText(index, isMid) : colorFill(index, isMid);
+  // var isInverse = number % (colorWheelSize*4) > colorWheelSize*2;
+  // return isInverse ? colorFillInv(index, isMid) : colorFill(index, isMid);
 }
 
 function getViewSlotKey() {
@@ -305,7 +358,6 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
       : div(isDummyNode(value) ? `.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy` : `.slot-${listIndex}-${value.id}-${i}.slot.mid`, {class: {relaxed: slot.count}}, [
         span('.slot-index', i.toString()),
         span('.slot-prop.size', value.size.toString()),
-        span('.slot-prop.count', getChildSlotCount(value)),
         span('.slot-prop.sum', {class: {invalid: i >= slot.slots.length - recompute}}, slot.sum),
       ]))
     : [span('.no-slots', 'Empty')];
@@ -318,6 +370,7 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
         span('.prop.size', [span('.value', [slot.size.toString()])]),
         span('.prop.sum', [span('.value', [slot.sum.toString()])]),
         span('.prop.recompute', [span('.value', recompute.toString())]),
+        span('.prop.subcount', [span('.value', [slot.subcount.toString()])]),
       ]),
       div('.slots', slots)
     ])
@@ -541,10 +594,11 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 25;
-        if(model.timeline.size > startIndex && model.index !== startIndex) {
+        var startIndex = 95;
+        var thisIndex = Math.min(startIndex, model.timeline.size - 1);
+        if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
-          model.index = startIndex;
+          model.index = thisIndex;
         }
       })
       .merge(selectVersion$, key$)
@@ -554,71 +608,15 @@ function main({DOM, events}) {
   }
 }
 
-var colors = {
-  0: ['white', '#7fbad8', '#0075b2'],
-  1: ['white', '#91a0ce', '#24429e'],
-  2: ['white', '#ab86e0', '#570ec1'],
-  3: ['white', '#c693cb', '#8d2798'],
-  4: ['white', '#e17fa2', '#c30045'],
-  5: ['white', '#ee8c7f', '#de1900'],
-  6: ['white', '#eeb27f', '#de6500'],
-  7: ['black', '#6f4900', '#de9200'],
-  8: ['black', '#6f5f00', '#debe00'],
-  9: ['black', '#6c7200', '#d9e400'],
-  10: ['white', '#b8e08d', '#72c11b'],
-  11: ['white', '#94d4a9', '#2aaa54'],
-  12: ['black', '#797a7a', '#f2f4f4'],
-  13: ['black', '#333339', '#676773'],
-  main: i => colors[i][2],
-  inverse: i => colors[i][0],
-  mid: i => colors[i][1],
-};
-
-function colorText(i, mid = false) {
-  return {color: mid ? colors.mid(i) : colors.main(i)};
-}
-
-function colorFill(i, mid = false) {
-  return {color: mid ? colors.mid(i) : colors.inverse(i), 'background-color': colors.main(i)};
-}
-
-function colorFillInv(i, mid = false) {
-  return {color: mid ? colors.mid(i) : colors.main(i), 'background-color': colors.inverse(i)};
-}
-
-function hashString(str) {
-  var hash = 5381, i = str.length;
-  while(i) hash = (hash * 33) ^ str.charCodeAt(--i);
-  return hash >>> 0;
-}
-
-function safe(id) {
-  return typeof id === 'symbol'
-    ? id.toString().substr(7, id.toString().length - 8)
-    : id;
-}
-
-const colorWheelSize = 12;
-function chooseStyle(id, textOnly) {
-  var number;
-  if(id === null || id === void 0) number = 0;
-  else if(typeof id !== 'number') number = hashString(safe(id));
-  else number = id;
-  var index = number % colorWheelSize;
-  var isMid = number % (colorWheelSize*2) > colorWheelSize;
-  return textOnly ? colorText(index, isMid) : colorFill(index, isMid);
-  // var isInverse = number % (colorWheelSize*4) > colorWheelSize*2;
-  // return isInverse ? colorFillInv(index, isMid) : colorFill(index, isMid);
-}
-
 // -----------------------------------------------------------------------------
 
 (function() {
   Cycle.run(main, {
     DOM: makeDOMDriver('#app-root')
   });
-  // var list = List.empty().append('foo').append('bar')
-  var list = listOf(195);
+  // var list = List.empty();
+  var list = listOf(521);
+  // var list = List.of(makeValues(95));
   list = list.append('FOO', 'BAR', 'BAZ');
 })();
 
@@ -626,7 +624,7 @@ function listOf(size) {
   const values = makeValues(size);
   var list = List.empty();
   while(list.size < size) {
-    list = list.append(...values.slice(list.size, list.size + 7));
+    list = list.append(...values.slice(list.size, list.size + 13));
   }
   return list;
 }

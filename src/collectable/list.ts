@@ -32,16 +32,17 @@ export function setCallback(callback: Function): void {
 // RESET = inverted mask - zeros out the bits of the value and preserves the rest (zero position as above)
 
 const enum CONST {
-  MAX_OFFSET_ERROR = 2, // `e` in the RRB paper
 
   // Branch factor means the number of slots (branches) that each node can contain (2^5=32). Each level of the tree
   // represents a different order of magnitude (base 32) of a given index in the list. The branch factor bit count and
   // mask are used to isolate each different order of magnitude (groups of 5 bits in the binary representation of a
   // given list index) in order to descend the tree to the leaf node containing the value at the specified index.
-  BRANCH_INDEX_BITCOUNT = 2,
+  BRANCH_INDEX_BITCOUNT = 3,
   BRANCH_FACTOR = 1 << BRANCH_INDEX_BITCOUNT,
   BRANCH_INDEX_MASK = BRANCH_FACTOR - 1,
   BRANCH_INDEX_RESET = ~BRANCH_INDEX_MASK,
+
+  MAX_OFFSET_ERROR = (BRANCH_INDEX_BITCOUNT >>> 2) + 1, // `e` in the RRB paper
 
   // // We store the child slot count as metadata for each slot, even though the child slot array, whose length the value
   // // represents, is a sibling property of the slot metadata, because when uncommitted changes are pending for a child
@@ -105,6 +106,7 @@ class Slot<T> {
     public size: number, // the total number of descendent elements
     public sum: number, // the total accumulated size at this slot
     public recompute: number, // the number of child slots for which the sum must be recalculated
+    public subcount: number, // the total number of slots belonging to immediate child slots
     public slots: (Slot<T>|T)[]
   ) {
     this.id = ++nextId;
@@ -119,8 +121,9 @@ class View<T> {
     public end: number,
     public slotIndex: number,
     public sizeDelta: number,
+    public changed: boolean,
     public parent: View<T>,
-    public slot: Slot<T>
+    public slot: Slot<T>,
   ) {
     this.id = ++nextId;
   }
@@ -130,16 +133,33 @@ type ListMutationCallback<T> = (list: MutableList<T>) => void;
 var nextId = 0;
 
 export class List<T> {
+  public _id: number;
   constructor(
-    public _id: number,
     public size: number,
-    public _origin: number,
     public _views: View<T>[] // middle view points directly to root if no indexing has yet been performed
-  ) {}
+  ) {
+    this._id = ++nextId;
+  }
 
   static empty<T>(): List<T> {
-    publish(emptyList, true, 'EMPTY LIST');
+publish(emptyList, true, 'EMPTY LIST');
     return emptyList;
+  }
+
+  static of<T>(values: T[]): List<T> {
+    if(!Array.isArray(values)) {
+      throw new Error('First argument must be an array of values');
+    }
+    var list = MutableList.empty<T>();
+    list.size = values.length;
+    var nodes = list._increaseCapacity(list._views[0], values.length);
+    for(var i = 0, nodeIndex = 0, slotIndex = 0, node = nodes[0];
+        i < values.length;
+        i++, slotIndex >= CONST.BRANCH_INDEX_MASK ? (slotIndex = 0, node = nodes[++nodeIndex]) : (++slotIndex)) {
+      node[slotIndex] = values[i];
+    }
+publish(list, true, `DONE: created list of ${values.length} values`);
+    return list.immutable();
   }
 
   mutable(callback: ListMutationCallback<T>): List<T> {
@@ -150,12 +170,25 @@ export class List<T> {
 
   append(...values: T[]): List<T>
   append(): List<T> {
+    var tail: View<T>, slot: Slot<T>;
     if(arguments.length === 0) {
       return this;
     }
+    else if(arguments.length === 1 && this.size > 0) {
+      tail = last(this._views);
+      if(tail.changed && (slot = tail.slot).size < CONST.BRANCH_FACTOR) {
+        var group = ++nextId;
+        slot = new Slot<T>(group, slot.size + 1, 0, 0, 0, copyToFixedArray(slot.slots, slot.size + 1));
+        slot.slots[slot.size - 1] = arguments[0];
+        var views = copyArray(this._views);
+        views[views.length - 1] = new View<T>(group, tail.start, tail.end + 1, tail.slotIndex, tail.sizeDelta + 1, tail.changed, tail.parent, slot);
+        return new List<T>(this.size + 1, views);
+      }
+    }
+
     var list = mutableList<T>(this, false);
     list.append.apply(list, arguments);
-    publish(list, true, `DONE: appended ${arguments.length} value(s): ${Array.from(arguments).map(val => typeof val === 'string' ? `"${val}"` : val).join(', ')}`);
+publish(list, true, `DONE: appended ${arguments.length} value(s): ${Array.from(arguments).map(val => typeof val === 'string' ? `"${val}"` : val).join(', ')}`);
     return list.immutable();
   }
 
@@ -166,6 +199,16 @@ export class List<T> {
   slice(start: number, end?: number): List<T> {
     var list = mutableList<T>(this, false);
     list.slice(start, end);
+    return list.immutable();
+  }
+
+  concat(...lists: List<T>[]): List<T>
+  concat(): List<T> {
+    if(arguments.length === 0) {
+      return this;
+    }
+    var list = mutableList<T>(this, false);
+    list.concat.apply(list, arguments);
     return list.immutable();
   }
 }
@@ -187,7 +230,7 @@ export class List<T> {
 */
 
 class MutableList<T> {
-  _id = ++nextId;
+  _group = ++nextId;
 
   // original immutable list reference
   _list: List<T> = emptyList;
@@ -204,8 +247,15 @@ class MutableList<T> {
   _leftItemEnd = -1;
   _rightItemStart = -1;
 
+  static empty<T>(): MutableList<T> {
+    var list = new MutableList<T>();
+    list._changed = true;
+    list._views = [emptyView];
+    return list;
+  }
+
   _reset(list: List<T>): MutableList<T> {
-    this._id = ++nextId;
+    this._group = ++nextId;
     this._list = list;
     this.size = list.size;
     this._changed = false;
@@ -236,7 +286,7 @@ class MutableList<T> {
     // }
 
     // non-batched, so release resources
-    var list = new List<T>(this._id, this.size, 0, this._views);
+    var list = new List<T>(this.size, this._views);
     this._list = emptyList;
     this._views = [];
     return list;
@@ -263,9 +313,9 @@ class MutableList<T> {
 log('INCREASE CAPACITY BY ' + values.length);
     var nodes = this._increaseCapacity(last(this._views), values.length);
 
-    for(var i = 0, nodeIndex = 0, node = nodes[nodeIndex], lastIndex = node.length - 1, slotIndex = (tail.end - tail.start) % CONST.BRANCH_FACTOR;
+    for(var i = 0, nodeIndex = 0, node = nodes[nodeIndex], slotIndex = (tail.end - tail.start) % CONST.BRANCH_FACTOR;
         i < values.length;
-        i++, slotIndex >= lastIndex ? (slotIndex = 0, node = nodes[++nodeIndex]) : (++slotIndex)) {
+        i++, slotIndex >= node.length - 1 ? (slotIndex = 0, node = nodes[++nodeIndex]) : (++slotIndex)) {
 log(`${'###'} set value "${values[i]}" in node ${nodeIndex}, slot ${slotIndex}`);
       node[slotIndex] = values[i];
     }
@@ -281,6 +331,44 @@ log(`${'###'} set value "${values[i]}" in node ${nodeIndex}, slot ${slotIndex}`)
     return this;
   }
 
+  concat(...lists: (List<T>|MutableList<T>)[]): MutableList<T>
+  concat(): MutableList<T> {
+    for(var i = 0; i < arguments.length; i++) {
+      var list: (List<T>|MutableList<T>) = arguments[i];
+      if(this === list) {
+        this._group = ++nextId; // prevent ghosted mutations to nodes that are referenced both left and right
+      }
+    }
+
+    return this;
+  }
+
+  _head<T>(list: List<T>|MutableList<T>): View<T> {
+    var view = list._views[0];
+    if(view.start === 0) return view;
+    for(var view = last(list._views), level = 0; view.start > 0; view = view.parent, level++);
+    while(level > 0) {
+      var slot = <Slot<T>>view.slot.slots[0];
+      view = new View<T>(this._group, 0, slot.size, 0, 0, false, view, slot);
+      level--;
+    }
+    return view;
+  }
+
+  _join(inputs: [Slot<T>, Slot<T>]): boolean {
+    var left = inputs[0], right = inputs[1];
+    var count = left.slots.length + right.slots.length;
+    var reducedCount = calculateRebalancedSlotCount(count, left.subcount + right.subcount);
+    if(count === reducedCount) {
+      return false;
+    }
+
+  }
+
+  _split(slot: Slot<T>, slotIndex: number): [Slot<T>, Slot<T>] {
+
+  }
+
   _increaseCapacity(oldTail: View<T>, increaseBy: number): T[][] {
     var view = oldTail,
         childView: View<T> = <any>void 0,
@@ -291,7 +379,7 @@ log(`${'###'} set value "${values[i]}" in node ${nodeIndex}, slot ${slotIndex}`)
         totalRequiredAdditionalSlots = increaseBy,
         level = 0,
         shift = 0,
-        group = this._id,
+        group = this._group,
         nodes: T[][] = <any>void 0,
         nodeIndex = 0;
 
@@ -315,7 +403,7 @@ log(`will overflow right?`, willOverflowRight);
 
       if(view.group !== group) {
 var temp = `replace view ${view.id} (having slot index ${view.slotIndex}) with new view `;
-        view = new View<T>(group, view.start, view.end, view.slotIndex, view.sizeDelta, view.parent, slot);
+        view = new View<T>(group, view.start, view.end, view.slotIndex, view.sizeDelta, view.changed, view.parent, slot);
 log(temp + view.id);
         if(isLeafLevel) {
           this._views[this._views.length - 1] = view;
@@ -342,7 +430,7 @@ log(temp + view.id);
         if(slot.group !== group) {
 log(`clone slot object (old id: ${slot.id}, group ${slot.group} => ${group}, slot array changed in size from ${slot.slots.length} to ${slotCount})`);
           slots = copyToFixedArray(slots, slotCount);
-          slot = new Slot<T>(group, slot.size, 0, 0, slots);
+          slot = new Slot<T>(group, slot.size, 0, 0, slot.subcount, slots);
           view.slot = slot;
         }
         else if(expandCurrentNode) {
@@ -352,7 +440,10 @@ log(`slotCount is now: ${slotCount}`);
       }
 
       if(isParentLevel) {
+        var subcount = slot.subcount - (<Slot<T>>slots[childView.slotIndex]).slots.length;
         slots[childView.slotIndex] = childView.slot;
+log(`child of slot ${slot.id} at index ${childView.slotIndex} has ${(<Slot<T>>slots[childView.slotIndex]).slots.length} subchild slots, compared to slot ${childView.slot.id} in the child view, which has ${childView.slot.slots.length} subchild slots.`);
+        slot.subcount = subcount + childView.slot.slots.length;
         if(view.parent !== voidView) {
           view.sizeDelta += childView.sizeDelta;
         }
@@ -364,7 +455,8 @@ log(`slot size (${slot.size}) increased by child size delta (${childView.sizeDel
         nodeIndex = this._populateSubtrees(views, nodes, nodeIndex, level, nextSlotIndex, remainingCapacityToAdd + delta);
       }
       else {
-        view.sizeDelta = numberOfAddedSlots;
+// log(`size delta was ${view.sizeDelta}. It will be increased by ${numberOfAddedSlots}`);
+//         view.sizeDelta += numberOfAddedSlots;
         nodes = new Array<T[]>(shiftDownRoundUp(remainingCapacityToAdd, CONST.BRANCH_INDEX_BITCOUNT));
         if(expandCurrentNode) {
           nodes[0] = <T[]>slots;
@@ -372,92 +464,12 @@ log(`slot size (${slot.size}) increased by child size delta (${childView.sizeDel
         }
       }
 
-      // capacityAdded += min(numberOfAddedSlots << shift, remainingCapacityToAdd);
-      // remainingCapacityToAdd = increaseBy - capacityAdded;
-        // -------------------------------------------------------------------------------------------------------------
-        // CALCULATE THE DEGREE TO WHICH THE NODE AT THIS LEVEL SHOULD BE EXPANDED
-
-//       if(expandCurrentNode) {
-// //         numberOfAddedSlots = willOverflowRight ? unallocatedSlotCapacity : totalRequiredAdditionalSlots;
-// //         slotCount += numberOfAddedSlots;
-// //         // var slotArraySize = willOverflowRight ? CONST.BRANCH_FACTOR : - (willOverflowRight ?
-// //         //                                             0 : unallocatedSlotCapacity - totalRequiredAdditionalSlots);
-// // log(`slotCount is now: ${slotCount}`);
-// //         // -------------------------------------------------------------------------------------------------------------
-// //         // UPDATE OR REPLACE THE SLOT SO THAT IT HAS THE REQUIRED SIZE
-
-// //         if(slot.group === group) {
-// //           if(slots.length < slotCount) {
-// //             slots.length = slotCount;
-// //             // TODO: update the slot size
-// //           }
-// //         }
-// //         else {
-// // log(`clone slot object (old id: ${slot.id}, group ${slot.group} => ${group}, slot array changed in size from ${slot.slots.length} to ${slotCount})`);
-// //           slot = new Slot<T>(group, slot.size, 0, 0, slots = copyToFixedArray(slots, slotCount));
-// //           // TODO: update the slot size
-// //           view.slot = slot;
-// //           if(isParentLevel) {
-// // log(`[A] ASSIGN CHILD SLOT (view: ${childView.id}) TO PARENT SLOT (view: ${view.id}) @ INDEX ${childView.slotIndex}`);
-// //             slots[childView.slotIndex] = childView.slot;
-// //             view.sizeDelta += childView.sizeDelta;
-// //             slot.size += childView.sizeDelta;
-// //             childView.sizeDelta = 0;
-// //           }
-
-// //           // todo: refresh left views, and ensure that we own the view at this level (write to _views)
-// //         }
-//         // slot.size += willOverflowRight ? numberOfAddedSlots << shift : remainingCapacityToAdd;
-
-//         // -------------------------------------------------------------------------------------------------------------
-//         // COLLECT LEAF NODE SLOT ARRAYS AND RECURSIVELY CONSTRUCT SUBTREES TO POPULATE ANY NEWLY-ADDED SLOTS
-
-//         if(isLeafLevel) {
-//           numberOfAddedElements = numberOfAddedSlots;
-//           remainingCapacityToAdd -= numberOfAddedElements;
-//           nodes = new Array<T[]>(shiftDownRoundUp(remainingCapacityToAdd, CONST.BRANCH_INDEX_BITCOUNT));
-//           nodes[0] = <T[]>slots;
-//           nodeIndex = 1;
-// log(`leaf level`);
-//         }
-//         else {
-//           numberOfAddedElements += min(numberOfAddedSlots << shift, remainingCapacityToAdd);
-//           nodeIndex = this._populateSubtrees(views, nodes, nodeIndex, level, nextSlotIndex, remainingCapacityToAdd);
-//           remainingCapacityToAdd -= numberOfAddedElements;
-//         }
-//         capacityAdded += numberOfAddedElements;
-// // log(`increasing slot size by ${capacityAdded}, from ${slot.size} to ${slot.size + capacityAdded}`);
-//         // slot.size += capacityAdded;
-// log(`number of added elements: ${numberOfAddedElements}, number of added slots: ${numberOfAddedSlots}, remaining capacity to add: ${remainingCapacityToAdd}, node index: ${nodeIndex}`);
-// log(slots);
-//       }
-//       else {
-//         numberOfAddedSlots = 0;
-//         numberOfAddedElements = increaseBy - remainingCapacityToAdd;
-//         if(isLeafLevel) {
-//           nodes = new Array<T[]>(shiftDownRoundUp(remainingCapacityToAdd, CONST.BRANCH_INDEX_BITCOUNT));
-//           nodeIndex = 0;
-//         }
-//         else if(willOverflowRight) {
-// log(`[B] ASSIGN CHILD SLOT (view: ${childView.id}) TO PARENT SLOT (view: ${view.id}) @ INDEX ${childView.slotIndex}`);
-//           slots[childView.slotIndex] = childView.slot;
-//           view.sizeDelta += childView.sizeDelta;
-//           slot.size += childView.sizeDelta;
-//           childView.sizeDelta = 0;
-//         }
-//       }
-
       if(capacityAdded > 0) {
-        // if(slot.group !== group) {
-        //   slot = new Slot<T>(group, slot.size, slot.sum, slot.recompute, copyArray(slot.slots));
-        // }
-// log(`increasing slot size by ${capacityAdded}, from ${slot.size} to ${slot.size + capacityAdded}`);
-//         slot.size += capacityAdded;
 log(`level: ${level}, slot.size: ${slot.size}, capacityAdded: ${capacityAdded}`);
         if(isLeafLevel) {
           slot.size += capacityAdded;
           view.end += capacityAdded;
-          view.sizeDelta = capacityAdded;
+          view.sizeDelta += capacityAdded;
         }
         else if(isRelaxed(slot)) {
           slot.recompute = max(slot.recompute, slots.length - childView.slotIndex);
@@ -472,8 +484,8 @@ log(`level: ${level}, slot.size: ${slot.size}, capacityAdded: ${capacityAdded}`)
 
         if(view.parent === voidView) { // then the tree is full; grow it by adding an additional level above the current root
 log('GROW');
-          slot = new Slot<T>(group, slot.size - view.sizeDelta, 0, 0, [slot]);
-          view = new View<T>(group, view.start, view.end - view.sizeDelta, 0, 0, voidView, slot);
+          slot = new Slot<T>(group, slot.size - view.sizeDelta, 0, 0, slots.length, [slot]);
+          view = new View<T>(group, view.start, view.end - view.sizeDelta, 0, 0, view.changed, voidView, slot);
         }
         else {
           view = view.parent;
@@ -495,12 +507,8 @@ publish(this, false, `level ${level - (willOverflowRight ? 1 : 0)} capacity appl
     return <T[][]>nodes;
   }
 
-  _commitSlot(parentSlot: Slot<T>, childView: View<T>) {
-    var oldSlot = parentSlot.slots[childView.slotIndex];
-  }
-
   _populateSubtrees<T>(views: View<T>[], nodes: T[][], nodeIndex: number, level: number, firstSlotIndex: number, remaining: number): number {
-    publish(this, false, `populate subtree from level ${level}, slot index ${firstSlotIndex}, remaining to add: ${remaining}`);
+publish(this, false, `populate subtree from level ${level}, slot index ${firstSlotIndex}, remaining to add: ${remaining}`);
     var levelIndex = level;
     var shift = CONST.BRANCH_INDEX_BITCOUNT * levelIndex;
     var view = last(views);
@@ -512,7 +520,7 @@ publish(this, false, `level ${level - (willOverflowRight ? 1 : 0)} capacity appl
     var slotIndices = new Array<number>(views.length);
     var slotCounts = new Array<number>(views.length);
     var currentEnd = view.end;
-    var delta = 0;
+    var delta = 0, subcount = 0;
     slotIndices[levelIndex] = slotIndex;
     slotCounts[levelIndex] = slotCount;
 
@@ -526,43 +534,48 @@ log(`[populateSubtrees] ITERATE LOOP (remaining: ${remaining}, levelIndex: ${lev
       if(slotIndex === slotCount) {
 log(`ASCEND; end value for view ${view.id} changed to ${currentEnd}`);
 log(`child size delta is ${view.sizeDelta}`, view);
-        // var delta = view.sizeDelta;
         if(levelIndex === 1) {
           view.slot.size += delta;
+          view.slot.subcount += subcount;
           if(levelIndex < level) {
-            delta += view.sizeDelta;
-            // view.sizeDelta = 0;
+            // delta += view.sizeDelta;
+// log(`increasing \`delta\` to ${delta}`);
           }
           else {
             view.sizeDelta += delta;
           }
 log(`levelIndex is 1, so view slot size is increased by its own delta to ${view.slot.size}`);
         }
+        // else {
+        //   delta = view.sizeDelta;
+        // }
         levelIndex++;
         view.end = currentEnd;
 
         if(remaining === 0) {
+          view.changed = true;
           var lastSlot = <Slot<T>>last(slots);
-          slots[slots.length - 1] = new Slot<T>(0, lastSlot.size, lastSlot.sum, lastSlot.recompute, new Array<T>(lastSlot.slots.length)); // set the last slot as uncommitted
+          slots[slots.length - 1] = new Slot<T>(0, lastSlot.size, lastSlot.sum, lastSlot.recompute, lastSlot.subcount, new Array<T>(lastSlot.slots.length)); // set the last slot as uncommitted
         }
         if(levelIndex <= level) {
 log(`slot index from slotIndices[${levelIndex}] changed from ${slotIndices[levelIndex]} to ${slotIndices[levelIndex]+1}`);
           slotIndex = ++slotIndices[levelIndex];
-log(`[A] slotIndex changed to: ${slotIndex}`);
+          subcount = slotCount;
           slotCount = slotCounts[levelIndex];
+log(`[A] slotIndex changed to: ${slotIndex}; slotCount at this level is ${slotCount}`);
           shift += CONST.BRANCH_INDEX_BITCOUNT;
-log(`reset child view delta to 0`);
+log(`reset child view delta to 0; active delta is ${delta}`);
           view.sizeDelta = 0;
           view = views[levelIndex];
-          view.sizeDelta += delta;
 log(`view for levelIndex ${levelIndex} has id ${view.id}, and will have its slot size increased from ${view.slot.size} to ${view.slot.size + delta}`);
           view.slot.size += delta;
+log(`increasing \`delta\` to ${delta}`);
+          delta += view.sizeDelta;
+          view.sizeDelta = delta;
+log(`slot size is now: ${view.slot.size}; increase subcount of slot ${view.slot.id} by ${subcount}`);
+          view.slot.subcount += subcount;
           slots = view.slot.slots;
         }
-//         else if(view.parent === voidView) {
-// log(`this is the root, so the current view delta will be reset to 0`);
-//           view.sizeDelta = 0;
-//         }
       }
 
       // ---------------------------------------------------------------------------------------------------------------
@@ -589,11 +602,12 @@ log(`new element count will be ${elementCount}`);
 
           nodes[nodeIndex++] = leafSlots;
 log(`slots.length: ${slots.length}; assigning leafSlots to slot index ${slotIndex}`);
-          slots[slotIndex] = leafView.slot = new Slot<T>(group, elementCount, 0, 0, leafSlots);
+          slots[slotIndex] = leafView.slot = new Slot<T>(group, elementCount, 0, 0, 0, leafSlots);
           leafView.slotIndex = slotIndex;
           leafView.start = leafView.end;
           leafView.end += elementCount;
           delta += elementCount;
+          subcount += elementCount;
           slotIndex++;
 log(`[B] slotIndex changed to: ${slotIndex}`);
           currentEnd = leafView.end;
@@ -605,6 +619,7 @@ log(`currentEnd changed to: ${currentEnd}`);
           shift -= CONST.BRANCH_INDEX_BITCOUNT;
           view = views[--levelIndex];
           delta = 0;
+          subcount = 0;
 log(`DESCEND; remaining: ${remaining}, shift: ${shift}, levelIndex: ${levelIndex}`);
 
           slotCount = remaining >>> shift;
@@ -619,7 +634,7 @@ log(`DESCEND; remaining: ${remaining}, shift: ${shift}, levelIndex: ${levelIndex
           view.end += (slotCount << shift) + remainder;
 log(`view ${view.id} end changed to: ${view.end} (slot count: ${slotCount} + remainder: ${remainder})`);
           if(remainder > 0) slotCount++;
-          view.slot = new Slot<T>(group, 0, 0, 0, new Array<T>(slotCount));
+          view.slot = new Slot<T>(group, 0, 0, 0, 0, new Array<T>(slotCount));
           view.slotIndex = slotIndex;
 log(`view ${view.id} slot index is now: ${view.slotIndex}`);
 log(`assigned new slot (id: ${view.slot.id}) to view: new slotcount is: ${slotCount}`);
@@ -631,12 +646,15 @@ log(`assigned new slot (id: ${view.slot.id}) to view: new slotcount is: ${slotCo
           // addedCounts[levelIndex] = added = 0;
         }
       }
-      publish(this, false, `subtree population completed for level ${level} (remaining: ${remaining})`);
+publish(this, false, `subtree updated at level ${levelIndex} (remaining: ${remaining})`);
     } while(levelIndex <= level);
 
+    leafView.changed = true;
 log('DONE POPULATING SUBTREES');
     return nodeIndex;
   }
+
+  // _commit
 
 
 
@@ -936,6 +954,14 @@ class CommitState {
 //   }
 // }
 
+function calculateExtraSearchSteps(parentSlots: number, childSlots: number): number {
+  return parentSlots - (((childSlots - 1) >>> CONST.BRANCH_INDEX_BITCOUNT) + 1);
+}
+
+function calculateRebalancedSlotCount(parentSlots: number, childSlots: number): number {
+  var reduction = calculateExtraSearchSteps(parentSlots, childSlots) - CONST.MAX_OFFSET_ERROR;
+  return parentSlots - (reduction > 0 ? reduction : 0);
+}
 
 function mutableList<T>(list: List<T>, batched: boolean): MutableList<T> {
   return batched ? new MutableList<T>()._reset(list) : _mutableList._reset(list);
@@ -1003,10 +1029,10 @@ function isRelaxed<T>(slot: Slot<T>): boolean {
   return slot.sum !== 0;
 }
 
-var emptySlot = new Slot<any>(++nextId, 0, 0, 0, []);
-var voidView = new View<any>(++nextId, 0, 0, 0, 0, <any>void 0, emptySlot);
-var emptyView = new View<any>(++nextId, 0, 0, 0, 0, voidView, emptySlot);
-var emptyList = new List<any>(++nextId, 0, 0, [emptyView]);
+var emptySlot = new Slot<any>(++nextId, 0, 0, 0, 0, []);
+var voidView = new View<any>(++nextId, 0, 0, 0, 0, false, <any>void 0, emptySlot);
+var emptyView = new View<any>(++nextId, 0, 0, 0, 0, false, voidView, emptySlot);
+var emptyList = new List<any>(0, [emptyView]);
 var _mutableList = new MutableList<any>();
 
 function log(...args: any[])

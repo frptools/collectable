@@ -192,7 +192,7 @@ body
     > .props
       > .recompute
       > .sum
-      > .count
+      > .subcount
         display: none
   + .node
     margin-left: 5px
@@ -235,6 +235,8 @@ body
       content: 'sum'
     .recompute:before
       content: 'inv'
+    .subcount:before
+      content: 'sub'
 
 .slots
   display: flex
@@ -283,6 +285,9 @@ body
         background-color: #ffff94
       .slot-prop
         background-color: #f3f38f
+    &:not(.relaxed)
+      .slot-prop.sum
+        color: #bbb
 
     .slot-prop
       align-self: stretch
@@ -291,11 +296,6 @@ body
       font-weight: 400
       color: #600
       background-color: #f3f3f3
-      &.count:before
-        content: '+'
-        font-size: 12px
-        line-height: 8px
-        color: #666
       &.sum:before
         content: '→'
         font-weight: 700
@@ -305,11 +305,10 @@ body
         background-color: #f13811
       &.size
         &:before
-          content: '{'
-          color: #999
-        &:after
-          content: '}'
-          color: #999
+          content: '+'
+          font-size: 12px
+          line-height: 8px
+          color: #666
         background-color: white
 
     .slot-index
