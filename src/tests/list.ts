@@ -6,7 +6,7 @@ import {assert} from 'chai';
 import {List} from '../collectable/list';
 
 const enum CONST {
-  BRANCH_FACTOR = 8
+  BRANCH_FACTOR = 4
 }
 
 describe('[List]', () => {

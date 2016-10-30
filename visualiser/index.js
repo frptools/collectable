@@ -90,16 +90,25 @@ function addView(map, key, view) {
 
 var list$ = create(add => {
   var logs = [];
+  var previousList = [];
   setCallback(function(lists, done, message) {
     if(Array.isArray(lists)) {
       if(arguments.length === 1) {
-        logs.push(lists.map(arg => typeof arg === 'object' ? CJ.parse(CJ.stringify(arg)) : arg));
-        return;
+        if(lists.find(arg => arg instanceof Error)) {
+          logs.push(lists);
+          message = 'ERROR';
+          lists = previousList;
+        }
+        else {
+          logs.push(lists.map(arg => typeof arg === 'object' ? CJ.parse(CJ.stringify(arg)) : arg));
+          return;
+        }
       }
     }
     else {
       lists = [lists];
     }
+    previousList = lists;
 
     lists = lists.map(list => {
       list = CJ.parse(CJ.stringify(list));
@@ -237,6 +246,7 @@ function arrow(id, color) {
 function drawLines() {
   var listsEl = document.querySelector('.list-container .lists');
   var svgEl = document.getElementById('edges');
+  if(!svgEl) return;
   svgEl.style.width = (listsEl.offsetLeft + listsEl.offsetWidth) + 'px';
   svgEl.style.height = (listsEl.offsetTop + listsEl.offsetHeight) + 'px';
   var paths = `
@@ -353,13 +363,14 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
   var recompute = slot.recompute;
   var slots = isLeaf || hasChildren
     ? slot.slots.map((value, i) => !value
-    ? div('.slot.void', {class: {leaf: isLeaf}}, [span('.slot-index', i.toString())]) : isLeaf
-      ? div('.slot.leaf', value)
-      : div(isDummyNode(value) ? `.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy` : `.slot-${listIndex}-${value.id}-${i}.slot.mid`, {class: {relaxed: slot.count}}, [
-        span('.slot-index', i.toString()),
-        span('.slot-prop.size', value.size.toString()),
-        span('.slot-prop.sum', {class: {invalid: i >= slot.slots.length - recompute}}, slot.sum),
-      ]))
+      ? div('.slot.void', {class: {leaf: isLeaf}}, [span('.slot-index', i.toString())])
+      : isLeaf
+        ? div('.slot.leaf', value)
+        : div(isDummyNode(value) ? `.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy` : `.slot-${listIndex}-${value.id}-${i}.slot.mid`, {class: {relaxed: slot.sum + slot.recompute}}, [
+          span('.slot-index', i.toString()),
+          span('.slot-prop.size', value.size.toString()),
+          span('.slot-prop.sum', {class: {invalid: i >= slot.slots.length - recompute}}, slot.sum),
+        ]))
     : [span('.no-slots', 'Empty')];
 
   const nodeViews = [
@@ -393,7 +404,7 @@ function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, paren
   var items = [];
   var isInputSlotDummy = isDummyNode(slot);
   var makeItem = (slot, views) => {
-    var isLeaf = level === 0 && isLeafNode(slot);
+    var isLeaf = level === 0 || isLeafNode(slot);
     var item = {
       branchId: ++nextId,
       parentBranchId,
@@ -499,6 +510,7 @@ function updateLeftPosition() {
 
 function updateEdges() {
   requestAnimationFrame(drawLines);
+  setTimeout(drawLines, 100);
 }
 
 document.addEventListener('readystatechange', () => {
@@ -594,7 +606,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 95;
+        var startIndex = 18;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -614,10 +626,17 @@ function main({DOM, events}) {
   Cycle.run(main, {
     DOM: makeDOMDriver('#app-root')
   });
-  // var list = List.empty();
-  var list = listOf(521);
-  // var list = List.of(makeValues(95));
-  list = list.append('FOO', 'BAR', 'BAZ');
+
+  setTimeout(() => {
+
+    // var list = List.empty();
+    // var list = listOf(95);
+    var list0 = List.of(makeValues(33, i => `A${i}`));
+    // var list1 = List.of(makeValues(75, i => `B${i}`));
+    // list0 = list0.append('FOO', 'BAR', 'BAZ');
+    list0 = list0.concat(list0);
+
+  }, 100);
 })();
 
 function listOf(size) {
@@ -633,10 +652,10 @@ function text(i) {
   return '' + i;
 }
 
-function makeValues(count) {
+function makeValues(count, format = text) {
   var values = [];
   for(var i = 0; i < count; i++) {
-    values.push(text(i));
+    values.push(format(i));
   }
   return values;
 }
