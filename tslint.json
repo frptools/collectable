@@ -16,6 +16,7 @@
         "no-unsafe-finally": true,
         "no-unused-variable": true,
         "no-var-keyword": false,
+        "no-invalid-this": true,
         "one-line": [
             true,
             "check-open-brace",

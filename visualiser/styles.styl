@@ -52,6 +52,7 @@ body
 .list-container
   position: fixed
   top: 0
+  left: 0
   right: 0
   bottom: 0
   overflow: auto
@@ -130,6 +131,9 @@ body
       border-color: #03A9F4
       + .node
         margin-left: 2px
+    &.changed
+      background-color: yellow
+      border-color: red
 
 .view
   margin-left: 2px
@@ -145,6 +149,8 @@ body
     content: 'end'
   .sizeDelta:before
     content: 'size Δ'
+  .slotsDelta:before
+    content: 'slots Δ'
   .parentId:before
     content: 'pv-id'
   .slotId:before
@@ -196,6 +202,42 @@ body
       > .sum
       > .subcount
         display: none
+  &.relaxed
+    box-shadow: 0 0 30px rgba(black, 0.25), 0 0 5px rgba(black, 0.2)
+    border-color: #fff !important
+    color: #2b4e20
+    margin-top: -10px
+    &:before
+      content: 'relaxed'
+      display: block
+      text-transform: uppercase
+      text-align: center
+      font-weight: 700
+      color: #8da500
+      background-color: #f6ffbe
+    .slots
+      border-top-color: #95d283 !important
+      .slot-index
+      .slot-prop
+        background-color: #e4ff44
+      .slot-prop.sum
+        background-color: #d1efbd
+      .slot-index
+      .slot-prop
+      .slot + .slot
+        border-color: #95d283 !important
+    > .props .prop
+      &:before
+        background-color: #d6e8d5
+      + span
+        border-color: #95d283 !important
+  &:not(.relaxed)
+    .slot-prop.sum
+      display: none
+    > .props
+      .prop.recompute
+        display: none
+
   + .node
     margin-left: 5px
   > .props
@@ -233,10 +275,12 @@ body
         content: 'grp'
     .size:before
       content: 'siz'
-    .sum:before
-      content: 'sum'
+    .sum
+      display: none
+      &:before
+        content: 'sum'
     .recompute:before
-      content: 'inv'
+      content: 'rec'
     .subcount:before
       content: 'sub'
 
@@ -256,10 +300,10 @@ body
       border-left: 1px solid #ccc
     &.leaf
       padding: 2px
-      color: #313819
-      background-color: #e3f3bb
-      font-weight: 700
+      color: white
+      background-color: #4c4a5a
       font-size: 12px
+      border-left-color: #807d94
     &.void
       color: #c00
       background-color: #f3cccc
@@ -282,36 +326,29 @@ body
     &.void
       flex-direction: row
 
-    &.relaxed
-      .slot-index
-        background-color: #ff94b8
-      .slot-prop
-        background-color: #e68baa
-    &:not(.relaxed)
-      .slot-prop.sum
-        color: #bbb
-
     .slot-prop
       align-self: stretch
       padding: 1px 2px
       border-top: 1px solid #e7e7e7
       font-weight: 400
-      color: #600
       background-color: #f3f3f3
       &.sum:before
         content: '→'
         font-weight: 700
       &.sum.invalid
         content: '?'
-        color: #ffe6ac
-        background-color: #f13811
+        background-color: #ffd957
+        text-decoration: line-through
+        font-weight: 700
+        color: #c00
+        &:before
+          content: ''
       &.size
         &:before
           content: '+'
           font-size: 12px
           line-height: 8px
           color: #666
-        background-color: white
 
     .slot-index
       align-self: stretch

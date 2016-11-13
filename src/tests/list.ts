@@ -1,15 +1,18 @@
 import * as chalk from 'chalk';
+import {inspect} from 'util';
 
 declare function require(moduleName: string): any;
 
 import {assert} from 'chai';
 import {List} from '../collectable/list';
+import {Slot} from '../collectable/list/slot';
+import {shiftDownRoundUp} from '../collectable/list/common';
+import {CONST} from '../collectable/list/const';
 
-const enum CONST {
-  BRANCH_FACTOR = 4
-}
+const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
+const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
 
-describe('[List]', () => {
+suite('[List]', () => {
   var empty: List<string>;
   var listBF: List<string>;
   var listH1plus1: List<string>;
@@ -20,61 +23,28 @@ describe('[List]', () => {
   var list100k: List<string>;
   var tailSize70k: number;
 
-  before(() => {
+  suiteSetup(function() {
+    this.timeout(30000);
     // empty = List.empty<string>();
-    // listBF = listOf(CONST.BRANCH_FACTOR);
-    listH1plus1 = listOf(CONST.BRANCH_FACTOR + 1);
-    listH2plusBFplus1 = listOf(Math.pow(CONST.BRANCH_FACTOR, 2) + CONST.BRANCH_FACTOR + 1);
-    listH3plusBFplus1 = listOf(Math.pow(CONST.BRANCH_FACTOR, 3) + CONST.BRANCH_FACTOR + 1);
-    listH4plusBFplus1 = listOf(Math.pow(CONST.BRANCH_FACTOR, 4) + CONST.BRANCH_FACTOR + 1);
+    // listBF = listOf(BRANCH_FACTOR);
+    listH1plus1 = listOf(BRANCH_FACTOR + 1);
+    listH2plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
+    listH3plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1);
+    listH4plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1);
     // list70k = listOf(70000);
     // list100k = listOf(100000);
     // tailSize70k = (<LNode<string>>list70k._tail).size;
   });
 
-  describe('[internals]', () => {
-    // describe('getAdjustedSlotIndex()', () => {
-    //   var node = makeRelaxedNode();
-    //   it('should return the correct slot index and offset for input index 0', () => {
-    //     var index = getAdjustedSlotIndex<string>(node, 0);
-    //     assert.strictEqual(index[0], 0);
-    //     assert.strictEqual(index[1], 0);
-    //   });
-
-    //   it('should return 0 offset for the first slot index', () => {
-    //     var index = getAdjustedSlotIndex<string>(node, 10);
-    //     assert.strictEqual(index[0], 0);
-    //     assert.strictEqual(index[1], 0);
-    //   });
-
-    //   it('should return the offset preceding the calculated slot index', () => {
-    //     var index = getAdjustedSlotIndex<string>(node, 34);
-    //     assert.strictEqual(index[0], 1);
-    //     assert.strictEqual(index[1], 32);
-    //   });
-
-    //   it('should return the accumulated offset rather than the underlying slot size', () => {
-    //     var index = getAdjustedSlotIndex<string>(node, 63);
-    //     assert.strictEqual(index[0], 2);
-    //     assert.strictEqual(index[1], 63);
-    //   });
-
-    //   it('should return -1 for the slot index if out of range', () => {
-    //     var index = getAdjustedSlotIndex<string>(node, 1020);
-    //     assert.strictEqual(index[0], -1);
-    //   });
-    // });
-  });
-
-  describe('.empty()', () => {
-    it('should have size 0', () => {
+  suite('.empty()', () => {
+    test('should have size 0', () => {
       const list = List.empty<string>();
       assert.strictEqual(list.size, 0);
     });
   });
 
-  describe('#append()', () => {
-    it('should not mutate the original List', () => {
+  suite('#append()', () => {
+    test('should not mutate the original List', () => {
       const empty = List.empty<string>();
       const pushed = empty.append('foo');
       assert.strictEqual(empty.size, 0);
@@ -83,26 +53,26 @@ describe('[List]', () => {
       assert.notDeepEqual(empty, pushed);
     });
 
-    it('should return the original list if called with no arguments', () => {
+    test('should return the original list if called with no arguments', () => {
       const empty = List.empty<string>();
       const pushed = empty.append();
       assert.strictEqual(empty.size, 0);
       assert.strictEqual(empty, pushed);
     });
 
-    it('should have size:1 after adding the first element', () => {
+    test('should have size:1 after adding the first element', () => {
       const list = List.empty<string>().append('foo');
       assert.strictEqual(list.size, 1);
       assert.deepEqual(slotValues(tailView(list)), ['foo']);
     });
 
-    it('should have size:2 after adding the second element', () => {
+    test('should have size:2 after adding the second element', () => {
       const list = List.empty<string>().append('foo').append('bar');
       assert.strictEqual(list.size, 2);
       assert.deepEqual(slotValues(tailView(list)), ['foo', 'bar']);
     });
 
-    it('should push each additional argument as an independent value', () => {
+    test('should push each additional argument as an independent value', () => {
       const list = List.empty<string>().append('foo', 'bar', 'baz');
       assert.strictEqual(list.size, 3);
       var headValues = slotValues(headSlot(list));
@@ -112,24 +82,24 @@ describe('[List]', () => {
       assert.strictEqual(tailValues[tailValues.length - 1], 'baz');
     });
 
-    it('should be able to grow beyond the size of the default branching factor', () => {
-      assert.strictEqual(listH1plus1.size, CONST.BRANCH_FACTOR + 1);
-      assert.deepEqual(slotValues(headSlot(listH1plus1)), arrayOf(0, CONST.BRANCH_FACTOR));
-      assert.deepEqual(slotValues(tailView(listH1plus1)), arrayOf(CONST.BRANCH_FACTOR, CONST.BRANCH_FACTOR + 1));
-      assert.strictEqual(headSize(listH1plus1), CONST.BRANCH_FACTOR);
+    test('should be able to grow beyond the size of the default branching factor', () => {
+      assert.strictEqual(listH1plus1.size, BRANCH_FACTOR + 1);
+      assert.deepEqual(slotValues(headSlot(listH1plus1)), arrayOf(0, BRANCH_FACTOR));
+      assert.deepEqual(slotValues(tailView(listH1plus1)), arrayOf(BRANCH_FACTOR, BRANCH_FACTOR + 1));
+      assert.strictEqual(headSize(listH1plus1), BRANCH_FACTOR);
       assert.strictEqual(tailSize(listH1plus1), 1);
     });
 
-    it('should be able to increase capacity when the root is full', () => {
-      var h2Count = Math.pow(CONST.BRANCH_FACTOR, 2) + CONST.BRANCH_FACTOR + 1;
-      var h3Count = Math.pow(CONST.BRANCH_FACTOR, 3) + CONST.BRANCH_FACTOR + 1;
-      var h4Count = Math.pow(CONST.BRANCH_FACTOR, 4) + CONST.BRANCH_FACTOR + 1;
+    test('should be able to increase capacity when the root is full', () => {
+      var h2Count = Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1;
+      var h3Count = Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1;
+      var h4Count = Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1;
       assert.strictEqual(listH2plusBFplus1.size, h2Count);
       assert.strictEqual(listH3plusBFplus1.size, h3Count);
       assert.strictEqual(listH4plusBFplus1.size, h4Count);
     });
 
-    it('should surface the rightmost leaf node when it has unused capacity instead of creating a new tail'/*, () => {
+    test('should surface the rightmost leaf node when it has unused capacity instead of creating a new tail'/*, () => {
       const listA = listH2plusBFplus1.slice(0, 1000);
       assert.isUndefined(listA._tail);
       assert.deepEqual(edgeShape(listA, 'right'), [['V', 32, 1000], ['L', 8, 8, '#999']]);
@@ -146,13 +116,13 @@ describe('[List]', () => {
     }*/);
   });
 
-  describe('#pop()', () => {
-    it('should return itself if already empty'/*, () => {
+  suite('#pop()', () => {
+    test('should return itself if already empty'/*, () => {
       const list = List.empty();
       assert.strictEqual(list, list.pop());
     }*/);
 
-    it('should not mutate the original list'/*, () => {
+    test('should not mutate the original list'/*, () => {
       const list = List.empty<string>().append('foo', 'bar', 'baz');
       const listC = list.pop();
       const listB = listC.pop();
@@ -171,7 +141,7 @@ describe('[List]', () => {
       assert.notDeepEqual(listB, listC);
     }*/);
 
-    it('should surface the rightmost leaf node as the tail if there are no existing tail elements'/*, () => {
+    test('should surface the rightmost leaf node as the tail if there are no existing tail elements'/*, () => {
       const values = makeValues(1025);
       const list = List.empty<string>().append(...values);
       const listC = list.pop();
@@ -202,7 +172,7 @@ describe('[List]', () => {
       assert.strictEqual(listE._tail && listE._tail.size, 7);
     }*/);
 
-    it('should decrease list height when surfacing the last remaining leaf in the second root branch'/*, () => {
+    test('should decrease list height when surfacing the last remaining leaf in the second root branch'/*, () => {
       assert.strictEqual(depth(listOf(33).pop().pop()), 0);
       assert.strictEqual(depth(listOf(1024 + 33).pop().pop()), 2);
       assert.strictEqual(depth(listOf(1024 + 34).pop().pop()), 3);
@@ -211,8 +181,8 @@ describe('[List]', () => {
     }*/);
   });
 
-  describe('#get()', () => {
-    it('should return undefined if the index is out of range'/*, () => {
+  suite('#get()', () => {
+    test('should return undefined if the index is out of range'/*, () => {
       var list = List.empty<string>();
       var listC = listOf(33);
       assert.strictEqual(list.get(0), void 0);
@@ -222,31 +192,31 @@ describe('[List]', () => {
       assert.strictEqual(listC.get(50), void 0);
     }*/);
 
-    it('should return the correct element when it exists in the tail'/*, () => {
+    test('should return the correct element when it exists in the tail'/*, () => {
       assert.strictEqual(listOf(33).get(32), text(32));
       assert.strictEqual(listOf(1057).get(1056), text(1056));
     }*/);
 
-    it('should return the correct element when pathing through regular nodes'/*, () => {
+    test('should return the correct element when pathing through regular nodes'/*, () => {
       assert.strictEqual(listOf(33).get(2), text(2));
       assert.strictEqual(listOf(32).get(31), text(31));
       assert.strictEqual(listOf(33).slice(0, 32).get(31), text(31));
       assert.strictEqual(listOf(1057).get(2), text(2));
     }*/);
 
-    it('should return the correct element when pathing through relaxed nodes'/*, () => {
+    test('should return the correct element when pathing through relaxed nodes'/*, () => {
       assert.strictEqual(listOf(1057).slice(1).get(0), text(1));
       assert.strictEqual(list70k.slice(1027).get(0), text(1027));
     }*/);
   });
 
-  describe('#concat', () => {
-    it('should work', () => {
+  suite('#concat', () => {
+    test('should work', () => {
       var list = listOf(5).concat(listOf(3));
     });
   });
 
-  // describe('#slice()', () => {
+  // suite('#slice()', () => {
   //   it('should return the same list if the specified range is a superset of the input list', () => {
   //     assert.strictEqual(empty.slice(0), empty);
   //     assert.strictEqual(empty.size, 0);
@@ -272,7 +242,7 @@ describe('[List]', () => {
   //     assert.deepEqual(listH2plusBFplus1.slice(-10, -20), empty);
   //   });
 
-  //   describe('left slice', () => {
+  //   suite('left slice', () => {
   //     it('should leave only the tail if the start position occurs at or after the tail offset', () => {
   //       const listA = list70k.slice(list70k.size - tailSize70k + 1);
   //       assert.strictEqual(listA.size, tailSize70k - 1);
@@ -402,7 +372,7 @@ describe('[List]', () => {
   //     });
   //   });
 
-  //   describe('right slice', () => {
+  //   suite('right slice', () => {
   //     it('should only truncate the tail if the slice point occurs after the tail offset', () => {
   //       const removedAmount = tailSize70k - 3;
   //       const end = list70k.size - removedAmount;
@@ -462,7 +432,7 @@ describe('[List]', () => {
   //     });
   //   });
 
-  //   describe('mid slice', () => {
+  //   suite('mid slice', () => {
   //     it('should not generate any relaxed nodes if both slices are at root node slot boundaries', () => {
   //       var list = list100k.slice(32768, 98304);
   //       assert.deepEqual(edgeShape(list, 'left'), [
@@ -535,7 +505,7 @@ describe('[List]', () => {
   //   });
   // });
 
-  // describe('#concat()', () => {
+  // suite('#concat()', () => {
   //   it('should return the main list reference if no arguments are supplied', () => {
   //     assert.strictEqual(listBF.concat(), listBF);
   //   });
@@ -572,7 +542,7 @@ describe('[List]', () => {
   //   it('should be able to append the main list to itself via concatenation arguments');
   // });
 
-  // describe('speed stuff', () => {
+  // suite('speed stuff', () => {
   //   var list = listOf(1000000);
   //   var sp: [number, number][] = [];
   //   var start = (list.size*3/4)>>>0;
@@ -742,22 +712,64 @@ function arrayOf(start: number, end: number): string[] {
 }
 
 function listOf(size: number): List<string> {
-  const values = makeValues(size);
-  var list = List.empty<string>();
-  while(list.size < size) {
-    list = list.append(...values.slice(list.size, list.size + 297));
-  }
-  return list;
+  return List.of<string>(makeValues(size));
+  // const values = makeValues(size);
+  // var list = List.empty<string>();
+  // while(list.size < size) {
+  //   list = list.append(...values.slice(list.size, list.size + 10000));
+  // }
+  // return list;
 }
 
 function text(i: number) {
   return '#' + i;
 }
 
-function makeValues(count: number): string[] {
+function makeStandardSlot(requiredSize: number, level: number, valueOffset: number): Slot<string> {
+  var slots: (Slot<string>|string)[];
+  var size = 0;
+  var subcount = 0;
+  if(level === 0) {
+    slots = makeValues(requiredSize, valueOffset);
+    size = requiredSize;
+  }
+  else {
+    slots = [];
+    var lowerSubtreeMaxSize = 1 << (BRANCH_INDEX_BITCOUNT*level);
+    while(size < requiredSize) {
+      var lowerSize = Math.min(requiredSize - size, lowerSubtreeMaxSize);
+      var lowerSlot = makeStandardSlot(lowerSize, level - 1, valueOffset + size);
+      subcount += lowerSlot.slots.length;
+      size += lowerSize;
+      slots.push(lowerSlot);
+    }
+  }
+  var slot = new Slot<string>(1, size, 0, -1, subcount, slots);
+  delete slot.id;
+  return slot;
+}
+
+function makeRelaxedSlot(slots: Slot<string>[]): Slot<string> {
+  var size = 0, subcount = 0, sum = 0;
+  slots.forEach(slot => {
+    size += slot.size;
+    subcount += slot.slots.length;
+    sum += slot.size;
+    slot.sum = sum;
+  });
+  var slot = new Slot<string>(1, size, 0, 0, subcount, slots);
+  delete slot.id;
+  return slot;
+}
+
+function gatherLeafValues(slot: Slot<string>): any[] {
+  return slot.slots.map(slot => slot instanceof Slot ? slot.slots.map(gatherLeafValues) : slot);
+}
+
+function makeValues(count: number, valueOffset = 0): string[] {
   var values: string[] = [];
   for(var i = 0; i < count; i++) {
-    values.push(text(i));
+    values.push(text(i + valueOffset));
   }
   return values;
 }
@@ -825,3 +837,7 @@ function makeValues(count: number): string[] {
 // function descrNode(node: any): string {
 //   return !node ? 'VOID' : `${node.shift ? node.ranges ? 'RNode' : 'VNode' : 'LNode'}, size: ${node.size}, capacity: ${node.capacity}, slots: ${node.slots.length}, shift: ${node.shift}`;
 // }
+
+function dump(arg: any): void {
+  console.log(inspect(arg, false, 10, true));
+}

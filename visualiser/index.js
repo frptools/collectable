@@ -3,6 +3,9 @@ import {fromEvent} from 'most';
 import {create} from '@most/create'
 import {a, h, div, span, thunk, makeDOMDriver} from '@motorcycle/dom';
 import {List, setCallback} from '../lib/collectable/list';
+import {nextId as nextInternalId, publish} from '../lib/collectable/list/common';
+import {Slot} from '../lib/collectable/list/slot';
+import {View, voidView} from '../lib/collectable/list/view';
 import Immutable from 'immutable';
 import CJ from 'circular-json';
 
@@ -168,8 +171,7 @@ var edges = [];
 function getElement(id) {
   var el = document.getElementsByClassName(id)[0];
   if(!el) {
-    console.log(id);
-    debugger;
+    console.warn('MISSING ENDPOINT ELEMENT: ' + id);
   }
   return el;
 }
@@ -179,20 +181,22 @@ function getEndpointElements(endpoint) {
   switch(endpoint.type) {
     case 'slot':
       vEl = getElement(`slot-${endpoint.listIndex}-${endpoint.id}-${endpoint.index}`);
+      hEl = vEl && vEl.parentNode.parentNode;
       break;
     case 'dslot':
       vEl = getElement(`dslot-${endpoint.listIndex}-${endpoint.branch}-${endpoint.index}`);
+      hEl = vEl && vEl.parentNode.parentNode;
       break;
     case 'view':
       vEl = getElement(`view-${endpoint.listIndex}-${endpoint.id}`);
-      hEl = vEl.parentNode;
+      hEl = vEl && vEl.parentNode;
       break;
     case 'dummy':
       vEl = getElement(`dummy-${endpoint.listIndex}-${endpoint.branch}-${endpoint.index}`);
       break;
     case 'node':
       vEl = getElement(`node-${endpoint.listIndex}-${endpoint.id}`);
-      hEl = vEl.parentNode;
+      hEl = vEl && vEl.parentNode.classList.contains('has-view') ? vEl.parentNode : vEl;
       break;
   }
   return [vEl, hEl || vEl];
@@ -259,6 +263,7 @@ function drawLines() {
     var type = `${edge[0].type}-${edge[1].type}`;
     var [vStartEl, hStartEl] = getEndpointElements(edge[0]);
     var [vEndEl, hEndEl] = getEndpointElements(edge[1]);
+    if(!vStartEl || !vEndEl) return;
     var x0, y0, x1, y1, cx0, cy0, cx1, cy1, h, w;
     switch(type) {
       case 'view-view':
@@ -291,8 +296,8 @@ function drawLines() {
       case 'dslot-dummy':
         x0 = getMidX(vStartEl);
         x1 = getMidX(vEndEl);
-        y0 = vStartEl.offsetTop + vStartEl.offsetHeight;
-        y1 = vEndEl.offsetTop;
+        y0 = hStartEl.offsetTop + hStartEl.offsetHeight;
+        y1 = hEndEl.offsetTop;
         h = Math.floor((y1 - y0)/1.5);
         w = Math.floor((x1 - x0)/20);
         cx0 = x0 + w;
@@ -347,6 +352,7 @@ function renderView(listIndex, {view, isCorrectSlotRef}, index) {
     span('.prop.start', [span('.value', view.start.toString())]),
     span('.prop.end', [span('.value', view.end.toString())]),
     span('.prop.sizeDelta', [span('.value', (view.sizeDelta > 0 ? '+' : '') + view.sizeDelta)]),
+    span('.prop.slotsDelta', [span('.value', (view.slotsDelta > 0 ? '+' : '') + view.slotsDelta)]),
   ];
   if(index === -1) {
     props.push(
@@ -361,20 +367,22 @@ function renderView(listIndex, {view, isCorrectSlotRef}, index) {
 
 function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branchId, parentBranchId}, slotIndex) {
   var recompute = slot.recompute;
+  var isRelaxed = slot.recompute !== -1;
   var slots = isLeaf || hasChildren
     ? slot.slots.map((value, i) => !value
       ? div('.slot.void', {class: {leaf: isLeaf}}, [span('.slot-index', i.toString())])
       : isLeaf
         ? div('.slot.leaf', value)
-        : div(isDummyNode(value) ? `.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy` : `.slot-${listIndex}-${value.id}-${i}.slot.mid`, {class: {relaxed: slot.sum + slot.recompute}}, [
+        : div(isDummyNode(value) ? `.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy` : `.slot-${listIndex}-${value.id}-${i}.slot.mid`, [
           span('.slot-index', i.toString()),
           span('.slot-prop.size', value.size.toString()),
-          span('.slot-prop.sum', {class: {invalid: i >= slot.slots.length - recompute}}, slot.sum),
+          span('.slot-prop.sum', {class: {invalid: i >= slot.slots.length - recompute}}, value.sum),
         ]))
     : [span('.no-slots', 'Empty')];
 
   const nodeViews = [
-    div(`${isDummy ? `.dummy-${listIndex}-${parentBranchId}-${slotIndex}` : `.node-${listIndex}-${slot.id}`}.node`, {class: {leaf: isLeaf, dummy: isDummy}}, [
+    div(`${isDummy ? `.dummy-${listIndex}-${parentBranchId}-${slotIndex}` : `.node-${listIndex}-${slot.id}`}.node`,
+      {class: {leaf: isLeaf, dummy: isDummy, relaxed: isRelaxed}}, [
       div('.props', [
         span('.prop.group', [span('.value', {style: chooseStyle(slot.group)}, [slot.group.toString()])]),
         span('.prop.id', [span('.value', [slot.id.toString()])]),
@@ -392,7 +400,7 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
       nodeViews.push(renderView(listIndex, view, i));
     });
   }
-  return div('.node-view-container', {class: {'has-view': !!views}}, nodeViews);
+  return div('.node-view-container', {class: {'has-view': !!views, changed: nodeViews && nodeViews[0] && nodeViews[0].changed}}, nodeViews);
 }
 
 function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, parentBranchId, parentViewId, views, unusedViews) {
@@ -510,7 +518,7 @@ function updateLeftPosition() {
 
 function updateEdges() {
   requestAnimationFrame(drawLines);
-  setTimeout(drawLines, 100);
+  setTimeout(drawLines, 500);
 }
 
 document.addEventListener('readystatechange', () => {
@@ -522,10 +530,10 @@ document.addEventListener('readystatechange', () => {
 function renderList(model) {
   edges.length = 0;
   var entry = model.timeline.get(model.index);
-  console.debug(`# VERSION INDEX ${model.index}${entry.message ? `: ${entry.message}` : ''}`);
   if(entry.logs.length > 0) {
     entry.logs.forEach(logs => console.log.apply(console, logs));
   }
+  console.debug(`# VERSION INDEX ${model.index}${entry.message ? `: ${entry.message}` : ''}`);
   var lists = entry.lists.map(({list, views}, i) => {
     var root = list._views[list._views.length - 1];
     var unusedViews = new Set(views.all.values());
@@ -537,7 +545,11 @@ function renderList(model) {
     var nodeContainer = renderNodeContainer(i, root.slot, null, 0, views, unusedViews, level, 0);
     return div('.list', [
       div('.props', [
-        div('.size', 'list size: ' + list.size)
+        div('.size', ['list size: ', list.size.toString()]),
+        div('.lvi', ['lv-idx: ', list._leftViewIndex === void 0 ? 'n/a' : list._leftViewIndex.toString()]),
+        div('.lvn', ['lv-end: ', list._leftItemEnd === void 0 ? 'n/a' : list._leftItemEnd.toString()]),
+        div('.rvi', ['rv-idx: ', list._rightViewIndex === void 0 ? 'n/a' : list._rightViewIndex.toString()]),
+        div('.rvn', ['rv-start: ', list._rightItemStart === void 0 ? 'n/a' : list._rightItemStart.toString()]),
       ]),
       div('.container', [
         nodeContainer,
@@ -606,7 +618,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 18;
+        var startIndex = 147;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -628,13 +640,25 @@ function main({DOM, events}) {
   });
 
   setTimeout(() => {
-
-    // var list = List.empty();
+publish(List.empty(), true, 'EMPTY LIST');
+    var list; // = List.empty();
     // var list = listOf(95);
-    var list0 = List.of(makeValues(33, i => `A${i}`));
-    // var list1 = List.of(makeValues(75, i => `B${i}`));
+    var prefix = 'A'.charCodeAt(0);
+    var sizes = [21, 5, 1, 13, 2, 5, 9];
+    var offset = 0;
+    for(var i = 0; i < sizes.length; i++, prefix++) {
+      var size = sizes[i];
+      var newList = List.of(makeValues(size, offset, i => `${String.fromCharCode(prefix)}${i}`));
+      offset += size;
+      list = i === 0 ? newList : list.concat(newList);
+    }
     // list0 = list0.append('FOO', 'BAR', 'BAZ');
-    list0 = list0.concat(list0);
+    // for(var i = 0, j = 1, c = 'A'; i < 20; i++, j = (j*257>>>1), c = String.fromCharCode(c.charCodeAt(0) + 1)) {
+    //   list = list
+    //     ? list.concat(List.of(makeValues(j%257 + 1, i => `${c}${i}`)))
+    //     : List.of(makeValues(3, i => `${c}${i}`));
+    // }
+    runTest();
 
   }, 100);
 })();
@@ -652,11 +676,128 @@ function text(i) {
   return '' + i;
 }
 
-function makeValues(count, format = text) {
+function makeValues(count, offset = 0, format = text) {
   var values = [];
+  if(typeof offset === 'function') format = offset, offset = 0;
   for(var i = 0; i < count; i++) {
-    values.push(format(i));
+    values.push(format(i + offset));
   }
   return values;
 }
 
+function runTest() {
+  var BRANCH_FACTOR = 8;
+  var BRANCH_INDEX_BITCOUNT = 3;
+  var large = BRANCH_FACTOR << BRANCH_INDEX_BITCOUNT;
+  var small = BRANCH_FACTOR;
+  var group = nextInternalId();
+
+  function copySum(src, srcidx, dest, destidx) {
+      dest.slots[destidx].sum = src.slots[srcidx].sum;
+  }
+
+  function makeRelaxedPair() {
+      var offset = 0;
+      var left = makeRelaxedSlot([
+          makeStandardSlot(large, 1, 0),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(small, 1, offset += large),
+          makeStandardSlot(small, 1, offset += small),
+          makeStandardSlot(large, 1, offset += small),
+          makeStandardSlot(large, 1, offset += large)
+      ]);
+      var right = makeRelaxedSlot([
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(small, 1, offset += large),
+          makeStandardSlot(small, 1, offset += small),
+      ]);
+      return [left, right];
+  }
+  function makeBalancedPair(originalPair) {
+      var offset = 0;
+      var left = makeRelaxedSlot([
+          makeStandardSlot(large, 1, 0),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large),
+          makeStandardSlot(large, 1, offset += large)
+      ]);
+      var right = makeRelaxedSlot([
+          makeStandardSlot(small * 3, 1, offset += large),
+          makeStandardSlot(small, 1, offset += small * 3)
+      ]);
+      copySum(originalPair[0], 4, left, 4);
+      copySum(originalPair[0], 6, left, 5);
+      copySum(originalPair[0], 7, left, 6);
+      copySum(originalPair[1], 0, left, 7);
+      copySum(originalPair[1], 1, right, 0);
+      copySum(originalPair[1], 3, right, 1);
+      left.recompute = 4;
+      return [left, right];
+  }
+  function makeStandardSlot(requiredSize, level, valueOffset) {
+    var slots;
+    var size = 0;
+    var subcount = 0;
+    if (level === 0) {
+      slots = makeValues(requiredSize, valueOffset);
+      size = requiredSize;
+    }
+    else {
+      slots = [];
+      var lowerSubtreeMaxSize = 1 << (BRANCH_INDEX_BITCOUNT * level);
+      while (size < requiredSize) {
+        var lowerSize = Math.min(requiredSize - size, lowerSubtreeMaxSize);
+        var lowerSlot = makeStandardSlot(lowerSize, level - 1, valueOffset + size);
+        subcount += lowerSlot.slots.length;
+        size += lowerSize;
+        slots.push(lowerSlot);
+      }
+    }
+    var slot = new Slot(1, size, 0, -1, subcount, slots);
+    return slot;
+  }
+  function makeRelaxedSlot(slots) {
+    var size = 0, subcount = 0, sum = 0;
+    slots.forEach(slot => {
+      size += slot.size;
+      subcount += slot.slots.length;
+      sum += slot.size;
+      slot.sum = sum;
+    });
+    var slot = new Slot(group, size, 0, 0, subcount, slots);
+    return slot;
+  }
+  function createViewFromSlot(slot) {
+    var start = 0, end = slot.size, index = 0, group = slot.group;
+    var view = voidView;
+    do {
+      start = end - slot.size;
+      view = new View(group, start, end, index, 0, 0, false, view, slot);
+      index = slot.slots.length - 1;
+      slot = slot.slots[slot.slots.length - 1];
+    } while (slot instanceof Slot);
+    console.log(view);
+    return view;
+  }
+  function buildListFromRootSlot(slot) {
+    var list = new List(slot.size, [createViewFromSlot(slot)], []);
+    return list;
+  }
+
+  var nodesA = makeRelaxedPair();
+  var nodesB = makeBalancedPair(nodesA);
+  var listA0 = buildListFromRootSlot(nodesA[0]);
+  var listA1 = buildListFromRootSlot(nodesA[1]);
+  publish([listA0, listA1], true, 'Artificial list pair created for concatenation testing');
+  var listA2 = listA0.concat(listA1);
+  var listB0 = buildListFromRootSlot(nodesB[0]);
+  var listB1 = buildListFromRootSlot(nodesB[1]);
+  publish([listB0, listB1], true, 'Comparison pair created for concatenation testing');
+}
