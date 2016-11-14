@@ -1,18 +1,21 @@
-import * as chalk from 'chalk';
-import {inspect} from 'util';
-
 declare function require(moduleName: string): any;
 
 import {assert} from 'chai';
-import {List} from '../collectable/list';
+import {MutableList} from '../collectable/list/mutable-list';
 import {Slot} from '../collectable/list/slot';
-import {join} from '../collectable/list/concat';
+import {concat, join} from '../collectable/list/concat';
 import {compact} from '../collectable/list/compact';
-import {shiftDownRoundUp} from '../collectable/list/common';
-import {CONST} from '../collectable/list/const';
 
-const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
-const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
+import {
+  BRANCH_FACTOR,
+  BRANCH_INDEX_BITCOUNT,
+  makeStandardSlot,
+  makeRelaxedSlot,
+  gatherLeafValues,
+  rootSlot,
+  makeValues
+} from './test-utils';
+
 
 var large = BRANCH_FACTOR << BRANCH_INDEX_BITCOUNT;
 var small = BRANCH_FACTOR;
@@ -217,7 +220,7 @@ suite('[concatenation functions]', () => {
         var nodes = makeJoinablePair(3);
         join(nodes, BRANCH_INDEX_BITCOUNT*2, true);
         assert.isFalse(nodes[0].isRelaxed());
-      })
+      });
 
       test('the left node becomes a relaxed node if any slots other than the last are not fully populated', () => {
         var nodes = makeJoinablePair(3, 1);
@@ -232,18 +235,18 @@ suite('[concatenation functions]', () => {
         assert.strictEqual(nodes[0].subcount, leftSubcount + rightSubcount);
       });
 
-      test('none-leaf nodes are joined correctly', () => {
+      test('non-leaf nodes are joined correctly', () => {
         var nodes = makeJoinablePair(3);
-        var expectedValues = gatherLeafValues(makeStandardSlot(nodes[0].size + nodes[1].size, 2, 0));
+        var expectedValues = gatherLeafValues(makeStandardSlot(nodes[0].size + nodes[1].size, 2, 0), false);
         join(nodes, BRANCH_INDEX_BITCOUNT*2, true);
-        assert.deepEqual(gatherLeafValues(nodes[0]), expectedValues);
+        assert.deepEqual(gatherLeafValues(nodes[0], false), expectedValues);
       });
 
       test('leaf nodes are joined correctly', () => {
         var nodes = makeJoinablePair(1);
-        var expectedValues = gatherLeafValues(makeStandardSlot(nodes[0].size + nodes[1].size, 0, 0));
+        var expectedValues = gatherLeafValues(makeStandardSlot(nodes[0].size + nodes[1].size, 0, 0), false);
         join(nodes, 0, true);
-        assert.deepEqual(gatherLeafValues(nodes[0]), expectedValues);
+        assert.deepEqual(gatherLeafValues(nodes[0], false), expectedValues);
       });
     });
 
@@ -266,57 +269,165 @@ suite('[concatenation functions]', () => {
       });
     });
   });
+
+  suite('concat()', () => {
+    function makeTestRange(n: number, offset: number): string[][] {
+      var range: string[][] = [];
+      for(var i = 0; i < n; i += BRANCH_FACTOR) {
+        range.push(makeValues(Math.min(BRANCH_FACTOR, n - i), offset + i));
+      }
+      return range;
+    }
+
+    test('joins two minimal single-node lists', () => {
+      var left = MutableList.empty<any>().append(...makeValues(1));
+      var right = MutableList.empty<any>().append(...makeValues(2, 1));
+
+      concat(left, right);
+
+      var root = rootSlot(left);
+      assert.isFalse(root.isRelaxed());
+      assert.strictEqual(root.size, 3);
+      assert.deepEqual(gatherLeafValues(root, true), makeValues(3));
+    });
+
+    test('joins two single-level lists into a two-level result if capacity is exceeded', () => {
+      var n0 = BRANCH_FACTOR/2 + 1;
+      var n1 = n0 + 1;
+      var left = MutableList.empty<any>().append(...makeValues(n0));
+      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+
+      concat(left, right);
+
+      var root = rootSlot(left);
+      assert.isTrue(root.isRelaxed());
+      assert.strictEqual(root.size, n0 + n1);
+      assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+    });
+
+    test('joins two multi-level lists into a higher-level result if capacity is exceeded', () => {
+      var m = BRANCH_FACTOR/2;
+      var n0 = BRANCH_FACTOR*m + 1;
+      var n1 = BRANCH_FACTOR*m + 3;
+      var left = MutableList.empty<any>().append(...makeValues(n0));
+      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+
+      concat(left, right);
+
+      var root = rootSlot(left);
+      assert.isTrue(root.isRelaxed());
+      assert.strictEqual(root.size, n0 + n1);
+      assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+    });
+
+    test('joins a deeper left list to a shallower right list', () => {
+      var n0 = Math.pow(BRANCH_FACTOR, 2) + 1;
+      var n1 = BRANCH_FACTOR + 1;
+      var left = MutableList.empty<any>().append(...makeValues(n0));
+      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+
+      concat(left, right);
+
+      var root = rootSlot(left);
+      assert.isTrue(root.isRelaxed());
+      assert.strictEqual(root.size, n0 + n1);
+      assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+    });
+
+    test('joins a shallower left list to a deeper right list', () => {
+      var n0 = BRANCH_FACTOR + 1;
+      var n1 = Math.pow(BRANCH_FACTOR, 2) + 1;
+      var left = MutableList.empty<any>().append(...makeValues(n0));
+      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+
+      concat(left, right);
+
+      var root = rootSlot(left);
+      assert.isTrue(root.isRelaxed());
+      assert.strictEqual(root.size, n0 + n1);
+      assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+    });
+
+    test('leaves only a tail view in the resulting list', () => {
+      var n0 = BRANCH_FACTOR + 1;
+      var n1 = Math.pow(BRANCH_FACTOR, 2) + 1;
+      var left = MutableList.empty<any>().append(...makeValues(n0));
+      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+
+      concat(left, right);
+
+      assert.strictEqual(left._views.length, 1);
+      assert.strictEqual(left._views[0].start, left.size - 1);
+      assert.strictEqual(left._views[0].end, left.size);
+    });
+
+    test('ensures that the tail view path is uncommitted', () => {
+      var n0 = BRANCH_FACTOR + 1;
+      var n1 = Math.pow(BRANCH_FACTOR, 2) + 1;
+      var left = MutableList.empty<any>().append(...makeValues(n0));
+      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+
+      concat(left, right);
+
+      var v0 = left._views[0];
+      var v1 = v0.parent;
+      var v2 = v1.parent;
+
+      assert.strictEqual((<Slot<any>>v1.slot.slots[v0.slotIndex]).group, 0);
+      assert.strictEqual((<Slot<any>>v2.slot.slots[v1.slotIndex]).group, 0);
+    });
+  });
 });
 
-function text(i: number) {
-  return '#' + i;
-}
+// function text(i: number) {
+//   return '#' + i;
+// }
 
-function makeStandardSlot(requiredSize: number, level: number, valueOffset: number): Slot<string> {
-  var slots: (Slot<string>|string)[];
-  var size = 0;
-  var subcount = 0;
-  if(level === 0) {
-    slots = makeValues(requiredSize, valueOffset);
-    size = requiredSize;
-  }
-  else {
-    slots = [];
-    var lowerSubtreeMaxSize = 1 << (BRANCH_INDEX_BITCOUNT*level);
-    while(size < requiredSize) {
-      var lowerSize = Math.min(requiredSize - size, lowerSubtreeMaxSize);
-      var lowerSlot = makeStandardSlot(lowerSize, level - 1, valueOffset + size);
-      subcount += lowerSlot.slots.length;
-      size += lowerSize;
-      slots.push(lowerSlot);
-    }
-  }
-  var slot = new Slot<string>(1, size, 0, -1, subcount, slots);
-  delete slot.id;
-  return slot;
-}
+// function makeStandardSlot(requiredSize: number, level: number, valueOffset: number): Slot<string> {
+//   var slots: (Slot<string>|string)[];
+//   var size = 0;
+//   var subcount = 0;
+//   if(level === 0) {
+//     slots = makeValues(requiredSize, valueOffset);
+//     size = requiredSize;
+//   }
+//   else {
+//     slots = [];
+//     var lowerSubtreeMaxSize = 1 << (BRANCH_INDEX_BITCOUNT*level);
+//     while(size < requiredSize) {
+//       var lowerSize = Math.min(requiredSize - size, lowerSubtreeMaxSize);
+//       var lowerSlot = makeStandardSlot(lowerSize, level - 1, valueOffset + size);
+//       subcount += lowerSlot.slots.length;
+//       size += lowerSize;
+//       slots.push(lowerSlot);
+//     }
+//   }
+//   var slot = new Slot<string>(1, size, 0, -1, subcount, slots);
+//   delete slot.id;
+//   return slot;
+// }
 
-function makeRelaxedSlot(slots: Slot<string>[]): Slot<string> {
-  var size = 0, subcount = 0, sum = 0;
-  slots.forEach(slot => {
-    size += slot.size;
-    subcount += slot.slots.length;
-    sum += slot.size;
-    slot.sum = sum;
-  });
-  var slot = new Slot<string>(1, size, 0, 0, subcount, slots);
-  delete slot.id;
-  return slot;
-}
+// function makeRelaxedSlot(slots: Slot<string>[]): Slot<string> {
+//   var size = 0, subcount = 0, sum = 0;
+//   slots.forEach(slot => {
+//     size += slot.size;
+//     subcount += slot.slots.length;
+//     sum += slot.size;
+//     slot.sum = sum;
+//   });
+//   var slot = new Slot<string>(1, size, 0, 0, subcount, slots);
+//   delete slot.id;
+//   return slot;
+// }
 
-function gatherLeafValues(slot: Slot<string>): any[] {
-  return slot.slots.map(slot => slot instanceof Slot ? slot.slots.map(gatherLeafValues) : slot);
-}
+// function gatherLeafValues(slot: Slot<string>): any[] {
+//   return slot.slots.map(slot => slot instanceof Slot ? slot.slots.map(gatherLeafValues) : slot);
+// }
 
-function makeValues(count: number, valueOffset = 0): string[] {
-  var values: string[] = [];
-  for(var i = 0; i < count; i++) {
-    values.push(text(i + valueOffset));
-  }
-  return values;
-}
+// function makeValues(count: number, valueOffset = 0): string[] {
+//   var values: string[] = [];
+//   for(var i = 0; i < count; i++) {
+//     values.push(text(i + valueOffset));
+//   }
+//   return values;
+// }

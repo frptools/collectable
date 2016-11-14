@@ -106,11 +106,11 @@ log(left.isRelaxed(), right.isRelaxed(), !left.isSubtreeFull(shift), shift);
 
 log(`COMPACT slots ${left.id} (group: ${left.group}) and ${right.id} (group: ${right.group}) (size ${left.size} + ${right.size})`);
 
-  compact([left, right], shift, count - reducedCount, lists);
+  compact([left, right], shift, count - reducedCount);
   return true;
 }
 
-export function concat<T>(leftList: MutableList<T>, rightList: MutableList<T>) {
+export function concat<T>(leftList: MutableList<T>, rightList: MutableList<T>): void {
 publish([leftList, rightList], true, `pre-concat`);
   // Note: If the left and right list are the same, change the group id to ensure that any internal structures that
   // will be mutated, and which are referentially identical on both sides, are cloned independently before mutation.

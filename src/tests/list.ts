@@ -1,16 +1,21 @@
-import * as chalk from 'chalk';
-import {inspect} from 'util';
-
 declare function require(moduleName: string): any;
 
 import {assert} from 'chai';
 import {List} from '../collectable/list';
 import {Slot} from '../collectable/list/slot';
-import {shiftDownRoundUp} from '../collectable/list/common';
-import {CONST} from '../collectable/list/const';
 
-const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
-const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
+import {
+  BRANCH_FACTOR,
+  arrayOf,
+  listOf,
+  slotValues,
+  tailSize,
+  tailView,
+  headSize,
+  headSlot,
+  rootSlot,
+  makeValues
+} from './test-utils';
 
 suite('[List]', () => {
   var empty: List<string>;
@@ -99,21 +104,25 @@ suite('[List]', () => {
     });
 
     test('should maintain the recompute property of relaxed nodes', () => {
-      var list0 = List.of(makeValues(7)).concat(List.of(makeValues(5)));
+      var n0 = BRANCH_FACTOR - 1;
+      var n1 = BRANCH_FACTOR - 2;
+      var list0 = List.of(makeValues(n0)).concat(List.of(makeValues(n1, n0)));
       var list1 = list0.append('X', 'Y', 'Z', 'K');
       var root = rootSlot(list1);
-      assert.strictEqual(root.subcount, 16);
-      assert.strictEqual(root.size, 16);
+      assert.strictEqual(root.subcount, n0 + n1 + 4);
+      assert.strictEqual(root.size, n0 + n1 + 4);
       assert.strictEqual(root.recompute, 1);
     });
 
     test('should create a relaxed node when growing a tree from a relaxed root', () => {
-      var list0 = List.of(makeValues(7)).concat(List.of(makeValues(56)));
+      var n0 = BRANCH_FACTOR - 1;
+      var n1 = Math.pow(BRANCH_FACTOR, 2) - n0 - 1;
+      var list0 = List.of(makeValues(n0)).concat(List.of(makeValues(n1)));
       var list1 = list0.append('X');
       var root = rootSlot(list1);
-      assert.strictEqual(root.subcount, 9);
-      assert.strictEqual(root.size, 64);
-      assert.strictEqual((<Slot<any>>root.slots[0]).sum, 63);
+      assert.strictEqual(root.subcount, BRANCH_FACTOR + 1);
+      assert.strictEqual(root.size, n0 + n1 + 1);
+      assert.strictEqual((<Slot<any>>root.slots[0]).sum, n0 + n1);
       assert.strictEqual(root.recompute, 1);
     });
   });
@@ -587,259 +596,3 @@ suite('[List]', () => {
   // });
 });
 
-// function dump(value: any): void {
-//   console.log(require('util').inspect(value, false, 10, true));
-// }
-
-// function log(...args: any[])
-// function log() {
-//   console.log.apply(console, arguments);
-// }
-
-// function show(target) {
-//   if(!target) {
-//     log(chalk.bold.red('cannot show list/view/slot; specified target has no value'));
-//     return;
-//   }
-//   var views: any[] = [], view: any, slot: any;
-//   var s = '';
-//   if('start' in target) {
-//     log(chalk.bold.white('\n# --- SHOW VIEW ---'));
-//     view = target;
-//   }
-//   else if (target._views) {
-//     log(chalk.bold.white('\n# --- SHOW LIST ---'));
-//     view = target._views[target._views.length - 1];
-//     s += chalk.blue(`[List group: ${target._id}, size: ${target.size}]\n`);
-//   }
-//   else {
-//     log(chalk.bold.white('\n# --- SHOW SLOT ---'));
-//   }
-//   if(view) {
-//     for(; view.parent; view = view.parent) {
-//       views.push(view);
-//     }
-//     view = views[views.length - 1];
-//     slot = view.slot;
-//   }
-//   else {
-//     slot = target;
-//   }
-//   s += display(slot, 0, views);
-//   log(s);
-//   log(chalk.bold.white('# --- END DUMP ----\n'));
-// }
-
-// function val(v, dark?) {
-//   return v === void 0 ? chalk.red('?') : dark ? chalk.blue(v) : chalk.green(v);
-// }
-
-// function display(slot, indent, views: any[]) {
-//   var spacer = new Array(indent + 1).join(' ');
-//   if(!slot) return chalk.grey(spacer + '[Unassigned Slot]');
-//   var viewIndex = views.findIndex(v => v.slot === slot);
-//   var s = '';
-//   if(viewIndex > -1) {
-//     var view = views[viewIndex];
-//     s += chalk.magenta(`${spacer}{View #${viewIndex}:${chalk.bold.white.bgBlue(view.id)}, group: ${val(view.group, true)}, shift: ${val(view.shift)}, START: ${val(view.start, true)}, END: ${val(view.end, true)}, parent: ${view.parent.parent?chalk.bold.white.bgBlue(view.parent.id):'void'}, meta: ${val(view.meta, true)}}\n`);
-//   }
-//   s += `${spacer}[Slot group: ${val(slot.group)}, shift: ${val(slot.shift)}, meta: ${val(slot.meta)}, id: ${val(slot.id)}, count: ${slot.slotCount}]`;
-//   if(slot.slots && slot.slots.length) {
-//     if(!slot.slots[0] || !slot.slots[0].slots) {
-//       s += ` [ ${slot.slots.map(v => chalk.green(v)).join(', ')} ]`;
-//     }
-//     else {
-//       for(var i = 0; i < slot.slots.length; i++) {
-//         s += '\n' + display(slot.slots[i], indent + 2, views);
-//       }
-//     }
-//   }
-//   return s;
-// }
-
-function rootSlot(value: any): Slot<any> {
-  return rootView(value).slot;
-}
-
-function rootView(listOrView: any): any {
-  var view = tailView(listOrView);
-  while(view && view.parent && view.parent.parent) view = view.parent;
-  return view;
-}
-
-function tailView<T>(list: List<T>): any {
-  return list._views[list._views.length - 1];
-}
-
-function headView<T>(list: List<T>): any {
-  return list._views[0];
-}
-
-function headSlot<T>(list: List<T>): any {
-  var view = rootView(list);
-  var slot = view.slot;
-  while(slot.slots[0] && slot.slots[0].slots) {
-    if(slot === slot.slots[0]) assert.fail();
-    slot = slot.slots[0];
-  }
-  return slot;
-}
-
-function viewSize(view: any): number {
-  return view ? view.end - view.start : -1;
-}
-
-function rootSize<T>(list: List<T>): number {
-  return viewSize(rootView(list));
-}
-
-function tailSize<T>(list: List<T>): number {
-  return viewSize(tailView(list));
-}
-
-function headSize<T>(list: List<T>): number {
-  return headSlot(list).slots.length;
-}
-
-function slotValues(viewOrSlot: any): string[] {
-  return (viewOrSlot.slot || viewOrSlot).slots;
-}
-
-function arrayOf(start: number, end: number): string[] {
-  var arr = new Array<string>(end - start);
-  for(var i = 0; i < arr.length; i++) {
-    arr[i] = text(start + i);
-  }
-  return arr;
-}
-
-function listOf(size: number): List<string> {
-  return List.of<string>(makeValues(size));
-  // const values = makeValues(size);
-  // var list = List.empty<string>();
-  // while(list.size < size) {
-  //   list = list.append(...values.slice(list.size, list.size + 10000));
-  // }
-  // return list;
-}
-
-function text(i: number) {
-  return '#' + i;
-}
-
-function makeStandardSlot(requiredSize: number, level: number, valueOffset: number): Slot<string> {
-  var slots: (Slot<string>|string)[];
-  var size = 0;
-  var subcount = 0;
-  if(level === 0) {
-    slots = makeValues(requiredSize, valueOffset);
-    size = requiredSize;
-  }
-  else {
-    slots = [];
-    var lowerSubtreeMaxSize = 1 << (BRANCH_INDEX_BITCOUNT*level);
-    while(size < requiredSize) {
-      var lowerSize = Math.min(requiredSize - size, lowerSubtreeMaxSize);
-      var lowerSlot = makeStandardSlot(lowerSize, level - 1, valueOffset + size);
-      subcount += lowerSlot.slots.length;
-      size += lowerSize;
-      slots.push(lowerSlot);
-    }
-  }
-  var slot = new Slot<string>(1, size, 0, -1, subcount, slots);
-  delete slot.id;
-  return slot;
-}
-
-function makeRelaxedSlot(slots: Slot<string>[]): Slot<string> {
-  var size = 0, subcount = 0, sum = 0;
-  slots.forEach(slot => {
-    size += slot.size;
-    subcount += slot.slots.length;
-    sum += slot.size;
-    slot.sum = sum;
-  });
-  var slot = new Slot<string>(1, size, 0, 0, subcount, slots);
-  delete slot.id;
-  return slot;
-}
-
-function gatherLeafValues(slot: Slot<string>): any[] {
-  return slot.slots.map(slot => slot instanceof Slot ? slot.slots.map(gatherLeafValues) : slot);
-}
-
-function makeValues(count: number, valueOffset = 0): string[] {
-  var values: string[] = [];
-  for(var i = 0; i < count; i++) {
-    values.push(text(i + valueOffset));
-  }
-  return values;
-}
-
-// function makeRelaxedNode(): RNode<string> {
-//   var slotSizes = [
-//     32, 31, 32, 32, 32, 32, 32, 32,
-//     32, 32, 31, 30, 32, 32, 32, 32,
-//     32, 32, 32, 32, 32, 32, 32, 32,
-//     32, 32, 32, 32, 32, 31, 32
-//   ];
-//   var slots = slotSizes.map((size, i) => makeNode(size, i + ':'));
-//   var size = slotSizes.reduce((size, n) => size + n, 0);
-//   var ranges = slotSizes.reduce((arr: number[], n: number) => (arr.push(n + (arr[arr.length-1]||0)), arr), []);
-//   return <RNode<string>>new Node<LNode<string>>(new ID(), size, size, 5, 0, slots, ranges);
-// }
-
-// function makeNode(size, prefix: string = ''): LNode<string> {
-//   var id = new ID();
-//   return <any>new Node<string>(new ID(), size, 32, 0, 0, makeValues(size).map(s => prefix + s), void 0);
-// }
-
-// function depth<T>(list: List<T>): number {
-//   if(list._root === void 0) return 0;
-//   function calc(root, n) {
-//     return root.shift === 0 ? n : calc(root.slots[0], n + 1);
-//   }
-//   return calc(list._root, 1);
-// }
-
-// function edgeShape<T>(list: List<T>, side: 'left'|'right'): any[] {
-//   var shape: any[] = [];
-//   var node: any = list._root;
-//   while(node && node.slots) {
-//     var child = node.slots[side === 'left' ? 0 : node.slots.length - 1];
-//     if(node.ranges || child.slots) {
-//       shape.push([node.ranges ? 'R' : 'V', node.slots.length, node.size]);
-//     }
-//     else {
-//       shape.push(['L', node.slots.length, node.size, child]);
-//       break;
-//     }
-//     node = child;
-//   }
-//   return shape;
-// }
-
-// function lastNode(node: any) {
-//   node = node.slots[node.slots.length - 1];
-//   return node.shift === 0 ? node : lastNode(node);
-// };
-
-// function sizeOf(node: any): number {
-//   return node ? node.size : 0;
-// }
-
-// function descrNodeCompact(node: any): string {
-//   return !node ? 'VOID' : `[${node.shift ? node.ranges ? 'R' : 'V' : 'L'}: ${node.size}/${node.capacity} (${node.slots.length} slots, >>${node.shift}]`;
-// }
-
-// function descrList(list: any): string {
-//   return !list ? 'VOID' : `size: ${list.size}, root: ${descrNodeCompact(list._root)}, tail: ${descrNodeCompact(list._tail)}`;
-// }
-
-// function descrNode(node: any): string {
-//   return !node ? 'VOID' : `${node.shift ? node.ranges ? 'RNode' : 'VNode' : 'LNode'}, size: ${node.size}, capacity: ${node.capacity}, slots: ${node.slots.length}, shift: ${node.shift}`;
-// }
-
-function dump(arg: any): void {
-  console.log(inspect(arg, false, 10, true));
-}
