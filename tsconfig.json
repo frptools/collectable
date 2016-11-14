@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
+    "module": "commonjs",
+    "declaration": true,
     "strictNullChecks": true,
     "target": "es6",
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "removeComments": true,
+    "outDir": "./lib",
     "lib": ["es5", "es6"]
   },
   "include": [

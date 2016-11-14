@@ -70,7 +70,7 @@ log(`[focus tail] view id: ${view.id}`);
   return view;
 }
 
-export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoin: boolean, lists: any): boolean {
+export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoin: boolean): boolean {
   var left = nodes[0], right = nodes[1];
   var count = left.slots.length + right.slots.length;
 
@@ -157,7 +157,7 @@ publish(isJoined ? leftList : [leftList, rightList], false, `[concat START] leve
 log(`join nodes:`, nodes);
       var rightSlotCount = rightSeamView.slotCount();
 
-      if(join(nodes, shift, isLeftRoot || isRightConverged, [leftList, rightList])) {
+      if(join(nodes, shift, isLeftRoot || isRightConverged)) {
         if(nodes[1].size === 0) {
           rightSeamView.start = leftSeamView.start;
           rightSeamView.replaceSlot(nodes[0]);

@@ -24,7 +24,6 @@ suite('[List]', () => {
   var tailSize70k: number;
 
   suiteSetup(function() {
-    this.timeout(30000);
     // empty = List.empty<string>();
     // listBF = listOf(BRANCH_FACTOR);
     listH1plus1 = listOf(BRANCH_FACTOR + 1);
@@ -99,21 +98,24 @@ suite('[List]', () => {
       assert.strictEqual(listH4plusBFplus1.size, h4Count);
     });
 
-    test('should surface the rightmost leaf node when it has unused capacity instead of creating a new tail'/*, () => {
-      const listA = listH2plusBFplus1.slice(0, 1000);
-      assert.isUndefined(listA._tail);
-      assert.deepEqual(edgeShape(listA, 'right'), [['V', 32, 1000], ['L', 8, 8, '#999']]);
-      const listB = listA.push('x');
-      assert.strictEqual(listB._root && listB._root.size, 992);
-      assert.strictEqual(listB._tail && listB._tail.size, 9);
+    test('should maintain the recompute property of relaxed nodes', () => {
+      var list0 = List.of(makeValues(7)).concat(List.of(makeValues(5)));
+      var list1 = list0.append('X', 'Y', 'Z', 'K');
+      var root = rootSlot(list1);
+      assert.strictEqual(root.subcount, 16);
+      assert.strictEqual(root.size, 16);
+      assert.strictEqual(root.recompute, 1);
+    });
 
-      const listC = listH2plusBFplus1.slice(0, 1024);
-      assert.isUndefined(listC._tail);
-      assert.deepEqual(edgeShape(listC, 'right'), [['V', 32, 1024], ['L', 32, 32, '#1023']]);
-      const listD = listC.push('x');
-      assert.strictEqual(listD._root && listD._root.size, 1024);
-      assert.strictEqual(listD._tail && listD._tail.size, 1);
-    }*/);
+    test('should create a relaxed node when growing a tree from a relaxed root', () => {
+      var list0 = List.of(makeValues(7)).concat(List.of(makeValues(56)));
+      var list1 = list0.append('X');
+      var root = rootSlot(list1);
+      assert.strictEqual(root.subcount, 9);
+      assert.strictEqual(root.size, 64);
+      assert.strictEqual((<Slot<any>>root.slots[0]).sum, 63);
+      assert.strictEqual(root.recompute, 1);
+    });
   });
 
   suite('#pop()', () => {
@@ -655,7 +657,7 @@ suite('[List]', () => {
 //   return s;
 // }
 
-function rootSlot(value: any): void {
+function rootSlot(value: any): Slot<any> {
   return rootView(value).slot;
 }
 

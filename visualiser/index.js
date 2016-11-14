@@ -644,7 +644,7 @@ publish(List.empty(), true, 'EMPTY LIST');
     var list; // = List.empty();
     // var list = listOf(95);
     var prefix = 'A'.charCodeAt(0);
-    var sizes = [21, 5, 1, 13, 2, 5, 9];
+    var sizes = [7, 56]; //, 1, 13, 2, 5];
     var offset = 0;
     for(var i = 0; i < sizes.length; i++, prefix++) {
       var size = sizes[i];
@@ -652,13 +652,13 @@ publish(List.empty(), true, 'EMPTY LIST');
       offset += size;
       list = i === 0 ? newList : list.concat(newList);
     }
-    // list0 = list0.append('FOO', 'BAR', 'BAZ');
+    list = list.append('X');
     // for(var i = 0, j = 1, c = 'A'; i < 20; i++, j = (j*257>>>1), c = String.fromCharCode(c.charCodeAt(0) + 1)) {
     //   list = list
     //     ? list.concat(List.of(makeValues(j%257 + 1, i => `${c}${i}`)))
     //     : List.of(makeValues(3, i => `${c}${i}`));
     // }
-    runTest();
+    // runTest();
 
   }, 100);
 })();
@@ -783,7 +783,6 @@ function runTest() {
       index = slot.slots.length - 1;
       slot = slot.slots[slot.slots.length - 1];
     } while (slot instanceof Slot);
-    console.log(view);
     return view;
   }
   function buildListFromRootSlot(slot) {

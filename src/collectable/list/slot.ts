@@ -32,6 +32,10 @@ export class Slot<T> {
     return this.recompute !== -1;
   }
 
+  calculateRecompute(slotCountDelta: number): number {
+    return this.recompute === -1 ? -1 : this.recompute + slotCountDelta;
+  }
+
   isSubtreeFull(shift: number): boolean {
     return this.slots.length << shift === this.size;
   }

@@ -53,20 +53,20 @@ publish(list, true, `DONE: created list of ${values.length} values`);
     if(arguments.length === 0) {
       return this;
     }
-    else if(arguments.length === 1 && this.size > 0) { // fast append
-      tail = last(this._views);
-      if(tail.changed && (slot = tail.slot).size < CONST.BRANCH_FACTOR) {
-        var group = nextId();
-        slot = new Slot<T>(group, slot.size + 1, 0, 0, 0, padArrayRight(slot.slots, 1));
-        slot.slots[slot.size - 1] = arguments[0];
-        var views = copyArray(this._views);
-        views[views.length - 1] = new View<T>(group, tail.start, tail.end + 1, tail.slotIndex,
-                                              this.size > CONST.BRANCH_FACTOR ? tail.sizeDelta + 1 : 0,
-                                              tail.slotsDelta + 1,
-                                              tail.changed, tail.parent, slot);
-        return new List<T>(this.size + 1, views, copyArray(this._delta));
-      }
-    }
+    // else if(arguments.length === 1 && this.size > 0) { // fast append
+    //   tail = last(this._views);
+    //   if(tail.changed && (slot = tail.slot).size < CONST.BRANCH_FACTOR) {
+    //     var group = nextId();
+    //     slot = new Slot<T>(group, slot.size + 1, 0, 0, 0, padArrayRight(slot.slots, 1));
+    //     slot.slots[slot.size - 1] = arguments[0];
+    //     var views = copyArray(this._views);
+    //     views[views.length - 1] = new View<T>(group, tail.start, tail.end + 1, tail.slotIndex,
+    //                                           this.size > CONST.BRANCH_FACTOR ? tail.sizeDelta + 1 : 0,
+    //                                           tail.slotsDelta + 1,
+    //                                           tail.changed, tail.parent, slot);
+    //     return new List<T>(this.size + 1, views, copyArray(this._delta));
+    //   }
+    // }
 
     var list = MutableList.transient<T>(this);
     list.append.apply(list, arguments);

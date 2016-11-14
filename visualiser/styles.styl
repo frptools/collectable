@@ -216,16 +216,17 @@ body
       color: #8da500
       background-color: #f6ffbe
     .slots
-      border-top-color: #95d283 !important
-      .slot-index
-      .slot-prop
-        background-color: #e4ff44
-      .slot-prop.sum
-        background-color: #d1efbd
-      .slot-index
-      .slot-prop
-      .slot + .slot
-        border-color: #95d283 !important
+      .slot:not(.dummy):not(.void)
+        border-top-color: #95d283 !important
+        .slot-index
+        .slot-prop
+          background-color: #e4ff44
+        .slot-prop.sum
+          background-color: #d1efbd
+        .slot-index
+        .slot-prop
+        + .slot
+          border-color: #95d283 !important
     > .props .prop
       &:before
         background-color: #d6e8d5
@@ -320,7 +321,8 @@ body
         background-color: #ddd
         border-top-color: #bbb
         &.sum.invalid
-          background-color: #ca2f0f
+          background-color: #b37d7d
+          color: #ffd957
         &.size
           background-color: #ccc
     &.void
