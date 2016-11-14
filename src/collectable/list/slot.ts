@@ -1,4 +1,4 @@
-import {nextId, copyArray} from './common';
+import {nextId, copyArray, log} from './common';
 
 export class Slot<T> {
   public id = nextId();
@@ -38,6 +38,15 @@ export class Slot<T> {
 
   isSubtreeFull(shift: number): boolean {
     return this.slots.length << shift === this.size;
+  }
+
+  setUncommitted(slotIndex: number): void {
+    var index = slotIndex < 0 ? this.slots.length + slotIndex : slotIndex;
+    var slot = <Slot<T>>this.slots[index];
+log(`setting child ${index} of slot ${this.id} as uncommitted`);
+    if(slot.group !== 0) {
+      this.slots[index] = new Slot<T>(0, slot.size, slot.sum, slot.recompute, slot.subcount, new Array<T>(slot.slots.length));
+    }
   }
 }
 

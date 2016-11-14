@@ -1,4 +1,3 @@
-import {COMMIT} from './const';
 import {max, nextId, log} from './common';
 import {Slot, emptySlot} from './slot';
 
@@ -40,7 +39,7 @@ export class View<T> {
     return this.group === group ? this : this.clone(group);
   }
 
-  ascend(commit: COMMIT): View<T> {
+  ascend(setUncommitted: boolean): View<T> {
     var parentView: View<T>, parentSlot: Slot<T>;
     var isRoot = this.isRoot();
 log(`[ascend] from view ${this.id}, is changed: ${this.changed}`);
@@ -49,9 +48,7 @@ log(`[ascend] from view ${this.id}, is changed: ${this.changed}`);
 log(`is root; create new parent view and slot`);
       parentView = new View<T>(this.group, this.start, this.end, this.slot.sum, 0, 0, false, voidView,
         parentSlot = new Slot<T>(this.group, this.slot.size, 0, this.slot.recompute === -1 ? -1 : 1, this.slot.slots.length, [this.slot]));
-      if(commit === COMMIT.BOTH) {
-        this.parent = parentView;
-      }
+      this.parent = parentView;
     }
     else {
       parentView = this.parent;
@@ -63,9 +60,7 @@ log(`is root; create new parent view and slot`);
     if(this.changed) {
       if(parentView.group !== this.group) {
         parentView = parentView.clone(this.group);
-        if(commit === COMMIT.BOTH) {
-          this.parent = parentView;
-        }
+        this.parent = parentView;
       }
 
       if(!isRoot) {
@@ -94,20 +89,17 @@ log(`parent ${parentSlot.id} was ${wasParentRelaxed ? 'previously' : 'not'} rela
         parentSlot.recompute = -1;
       }
 
-      if(commit === COMMIT.BOTH) {
-        this.changed = false;
-        this.sizeDelta = 0;
-      }
+      this.changed = setUncommitted;
+      this.sizeDelta = 0;
 
-      if(commit >= COMMIT.PARENT_ONLY && parentSlot.slots[this.slotIndex] !== this.slot) {
-        parentSlot.slots[this.slotIndex] = this.slot;
+      parentSlot.slots[this.slotIndex] = this.slot; // ensure the new slot metadata is stored
+      if(setUncommitted) {
+        parentSlot.setUncommitted(this.slotIndex); // even if the child slot was already a dummy slot, the metadata values will now be updated
       }
     }
-    else if(commit >= COMMIT.PARENT_ONLY && this.group !== parentView.group) {
+    else if(this.group !== parentView.group) {
       parentView = parentView.clone(this.group);
-      if(commit === COMMIT.BOTH) {
-        this.parent = parentView;
-      }
+      this.parent = parentView;
     }
 
 log(`[ascend] from view: ${this.id} (root: ${isRoot}) to parent view: ${parentView.id} (root: ${parentView.isRoot()})`);

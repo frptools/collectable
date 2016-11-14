@@ -12,6 +12,7 @@ import {
   makeStandardSlot,
   makeRelaxedSlot,
   gatherLeafValues,
+  commitToRoot,
   rootSlot,
   makeValues
 } from './test-utils';
@@ -302,6 +303,8 @@ suite('[concatenation functions]', () => {
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
       assert.strictEqual(root.size, n0 + n1);
+
+      commitToRoot(left);
       assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
     });
 
@@ -317,6 +320,8 @@ suite('[concatenation functions]', () => {
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
       assert.strictEqual(root.size, n0 + n1);
+
+      commitToRoot(left);
       assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
     });
 
@@ -331,6 +336,8 @@ suite('[concatenation functions]', () => {
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
       assert.strictEqual(root.size, n0 + n1);
+
+      commitToRoot(left);
       assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
     });
 
@@ -345,6 +352,8 @@ suite('[concatenation functions]', () => {
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
       assert.strictEqual(root.size, n0 + n1);
+
+      commitToRoot(left);
       assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
     });
 
@@ -378,56 +387,3 @@ suite('[concatenation functions]', () => {
     });
   });
 });
-
-// function text(i: number) {
-//   return '#' + i;
-// }
-
-// function makeStandardSlot(requiredSize: number, level: number, valueOffset: number): Slot<string> {
-//   var slots: (Slot<string>|string)[];
-//   var size = 0;
-//   var subcount = 0;
-//   if(level === 0) {
-//     slots = makeValues(requiredSize, valueOffset);
-//     size = requiredSize;
-//   }
-//   else {
-//     slots = [];
-//     var lowerSubtreeMaxSize = 1 << (BRANCH_INDEX_BITCOUNT*level);
-//     while(size < requiredSize) {
-//       var lowerSize = Math.min(requiredSize - size, lowerSubtreeMaxSize);
-//       var lowerSlot = makeStandardSlot(lowerSize, level - 1, valueOffset + size);
-//       subcount += lowerSlot.slots.length;
-//       size += lowerSize;
-//       slots.push(lowerSlot);
-//     }
-//   }
-//   var slot = new Slot<string>(1, size, 0, -1, subcount, slots);
-//   delete slot.id;
-//   return slot;
-// }
-
-// function makeRelaxedSlot(slots: Slot<string>[]): Slot<string> {
-//   var size = 0, subcount = 0, sum = 0;
-//   slots.forEach(slot => {
-//     size += slot.size;
-//     subcount += slot.slots.length;
-//     sum += slot.size;
-//     slot.sum = sum;
-//   });
-//   var slot = new Slot<string>(1, size, 0, 0, subcount, slots);
-//   delete slot.id;
-//   return slot;
-// }
-
-// function gatherLeafValues(slot: Slot<string>): any[] {
-//   return slot.slots.map(slot => slot instanceof Slot ? slot.slots.map(gatherLeafValues) : slot);
-// }
-
-// function makeValues(count: number, valueOffset = 0): string[] {
-//   var values: string[] = [];
-//   for(var i = 0; i < count; i++) {
-//     values.push(text(i + valueOffset));
-//   }
-//   return values;
-// }

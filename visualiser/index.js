@@ -400,7 +400,7 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
       nodeViews.push(renderView(listIndex, view, i));
     });
   }
-  return div('.node-view-container', {class: {'has-view': !!views, changed: nodeViews && nodeViews[0] && nodeViews[0].changed}}, nodeViews);
+  return div('.node-view-container', {class: {'has-view': !!views, changed: views && views[0] && views[0].view.changed}}, nodeViews);
 }
 
 function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, parentBranchId, parentViewId, views, unusedViews) {
@@ -618,7 +618,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 147;
+        var startIndex = 98;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -644,7 +644,7 @@ publish(List.empty(), true, 'EMPTY LIST');
     var list; // = List.empty();
     // var list = listOf(95);
     var prefix = 'A'.charCodeAt(0);
-    var sizes = [7, 56]; //, 1, 13, 2, 5];
+    var sizes = [7, 56, 1, 13, 2, 5, 70];
     var offset = 0;
     for(var i = 0; i < sizes.length; i++, prefix++) {
       var size = sizes[i];
@@ -653,6 +653,7 @@ publish(List.empty(), true, 'EMPTY LIST');
       list = i === 0 ? newList : list.concat(newList);
     }
     list = list.append('X');
+    list = list.append('A', 'B', 'C');
     // for(var i = 0, j = 1, c = 'A'; i < 20; i++, j = (j*257>>>1), c = String.fromCharCode(c.charCodeAt(0) + 1)) {
     //   list = list
     //     ? list.concat(List.of(makeValues(j%257 + 1, i => `${c}${i}`)))

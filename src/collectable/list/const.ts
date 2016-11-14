@@ -14,9 +14,3 @@ export const enum DIRECTION {
   LEFT = -1,
   RIGHT = 1
 }
-
-export const enum COMMIT {
-  NONE = 0,
-  PARENT_ONLY = 1,
-  BOTH = 2
-}

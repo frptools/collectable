@@ -1,4 +1,4 @@
-import {COMMIT, CONST, DIRECTION} from './const';
+import {CONST, DIRECTION} from './const';
 import {expandArray, last, max, min, shiftDownRoundUp, modulo, publish, log} from './common';
 
 import {Slot} from './slot';
@@ -128,6 +128,9 @@ log('GROW');
       slots = slot.slots;
       childView.parent = view;
     }
+    else {
+      view.changed = true;
+    }
 
 publish(list, false, `level ${level - (willOverflowRight ? 1 : 0)} capacity applied`);
 
@@ -136,6 +139,7 @@ publish(list, false, `level ${level - (willOverflowRight ? 1 : 0)} capacity appl
   if(view.parent.isNone()) {
 log(`this is the root, so the current view delta will be reset to 0`);
     view.sizeDelta = 0;
+    view.changed = false;
   }
 
   return <T[][]>nodes;
@@ -180,8 +184,7 @@ log(`levelIndex is 1, so view slot size is increased by its own delta to ${view.
 
       if(remaining === 0) {
         view.changed = true;
-        var lastSlot = <Slot<T>>last(slots);
-        slots[slots.length - 1] = new Slot<T>(0, lastSlot.size, lastSlot.sum, lastSlot.recompute, lastSlot.subcount, new Array<T>(lastSlot.slots.length)); // set the last slot as uncommitted
+        view.slot.setUncommitted(-1);
       }
       if(levelIndex <= level) {
 log(`slot index from slotIndices[${levelIndex}] changed from ${slotIndices[levelIndex]} to ${slotIndices[levelIndex]+1}`);

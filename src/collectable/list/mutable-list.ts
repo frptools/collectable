@@ -1,5 +1,5 @@
 import {copyArray, last, nextId, publish, log} from './common';
-import {COMMIT, CONST, DIRECTION} from './const';
+import {CONST, DIRECTION} from './const';
 import {concat} from './concat';
 import {increaseCapacity} from './capacity';
 
@@ -149,7 +149,7 @@ publish([this], false, 'commit D');
       if(direction === DIRECTION.RIGHT && level < targetLevel - 1) {
 publish([this], false, 'commit E');
 log(`ascend view ${view.id}`);
-        view = view.ascend(COMMIT.BOTH);
+        view = view.ascend(false);
 log(`view is now ${view.id}`);
       }
 
@@ -160,7 +160,7 @@ publish([this], false, 'commit F');
 
       if(direction === DIRECTION.LEFT && level < targetLevel - 1) {
 publish([this], false, 'commit G');
-        view = view.ascend(COMMIT.BOTH);
+        view = view.ascend(false);
       }
 
       level++;

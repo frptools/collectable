@@ -1,4 +1,4 @@
-import {COMMIT, CONST, DIRECTION} from './const';
+import {CONST, DIRECTION} from './const';
 import {nextId, concatArray, concatSlots, last, padArrayLeft, log, publish} from './common';
 import {compact} from './compact';
 
@@ -191,7 +191,7 @@ log(`right slot count delta is now ${rightSeamView.slotsDelta} (slot count was: 
 
       if(!isJoined) {
 publish(isJoined ? leftList : [leftList, rightList], false, 'ascend left because not yet joined');
-        leftSeamView = leftSeamView.ascend(COMMIT.BOTH /*COMMIT.PARENT_ONLY*/);
+        leftSeamView = leftSeamView.ascend(false);
 log(`left subcount increased to ` + leftSeamView.slot.subcount);
         // if(!isRelaxed(leftSeamView.slot) && !isSubtreeFull(leftSeamView.slot, shift + CONST.BRANCH_INDEX_BITCOUNT)) {
         //   leftSeamView.slot.recompute = leftSeamView.slot.slots.length;
@@ -200,27 +200,9 @@ log(`left subcount increased to ` + leftSeamView.slot.subcount);
       }
     }
 
-    var didAscend = false;
-    if(!isRightConverged) {
-      rightEdgeView.end = leftList.size + rightList.size;
-      rightEdgeView.start = rightEdgeView.end - rightEdgeView.slot.size;
-      edgeChildView = rightEdgeView;
-      if(rightEdgeView.parent === rightSeamView.parent) {
-publish(isJoined ? leftList : [leftList, rightList], false, 'CONVERGE RIGHT: ascend right edge view only');
-        rightEdgeView = rightEdgeView.ascend(COMMIT.BOTH);
-        rightEdgeView.slot.slots[0] = rightSeamView.slot;
-        rightSeamView.parent = rightEdgeView;
-        rightSeamView = rightEdgeView;
-        isRightConverged = true;
-      }
-      else {
-publish(isJoined ? leftList : [leftList, rightList], false, 'ascend both right branches because not yet converged');
-        rightEdgeView = rightEdgeView.ascend(COMMIT.BOTH);
-        rightSeamView = rightSeamView.ascend(COMMIT.BOTH);
-      }
-      didAscend = true;
-    }
-    else {
+    var childView: View<T>;
+    if(isRightConverged) {
+      childView = rightSeamView;
       rightSeamView.end = leftList.size + rightList.size;
       if(!isJoined || !isLeftRoot) {
         edgeChildView = rightSeamView;
@@ -231,13 +213,43 @@ publish(isJoined ? leftList : [leftList, rightList], false, 'ascend right seam v
         else {
           rightSeamView.slot.size = rightSeamView.end - rightSeamView.start;
         }
-        rightSeamView = rightSeamView.ascend(COMMIT.BOTH);
-        didAscend = true;
+        if(shift > 0) {
+          rightSeamView.slot.setUncommitted(-1);
+        }
+        rightSeamView = rightSeamView.ascend(false);
         if(isJoined) {
           isLeftRoot = rightSeamView.isRoot();
         }
       }
     }
+    else {
+      childView = rightEdgeView;
+      rightEdgeView.end = leftList.size + rightList.size;
+      rightEdgeView.start = rightEdgeView.end - rightEdgeView.slot.size;
+      edgeChildView = rightEdgeView;
+      if(shift > 0) {
+        rightEdgeView.slot.setUncommitted(-1);
+      }
+      if(rightEdgeView.parent === rightSeamView.parent) {
+publish(isJoined ? leftList : [leftList, rightList], false, 'CONVERGE RIGHT: ascend right edge view only');
+        rightEdgeView = rightEdgeView.ascend(false);
+        rightEdgeView.slot.slots[0] = rightSeamView.slot;
+        rightSeamView.parent = rightEdgeView;
+        rightSeamView = rightEdgeView;
+        isRightConverged = true;
+      }
+      else {
+publish(isJoined ? leftList : [leftList, rightList], false, 'ascend both right branches because not yet converged');
+        rightEdgeView = rightEdgeView.ascend(false);
+        rightSeamView = rightSeamView.ascend(false);
+      }
+    }
+    childView.changed = true;
+
+//     if(didAscend) {
+// log(`[SET UNCOMMITTED] right edge view ${rightEdgeView.id}`, shift);
+//       rightEdgeView.slot.setUncommitted(-1);
+//     }
 
 publish(isJoined ? leftList : [leftList, rightList], false, `level ${level} committed`);
 
@@ -253,6 +265,10 @@ log(`[concat END] level: ${level}, joined: ${isJoined}, left root: ${isLeftRoot}
   leftList.size += rightList.size;
   rightSeamView.end = leftList.size;
   rightSeamView.slot.size = rightSeamView.end - rightSeamView.start;
+  rightSeamView.changed = false;
+  if(level > 1) {
+    rightSeamView.slot.setUncommitted(-1);
+  }
 
   leftList._leftViewIndex = -1;
   leftList._rightViewIndex = -1;

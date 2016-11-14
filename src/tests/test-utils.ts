@@ -3,6 +3,7 @@ import {assert} from 'chai';
 import {CONST} from '../collectable/list/const';
 import {List} from '../collectable/list';
 import {Slot} from '../collectable/list/slot';
+import {View} from '../collectable/list/view';
 
 export const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
 export const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
@@ -127,4 +128,14 @@ export function makeValues(count: number, valueOffset = 0): string[] {
     values.push(text(i + valueOffset));
   }
   return values;
+}
+
+export function commitToRoot(arg: any) {
+  var view = arg._views ? arg._views[arg._views.length - 1] : arg;
+  while(!view.parent.isNone()) {
+    var slot = view.slot;
+    var index = view.slotIndex;
+    view = view.parent;
+    view.slot.slots[index] = slot;
+  }
 }
