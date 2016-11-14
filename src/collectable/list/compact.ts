@@ -1,7 +1,6 @@
 import * as chalk from 'chalk';
 
-import {CONST} from './const';
-import {max, min, log, publish} from './common';
+import {CONST, max, min, log, publish} from './common';
 import {Slot, emptySlot} from './slot';
 
 interface CompactionState<T> {

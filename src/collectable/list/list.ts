@@ -1,5 +1,4 @@
-import {CONST} from './const';
-import {copyArray, last, nextId, padArrayRight, publish} from './common';
+import {CONST, copyArray, last, nextId, padArrayRight, publish} from './common';
 import {increaseCapacity} from './capacity';
 
 import {Slot} from './slot';

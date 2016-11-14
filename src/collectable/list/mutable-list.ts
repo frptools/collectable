@@ -1,5 +1,4 @@
-import {copyArray, last, nextId, publish, log} from './common';
-import {CONST, DIRECTION} from './const';
+import {CONST, DIRECTION, copyArray, last, nextId, publish, log} from './common';
 import {concat} from './concat';
 import {increaseCapacity} from './capacity';
 

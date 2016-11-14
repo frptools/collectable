@@ -1,6 +1,6 @@
 import {assert} from 'chai';
 
-import {CONST} from '../collectable/list/const';
+import {CONST} from '../collectable/list/common';
 import {List} from '../collectable/list';
 import {Slot} from '../collectable/list/slot';
 import {View} from '../collectable/list/view';

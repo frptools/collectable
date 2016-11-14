@@ -1,5 +1,4 @@
-import {CONST, DIRECTION} from './const';
-import {expandArray, last, max, min, shiftDownRoundUp, modulo, publish, log} from './common';
+import {CONST, expandArray, last, max, min, shiftDownRoundUp, modulo, publish, log} from './common';
 
 import {Slot} from './slot';
 import {View} from './view';

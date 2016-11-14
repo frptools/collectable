@@ -1,114 +1,10 @@
-import {CONST, DIRECTION} from './const';
-import {nextId, concatArray, concatSlots, last, padArrayLeft, log, publish} from './common';
+import {CONST, DIRECTION, nextId, concatArray, concatSlots, last, log, publish} from './common';
+import {CREATE_VIEW, focusHead, focusTail} from './focus';
 import {compact} from './compact';
 
 import {Slot} from './slot';
 import {View} from './view';
 import {MutableList} from './mutable-list';
-
-export function calculateExtraSearchSteps(upperSlots: number, lowerSlots: number): number {
-  var steps =  upperSlots - (((lowerSlots - 1) >>> CONST.BRANCH_INDEX_BITCOUNT) + 1);
-log(`[calculate extra search steps] upper slots: ${upperSlots}, lower slots: ${lowerSlots}, result: ${steps}`);
-  return steps;
-}
-
-export function calculateRebalancedSlotCount(upperSlots: number, lowerSlots: number): number {
-  var reduction = calculateExtraSearchSteps(upperSlots, lowerSlots) - CONST.MAX_OFFSET_ERROR;
-log(`[calculate rebalanced slot count] reduction: ${reduction}; new upper slot count: ${upperSlots - (reduction > 0 ? reduction : 0)}`);
-  return upperSlots - (reduction > 0 ? reduction : 0);
-}
-
-export function focusHead<T>(list: MutableList<T>, store: boolean): View<T> {
-  var view = list._views[0], rvi = 1;
-  list._leftViewIndex = -1;
-  list._leftItemEnd = -1;
-
-log(`[focus head] view.start: ${view.start}`);
-  if(view.start > 0) {
-    var level = 0;
-    do {
-      view = view.parent;
-      level++;
-log(`ascend to level ${level}`);
-    } while(!view.parent.isNone());
-    while(--level >= 0) {
-      var slot = <Slot<T>>view.slot.slots[0];
-      view = new View<T>(list._group, 0, slot.size, 0, 0, 0, false, view, slot);
-log(`descend to level ${level}; left edge view created with id ${view.id}`);
-    }
-
-    if(store) {
-      list._views = padArrayLeft(list._views, 1);
-      list._views[0] = view;
-    }
-    else {
-      rvi = 0;
-    }
-  }
-  else if(store) {
-    list._views[0] = view = view.clone(list._group);
-  }
-
-  list._rightViewIndex = rvi;
-  list._rightItemStart = list._views.length > list._rightViewIndex
-    ? list._views[list._rightViewIndex].start
-    : list.size;
-
-  return view;
-}
-
-export function focusTail<T>(list: MutableList<T>, makeEditable: boolean): View<T> {
-  var view = last(list._views);
-  if(makeEditable && view.group !== list._group) {
-    list._views[list._views.length - 1] = view = view.clone(list._group);
-  }
-log(`[focus tail] view id: ${view.id}`);
-  list._leftViewIndex = list._views.length - 2;
-  list._leftItemEnd = list._leftViewIndex >= 0 ? list._views[list._leftViewIndex].end : -1;
-  list._rightViewIndex = list._views.length;
-  list._rightItemStart = list.size;
-  return view;
-}
-
-export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoin: boolean): boolean {
-  var left = nodes[0], right = nodes[1];
-  var count = left.slots.length + right.slots.length;
-
-  if(canFinalizeJoin && count <= CONST.BRANCH_FACTOR) {
-log(`FULL join between slots ${left.id} and ${right.id} (size ${left.size} + ${right.size})`);
-    var relaxed = left.isRelaxed() || right.isRelaxed() || !left.isSubtreeFull(shift);
-log(left.isRelaxed(), right.isRelaxed(), !left.isSubtreeFull(shift), shift);
-
-    left.slots = shift === 0
-      ? concatArray(left.slots, right.slots, 0)
-      : concatSlots<T>(<Slot<T>[]>left.slots, <Slot<T>[]>right.slots);
-    left.size += right.size;
-    left.subcount += right.subcount;
-    if(relaxed) {
-      left.recompute = 0;
-    }
-    else {
-      left.recompute = -1;
-    }
-    nodes[1] = Slot.empty<T>();
-    return true;
-  }
-
-  if(shift === 0) {
-    return false;
-  }
-
-
-  var reducedCount = calculateRebalancedSlotCount(count, left.subcount + right.subcount);
-  if(count === reducedCount) {
-    return false;
-  }
-
-log(`COMPACT slots ${left.id} (group: ${left.group}) and ${right.id} (group: ${right.group}) (size ${left.size} + ${right.size})`);
-
-  compact([left, right], shift, count - reducedCount);
-  return true;
-}
 
 export function concat<T>(leftList: MutableList<T>, rightList: MutableList<T>): void {
 publish([leftList, rightList], true, `pre-concat`);
@@ -123,7 +19,7 @@ log(`cloning right list so that it can be freely mutated`);
   var rightEdgeView = focusTail(rightList, true),
       edgeChildView = View.empty<T>(),
       isRightConverged = rightEdgeView.isRoot(),
-      rightSeamView = isRightConverged ? rightEdgeView : focusHead(rightList, true),
+      rightSeamView = isRightConverged ? rightEdgeView : focusHead(rightList, CREATE_VIEW.PERSIST_UNCOMMITTED),
       leftSeamView = focusTail(leftList, true /*false*/),
       isLeftRoot = leftSeamView.isRoot(),
       isJoined = false,
@@ -274,4 +170,56 @@ log(`[concat END] level: ${level}, joined: ${isJoined}, left root: ${isLeftRoot}
   leftList._rightViewIndex = -1;
   leftList._leftItemEnd = -1;
   leftList._rightItemStart = -1;
+}
+
+export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoin: boolean): boolean {
+  var left = nodes[0], right = nodes[1];
+  var count = left.slots.length + right.slots.length;
+
+  if(canFinalizeJoin && count <= CONST.BRANCH_FACTOR) {
+log(`FULL join between slots ${left.id} and ${right.id} (size ${left.size} + ${right.size})`);
+    var relaxed = left.isRelaxed() || right.isRelaxed() || !left.isSubtreeFull(shift);
+log(left.isRelaxed(), right.isRelaxed(), !left.isSubtreeFull(shift), shift);
+
+    left.slots = shift === 0
+      ? concatArray(left.slots, right.slots, 0)
+      : concatSlots<T>(<Slot<T>[]>left.slots, <Slot<T>[]>right.slots);
+    left.size += right.size;
+    left.subcount += right.subcount;
+    if(relaxed) {
+      left.recompute = 0;
+    }
+    else {
+      left.recompute = -1;
+    }
+    nodes[1] = Slot.empty<T>();
+    return true;
+  }
+
+  if(shift === 0) {
+    return false;
+  }
+
+
+  var reducedCount = calculateRebalancedSlotCount(count, left.subcount + right.subcount);
+  if(count === reducedCount) {
+    return false;
+  }
+
+log(`COMPACT slots ${left.id} (group: ${left.group}) and ${right.id} (group: ${right.group}) (size ${left.size} + ${right.size})`);
+
+  compact([left, right], shift, count - reducedCount);
+  return true;
+}
+
+export function calculateExtraSearchSteps(upperSlots: number, lowerSlots: number): number {
+  var steps =  upperSlots - (((lowerSlots - 1) >>> CONST.BRANCH_INDEX_BITCOUNT) + 1);
+log(`[calculate extra search steps] upper slots: ${upperSlots}, lower slots: ${lowerSlots}, result: ${steps}`);
+  return steps;
+}
+
+export function calculateRebalancedSlotCount(upperSlots: number, lowerSlots: number): number {
+  var reduction = calculateExtraSearchSteps(upperSlots, lowerSlots) - CONST.MAX_OFFSET_ERROR;
+log(`[calculate rebalanced slot count] reduction: ${reduction}; new upper slot count: ${upperSlots - (reduction > 0 ? reduction : 0)}`);
+  return upperSlots - (reduction > 0 ? reduction : 0);
 }
