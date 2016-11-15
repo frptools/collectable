@@ -1,4 +1,4 @@
-import {arrayIndex, max, nextId} from './common';
+import {CONST, arrayIndex, max, nextId} from './common';
 import {Slot, emptySlot} from './slot';
 
 export class View<T> {
@@ -29,6 +29,10 @@ export class View<T> {
 
   isRoot(): boolean {
     return this.parent === voidView;
+  }
+
+  isInRange(ordinal: number): boolean {
+    return this.start <= ordinal && this.end > ordinal;
   }
 
   clone(group: number): View<T> {
@@ -99,14 +103,19 @@ export class View<T> {
     return parentView;
   }
 
-  descend(slotIndex: number, setUncommitted: boolean): View<T> {
-    var upper = this.slot;
-    var index = arrayIndex(upper.slots, slotIndex);
-    if(setUncommitted && upper.group !== this.group) {
-      this.slot = upper = upper.clone(this.group);
-    }
-    var lower = upper.childAtIndex(index, setUncommitted);
-
+  descendToOrdinal(ordinal: number, shift: number, setUncommitted: boolean): View<T> {
+    var view = <View<T>>this,
+        slot = this.slot,
+        start = view.start,
+        out = {slot, index: 0, offset: 0};
+    do {
+      slot.resolveChild(ordinal, shift, out);
+      if(setUncommitted) slot.childAtIndex(out.index, true);
+      start += out.offset;
+      view = new View<T>(view.group, start, start + out.slot.size, out.index, 0, 0, setUncommitted, view, out.slot);
+      shift -= CONST.BRANCH_INDEX_BITCOUNT;
+    } while(shift > 0);
+    return view;
   }
 
   replaceSlot(slot: Slot<T>): void {

@@ -18,11 +18,11 @@ export function nextId() {
 }
 
 export function ordinalIndex(size: number, index: number): number {
-  return index < 0 ? index <= -size ? -1 : size + index : index >= size ? -1 : index;
+  return index < 0 ? index < -size ? -1 : size + index : index >= size ? -1 : index;
 }
 
 export function arrayIndex(array: any[], index: number): number {
-  return index < 0 ? array.length + index : index;
+  return ordinalIndex(array.length, index);
 }
 
 export function shiftDownRoundUp(value: number, shift: number): number {

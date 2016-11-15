@@ -152,12 +152,7 @@ export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoi
       : concatSlots<T>(<Slot<T>[]>left.slots, <Slot<T>[]>right.slots);
     left.size += right.size;
     left.subcount += right.subcount;
-    if(relaxed) {
-      left.recompute = 0;
-    }
-    else {
-      left.recompute = -1;
-    }
+    left.recompute = relaxed ? 0 : -1;
     nodes[1] = Slot.empty<T>();
     return true;
   }

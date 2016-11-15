@@ -1,5 +1,11 @@
 import {CONST, nextId, copyArray, arrayIndex} from './common';
 
+export type ChildSlotOutParams<T> = {
+  slot: T|Slot<T>,
+  index: number,
+  offset: number
+};
+
 export class Slot<T> {
   public id = nextId();
   constructor(
@@ -53,11 +59,12 @@ export class Slot<T> {
     return slot;
   }
 
-  resolveChild(ordinal: number, shift: number, out: {slot: T|Slot<T>, index: number}): boolean {
+  resolveChild(ordinal: number, shift: number, out: ChildSlotOutParams<T>): boolean {
     if(shift === 0) {
       if(ordinal >= this.slots.length) return false;
       out.slot = this.slots[ordinal];
       out.index = ordinal;
+      out.offset = 0;
       return true;
     }
 
@@ -67,6 +74,7 @@ export class Slot<T> {
     if(this.recompute === -1) {
       out.slot = <Slot<T>>this.slots[slotIndex];
       out.index = slotIndex;
+      out.offset = slotIndex << shift;
       return true;
     }
 
@@ -79,6 +87,7 @@ export class Slot<T> {
       } while(ordinal >= slot.sum && ++slotIndex);
       out.slot = slot;
       out.index = slotIndex;
+      out.offset = slotIndex === 0 ? 0 : (<Slot<T>>this.slots[slotIndex - 1]).sum;
       return true;
     }
 
@@ -108,6 +117,7 @@ export class Slot<T> {
         if(!found && sum > ordinal) {
           out.slot = slot;
           out.index = i;
+          out.offset = sum - slot.size;
           found = true;
         }
       }

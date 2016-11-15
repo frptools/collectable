@@ -1,4 +1,4 @@
-import {last, padArrayLeft, ordinalIndex} from './common';
+import {CONST, last, padArrayLeft, ordinalIndex} from './common';
 
 import {Slot} from './slot';
 import {View} from './view';
@@ -58,18 +58,46 @@ export function focusTail<T>(list: MutableState<T>, makeEditable: boolean): View
   return view;
 }
 
-export function viewAtOrdinal<T>(views: View<T>[], ordinal: number, writable: boolean): View<T>|undefined {
+export function viewAtOrdinal<T>(views: View<T>[], ordinal: number, setUncommitted: boolean): View<T>|undefined {
   var viewIndex = views.length - 1;
   var view = views[viewIndex];
   ordinal = ordinalIndex(view.end, ordinal);
   if(ordinal === -1) return void 0;
-  while(view.start > ordinal && viewIndex > 0) {
-    view = views[--viewIndex];
-    if(view.end >= ordinal) {
-      // then the ordinal we want lies between this view and the next
-      // todo: focus the central view on the specified ordinal
+  if(view.start <= ordinal) {
+    return view.end > ordinal ? view : void 0;
+  }
+  var setUncommitted = true;
+
+  if(views.length > 1) { // check the other views to figure out which one to use
+    view = views[0];
+    if(view.isInRange(ordinal)) return view;
+    if(view.start === 0) { // this is the head view and should be preserved
+      if(views.length === 2) { // a reusable focus view will be created in the middle of the views array
+        views.length = 3;
+        views[2] = views[1];
+      }
+      else { // the middle view exists and should be used
+        view = views[1];
+        if(view.isInRange(ordinal)) return view;
+      }
+      viewIndex = 1;
+      setUncommitted = view.changed;
+    }
+    else { // the front view is a reusable focus view, but is currently out of range
+      viewIndex = 0;
+      setUncommitted = false;
     }
   }
+  else { // make space at the front for a new focus view
+    views.length = 2;
+    views[1] = views[0];
+    viewIndex = 0;
+  }
+
+  for(var shift = CONST.BRANCH_INDEX_BITCOUNT, view = view.ascend(setUncommitted);
+      !view.isInRange(ordinal);
+      shift += CONST.BRANCH_INDEX_BITCOUNT, view.ascend(setUncommitted));
+  views[viewIndex] = view = view.descendToOrdinal(ordinal, shift, setUncommitted);
   return view;
 }
 

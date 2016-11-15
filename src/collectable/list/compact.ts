@@ -64,9 +64,8 @@ function copySlotLeft<T>(left: Position<T>, right: Position<T>): void {
   left.upper.slots[left.lowerIndex] = slot;
   left.lower = slot;
   left.compactable = isCompactable(slot);
-
-right.upper.slots[right.lowerIndex] = emptySlot;
-right.lower = emptySlot;
+  right.upper.slots[right.lowerIndex] = emptySlot;
+  right.lower = emptySlot;
 
   if(left.upperIndex !== right.upperIndex) {
     left.upper.size += slot.size;
