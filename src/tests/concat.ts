@@ -1,7 +1,7 @@
 declare function require(moduleName: string): any;
 
 import {assert} from 'chai';
-import {MutableList} from '../collectable/list/mutable-list';
+import {MutableList} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
 import {concat, join} from '../collectable/list/concat';
 import {compact} from '../collectable/list/compact';
@@ -284,7 +284,7 @@ suite('[concatenation functions]', () => {
       var left = MutableList.empty<any>().append(...makeValues(1));
       var right = MutableList.empty<any>().append(...makeValues(2, 1));
 
-      concat(left, right);
+      concat(left._state, right._state);
 
       var root = rootSlot(left);
       assert.isFalse(root.isRelaxed());
@@ -298,7 +298,7 @@ suite('[concatenation functions]', () => {
       var left = MutableList.empty<any>().append(...makeValues(n0));
       var right = MutableList.empty<any>().append(...makeValues(n1, n0));
 
-      concat(left, right);
+      concat(left._state, right._state);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -315,7 +315,7 @@ suite('[concatenation functions]', () => {
       var left = MutableList.empty<any>().append(...makeValues(n0));
       var right = MutableList.empty<any>().append(...makeValues(n1, n0));
 
-      concat(left, right);
+      concat(left._state, right._state);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -331,7 +331,7 @@ suite('[concatenation functions]', () => {
       var left = MutableList.empty<any>().append(...makeValues(n0));
       var right = MutableList.empty<any>().append(...makeValues(n1, n0));
 
-      concat(left, right);
+      concat(left._state, right._state);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -347,7 +347,7 @@ suite('[concatenation functions]', () => {
       var left = MutableList.empty<any>().append(...makeValues(n0));
       var right = MutableList.empty<any>().append(...makeValues(n1, n0));
 
-      concat(left, right);
+      concat(left._state, right._state);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -363,11 +363,11 @@ suite('[concatenation functions]', () => {
       var left = MutableList.empty<any>().append(...makeValues(n0));
       var right = MutableList.empty<any>().append(...makeValues(n1, n0));
 
-      concat(left, right);
+      concat(left._state, right._state);
 
-      assert.strictEqual(left._views.length, 1);
-      assert.strictEqual(left._views[0].start, left.size - 1);
-      assert.strictEqual(left._views[0].end, left.size);
+      assert.strictEqual(left._state.views.length, 1);
+      assert.strictEqual(left._state.views[0].start, left._state.size - 1);
+      assert.strictEqual(left._state.views[0].end, left._state.size);
     });
 
     test('ensures that the tail view path is uncommitted', () => {
@@ -376,9 +376,9 @@ suite('[concatenation functions]', () => {
       var left = MutableList.empty<any>().append(...makeValues(n0));
       var right = MutableList.empty<any>().append(...makeValues(n1, n0));
 
-      concat(left, right);
+      concat(left._state, right._state);
 
-      var v0 = left._views[0];
+      var v0 = left._state.views[0];
       var v1 = v0.parent;
       var v2 = v1.parent;
 

@@ -1,42 +1,49 @@
 import {assert} from 'chai';
 
-import {CONST} from '../collectable/list/common';
+import {CONST, last} from '../collectable/list/common';
 import {List} from '../collectable/list';
+import {MutableList, MutableState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
 import {View} from '../collectable/list/view';
 
 export const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
 export const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
 
-export function rootSlot(value: any): Slot<any> {
-  return rootView(value).slot;
+export type ListType<T> = List<T>|MutableList<T>|MutableState<T>;
+export type ListOrView<T> = ListType<T>|View<T>;
+export type ViewOrSlot<T> = View<T>|Slot<T>;
+
+export function rootSlot<T>(arg: ListOrView<T>): Slot<any> {
+  return rootView(arg).slot;
 }
 
-export function rootView(listOrView: any): any {
-  var view = tailView(listOrView);
+export function rootView<T>(arg: ListOrView<T>): View<T> {
+  var view = tailView(arg);
   while(view && view.parent && view.parent.parent) view = view.parent;
   return view;
 }
 
-export function tailView<T>(list: List<T>): any {
-  return list._views[list._views.length - 1];
+export function tailView<T>(arg: ListOrView<T>): View<T> {
+  if(arg instanceof View) return arg;
+  return last(getViews(arg));
 }
 
-export function headView<T>(list: List<T>): any {
-  return list._views[0];
+export function headView<T>(arg: ListOrView<T>): View<T> {
+  if(arg instanceof View) return arg;
+  return getViews(arg)[0];
 }
 
-export function headSlot<T>(list: List<T>): any {
+export function headSlot<T>(list: List<T>): Slot<T> {
   var view = rootView(list);
   var slot = view.slot;
-  while(slot.slots[0] && slot.slots[0].slots) {
+  while(slot.slots[0] instanceof Slot) {
     if(slot === slot.slots[0]) assert.fail();
-    slot = slot.slots[0];
+    slot = <Slot<T>>slot.slots[0];
   }
   return slot;
 }
 
-export function viewSize(view: any): number {
+export function viewSize<T>(view: View<T>): number {
   return view ? view.end - view.start : -1;
 }
 
@@ -52,8 +59,8 @@ export function headSize<T>(list: List<T>): number {
   return headSlot(list).slots.length;
 }
 
-export function slotValues(viewOrSlot: any): string[] {
-  return (viewOrSlot.slot || viewOrSlot).slots;
+export function slotValues<T>(arg: ViewOrSlot<T>): (T|Slot<T>)[] {
+  return (arg instanceof View ? arg.slot : arg).slots;
 }
 
 export function arrayOf(start: number, end: number): string[] {
@@ -64,15 +71,14 @@ export function arrayOf(start: number, end: number): string[] {
   return arr;
 }
 
+function getViews<T>(arg: ListType<T>): View<T>[] {
+  if(arg instanceof List) return arg._views;
+  if(arg instanceof MutableList) return arg._state.views;
+  return arg.views;
+}
 
-export function listOf(size: number): List<any> {
-  return List.of<any>(makeValues(size));
-  // const values = makeValues(size);
-  // var list = List.empty<any>();
-  // while(list.size < size) {
-  //   list = list.append(...values.slice(list.size, list.size + 10000));
-  // }
-  // return list;
+export function listOf(size: number): List<string> {
+  return List.of<string>(makeValues(size));
 }
 
 export function text(i: number) {
@@ -130,8 +136,8 @@ export function makeValues(count: number, valueOffset = 0): string[] {
   return values;
 }
 
-export function commitToRoot(arg: any) {
-  var view = arg._views ? arg._views[arg._views.length - 1] : arg;
+export function commitToRoot<T>(arg: ListOrView<T>) {
+  var view = tailView(arg);
   while(!view.parent.isNone()) {
     var slot = view.slot;
     var index = view.slotIndex;

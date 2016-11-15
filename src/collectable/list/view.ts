@@ -1,4 +1,4 @@
-import {max, nextId, log} from './common';
+import {arrayIndex, max, nextId} from './common';
 import {Slot, emptySlot} from './slot';
 
 export class View<T> {
@@ -42,10 +42,8 @@ export class View<T> {
   ascend(setUncommitted: boolean): View<T> {
     var parentView: View<T>, parentSlot: Slot<T>;
     var isRoot = this.isRoot();
-log(`[ascend] from view ${this.id}, is changed: ${this.changed}`);
 
     if(isRoot) {
-log(`is root; create new parent view and slot`);
       parentView = new View<T>(this.group, this.start, this.end, this.slot.sum, 0, 0, false, voidView,
         parentSlot = new Slot<T>(this.group, this.slot.size, 0, this.slot.recompute === -1 ? -1 : 1, this.slot.slots.length, [this.slot]));
       this.parent = parentView;
@@ -69,18 +67,14 @@ log(`is root; create new parent view and slot`);
       }
 
       if(parentSlot.group !== this.group) {
-log(`cloning parent slot (${parentSlot.id} -> group ${this.group}); old slot:`, parentSlot);
         parentView.slot = parentSlot = parentSlot.clone(this.group);
-log(`new parent slot:`, parentSlot);
         parentView.changed = true;
       }
-log(parentSlot.subcount, (<Slot<T>>parentSlot.slots[this.slotIndex]).slots.length, this.slot.slots.length);
       parentSlot.subcount += this.slotsDelta;
       this.slotsDelta = 0;
       parentSlot.size += this.sizeDelta;
 
       if(parentSlot.isRelaxed() || this.slot.isRelaxed()) {
-log(`parent ${parentSlot.id} was ${wasParentRelaxed ? 'previously' : 'not'} relaxed before now`);
         parentSlot.recompute = wasParentRelaxed
           ? max(parentSlot.recompute, parentSlot.slots.length - this.slotIndex)
           : parentSlot.slots.length;
@@ -94,7 +88,7 @@ log(`parent ${parentSlot.id} was ${wasParentRelaxed ? 'previously' : 'not'} rela
 
       parentSlot.slots[this.slotIndex] = this.slot; // ensure the new slot metadata is stored
       if(setUncommitted) {
-        parentSlot.setUncommitted(this.slotIndex); // even if the child slot was already a dummy slot, the metadata values will now be updated
+        parentSlot.childAtIndex(this.slotIndex, setUncommitted); // even if the child slot was already a dummy slot, the metadata values will now be updated
       }
     }
     else if(this.group !== parentView.group) {
@@ -102,14 +96,21 @@ log(`parent ${parentSlot.id} was ${wasParentRelaxed ? 'previously' : 'not'} rela
       this.parent = parentView;
     }
 
-log(`[ascend] from view: ${this.id} (root: ${isRoot}) to parent view: ${parentView.id} (root: ${parentView.isRoot()})`);
     return parentView;
+  }
+
+  descend(slotIndex: number, setUncommitted: boolean): View<T> {
+    var upper = this.slot;
+    var index = arrayIndex(upper.slots, slotIndex);
+    if(setUncommitted && upper.group !== this.group) {
+      this.slot = upper = upper.clone(this.group);
+    }
+    var lower = upper.childAtIndex(index, setUncommitted);
+
   }
 
   replaceSlot(slot: Slot<T>): void {
     this.slot = slot;
-    // this.sizeDelta += slot.size - this.end + this.start;
-    // this.end = this.start + slot.size;
     this.changed = true;
   }
 

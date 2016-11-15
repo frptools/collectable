@@ -1,19 +1,15 @@
-import {CONST, DIRECTION, nextId, concatArray, concatSlots, last, log, publish} from './common';
+import {CONST, nextId, concatArray, concatSlots, last} from './common';
 import {CREATE_VIEW, focusHead, focusTail} from './focus';
 import {compact} from './compact';
+import {COMMIT_DIRECTION, commitAdjacent} from './commit';
 
 import {Slot} from './slot';
 import {View} from './view';
-import {MutableList} from './mutable-list';
+import {MutableState} from './state';
 
-export function concat<T>(leftList: MutableList<T>, rightList: MutableList<T>): void {
-publish([leftList, rightList], true, `pre-concat`);
-  // Note: If the left and right list are the same, change the group id to ensure that any internal structures that
-  // will be mutated, and which are referentially identical on both sides, are cloned independently before mutation.
-
-  if((leftList === rightList && (leftList._group = nextId())) || rightList._group !== leftList._group) {
-log(`cloning right list so that it can be freely mutated`);
-    rightList = rightList._clone(leftList._group);
+export function concat<T>(leftList: MutableState<T>, rightList: MutableState<T>): void {
+  if((leftList === rightList && (leftList.group = nextId())) || rightList.group !== leftList.group) {
+    rightList = rightList.clone(leftList.group);
   }
 
   var rightEdgeView = focusTail(rightList, true),
@@ -24,33 +20,28 @@ log(`cloning right list so that it can be freely mutated`);
       isLeftRoot = leftSeamView.isRoot(),
       isJoined = false,
       level = 0,
-      shift = 0/*,
-      leftSlotCountDelta = 0,
-      rightSlotCountDelta = 0*/;
+      shift = 0;
 
-  if(leftSeamView.group !== leftList._group) {
-    leftList._views[leftList._views.length - 1] = leftSeamView = leftSeamView.clone(leftList._group);
+  if(leftSeamView.group !== leftList.group) {
+    leftList.views[leftList.views.length - 1] = leftSeamView = leftSeamView.clone(leftList.group);
   }
-  if(leftSeamView.slot.group !== leftList._group) {
-    leftSeamView.slot = leftSeamView.slot.clone(leftList._group);
+  if(leftSeamView.slot.group !== leftList.group) {
+    leftSeamView.slot = leftSeamView.slot.clone(leftList.group);
   }
-publish([leftList, rightList], false, `lists are now ready for mutation`);
 
   do {
-publish(isJoined ? leftList : [leftList, rightList], false, `[concat START] level: ${level}, joined: ${isJoined}, left root: ${isLeftRoot}, right converged: ${isRightConverged}`);
     if(!isJoined) {
       if(level > 0) {
         if(!isLeftRoot) {
-          leftList._commitAdjacent(leftSeamView, level, DIRECTION.LEFT);
+          commitAdjacent(leftList, leftSeamView, level, COMMIT_DIRECTION.LEFT);
         }
         if(!isRightConverged) {
-          rightList._commitAdjacent(rightSeamView, level, DIRECTION.RIGHT);
-          rightList._commitAdjacent(rightEdgeView, level, DIRECTION.LEFT);
+          commitAdjacent(rightList, rightSeamView, level, COMMIT_DIRECTION.RIGHT);
+          commitAdjacent(rightList, rightEdgeView, level, COMMIT_DIRECTION.LEFT);
         }
       }
 
       var nodes: [Slot<T>, Slot<T>] = [leftSeamView.slot, rightSeamView.slot];
-log(`join nodes:`, nodes);
       var rightSlotCount = rightSeamView.slotCount();
 
       if(join(nodes, shift, isLeftRoot || isRightConverged)) {
@@ -59,10 +50,8 @@ log(`join nodes:`, nodes);
           rightSeamView.replaceSlot(nodes[0]);
           if(isLeftRoot || isRightConverged) {
             isJoined = true;
-publish(isJoined ? leftList : [leftList, rightList], false, `JOINED; LEFT LIST DISCARDED.`);
-            leftList._views = [last(rightList._views)];
+            leftList.views = [last(rightList.views)];
             if(!isLeftRoot) {
-log(`not left root; updating right seam view`);
               rightSeamView.parent = leftSeamView.parent;
               rightSeamView.slotIndex += leftSeamView.slotIndex;
               rightSeamView.slotsDelta = rightSlotCount;
@@ -75,10 +64,8 @@ log(`not left root; updating right seam view`);
           leftSeamView.slotsDelta -= slotCountDelta;
           leftSeamView.replaceSlot(nodes[0]);
           rightSeamView.replaceSlot(nodes[1]);
-log(`left slot count delta is now ` + leftSeamView.slotsDelta);
           rightSeamView.slotsDelta += slotCountDelta;
         }
-log(`right slot count delta is now ${rightSeamView.slotsDelta} (slot count was: ${rightSlotCount}, is now: ${rightSeamView.slotCount()})`);
         rightSeamView.changed = true;
         if(level > 0) {
           edgeChildView.slotIndex = rightSeamView.slotCount() - 1;
@@ -86,12 +73,7 @@ log(`right slot count delta is now ${rightSeamView.slotsDelta} (slot count was: 
       }
 
       if(!isJoined) {
-publish(isJoined ? leftList : [leftList, rightList], false, 'ascend left because not yet joined');
         leftSeamView = leftSeamView.ascend(false);
-log(`left subcount increased to ` + leftSeamView.slot.subcount);
-        // if(!isRelaxed(leftSeamView.slot) && !isSubtreeFull(leftSeamView.slot, shift + CONST.BRANCH_INDEX_BITCOUNT)) {
-        //   leftSeamView.slot.recompute = leftSeamView.slot.slots.length;
-        // }
         isLeftRoot = leftSeamView.isRoot();
       }
     }
@@ -102,7 +84,6 @@ log(`left subcount increased to ` + leftSeamView.slot.subcount);
       rightSeamView.end = leftList.size + rightList.size;
       if(!isJoined || !isLeftRoot) {
         edgeChildView = rightSeamView;
-publish(isJoined ? leftList : [leftList, rightList], false, 'ascend right seam view only because previously converged');
         if(!isJoined) {
           rightSeamView.start = rightSeamView.end - rightSeamView.slot.size;
         }
@@ -110,7 +91,7 @@ publish(isJoined ? leftList : [leftList, rightList], false, 'ascend right seam v
           rightSeamView.slot.size = rightSeamView.end - rightSeamView.start;
         }
         if(shift > 0) {
-          rightSeamView.slot.setUncommitted(-1);
+          rightSeamView.slot.childAtIndex(-1, true);
         }
         rightSeamView = rightSeamView.ascend(false);
         if(isJoined) {
@@ -124,10 +105,9 @@ publish(isJoined ? leftList : [leftList, rightList], false, 'ascend right seam v
       rightEdgeView.start = rightEdgeView.end - rightEdgeView.slot.size;
       edgeChildView = rightEdgeView;
       if(shift > 0) {
-        rightEdgeView.slot.setUncommitted(-1);
+        rightEdgeView.slot.childAtIndex(-1, true);
       }
       if(rightEdgeView.parent === rightSeamView.parent) {
-publish(isJoined ? leftList : [leftList, rightList], false, 'CONVERGE RIGHT: ascend right edge view only');
         rightEdgeView = rightEdgeView.ascend(false);
         rightEdgeView.slot.slots[0] = rightSeamView.slot;
         rightSeamView.parent = rightEdgeView;
@@ -135,26 +115,14 @@ publish(isJoined ? leftList : [leftList, rightList], false, 'CONVERGE RIGHT: asc
         isRightConverged = true;
       }
       else {
-publish(isJoined ? leftList : [leftList, rightList], false, 'ascend both right branches because not yet converged');
         rightEdgeView = rightEdgeView.ascend(false);
         rightSeamView = rightSeamView.ascend(false);
       }
     }
     childView.changed = true;
 
-//     if(didAscend) {
-// log(`[SET UNCOMMITTED] right edge view ${rightEdgeView.id}`, shift);
-//       rightEdgeView.slot.setUncommitted(-1);
-//     }
-
-publish(isJoined ? leftList : [leftList, rightList], false, `level ${level} committed`);
-
     level++;
     shift += CONST.BRANCH_INDEX_BITCOUNT;
-    if(level > 10) {
-      throw new Error('INFINITE LOOP');
-    }
-log(`[concat END] level: ${level}, joined: ${isJoined}, left root: ${isLeftRoot}, right converged: ${isRightConverged}`);
 
   } while(!(isJoined && isLeftRoot && isRightConverged));
 
@@ -163,13 +131,13 @@ log(`[concat END] level: ${level}, joined: ${isJoined}, left root: ${isLeftRoot}
   rightSeamView.slot.size = rightSeamView.end - rightSeamView.start;
   rightSeamView.changed = false;
   if(level > 1) {
-    rightSeamView.slot.setUncommitted(-1);
+    rightSeamView.slot.childAtIndex(-1, true);
   }
 
-  leftList._leftViewIndex = -1;
-  leftList._rightViewIndex = -1;
-  leftList._leftItemEnd = -1;
-  leftList._rightItemStart = -1;
+  leftList.leftViewIndex = -1;
+  leftList.rightViewIndex = -1;
+  leftList.leftItemEnd = -1;
+  leftList.rightItemStart = -1;
 }
 
 export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoin: boolean): boolean {
@@ -177,9 +145,7 @@ export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoi
   var count = left.slots.length + right.slots.length;
 
   if(canFinalizeJoin && count <= CONST.BRANCH_FACTOR) {
-log(`FULL join between slots ${left.id} and ${right.id} (size ${left.size} + ${right.size})`);
     var relaxed = left.isRelaxed() || right.isRelaxed() || !left.isSubtreeFull(shift);
-log(left.isRelaxed(), right.isRelaxed(), !left.isSubtreeFull(shift), shift);
 
     left.slots = shift === 0
       ? concatArray(left.slots, right.slots, 0)
@@ -200,13 +166,10 @@ log(left.isRelaxed(), right.isRelaxed(), !left.isSubtreeFull(shift), shift);
     return false;
   }
 
-
   var reducedCount = calculateRebalancedSlotCount(count, left.subcount + right.subcount);
   if(count === reducedCount) {
     return false;
   }
-
-log(`COMPACT slots ${left.id} (group: ${left.group}) and ${right.id} (group: ${right.group}) (size ${left.size} + ${right.size})`);
 
   compact([left, right], shift, count - reducedCount);
   return true;
@@ -214,12 +177,10 @@ log(`COMPACT slots ${left.id} (group: ${left.group}) and ${right.id} (group: ${r
 
 export function calculateExtraSearchSteps(upperSlots: number, lowerSlots: number): number {
   var steps =  upperSlots - (((lowerSlots - 1) >>> CONST.BRANCH_INDEX_BITCOUNT) + 1);
-log(`[calculate extra search steps] upper slots: ${upperSlots}, lower slots: ${lowerSlots}, result: ${steps}`);
   return steps;
 }
 
 export function calculateRebalancedSlotCount(upperSlots: number, lowerSlots: number): number {
   var reduction = calculateExtraSearchSteps(upperSlots, lowerSlots) - CONST.MAX_OFFSET_ERROR;
-log(`[calculate rebalanced slot count] reduction: ${reduction}; new upper slot count: ${upperSlots - (reduction > 0 ? reduction : 0)}`);
   return upperSlots - (reduction > 0 ? reduction : 0);
 }

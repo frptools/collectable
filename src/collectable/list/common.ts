@@ -12,14 +12,17 @@ export const enum CONST {
   MAX_OFFSET_ERROR = (BRANCH_INDEX_BITCOUNT >>> 2) + 1, // `e` in the RRB paper
 }
 
-export const enum DIRECTION {
-  LEFT = -1,
-  RIGHT = 1
-}
-
 var _nextId = 0;
 export function nextId() {
   return ++_nextId;
+}
+
+export function ordinalIndex(size: number, index: number): number {
+  return index < 0 ? index <= -size ? -1 : size + index : index >= size ? -1 : index;
+}
+
+export function arrayIndex(array: any[], index: number): number {
+  return index < 0 ? array.length + index : index;
 }
 
 export function shiftDownRoundUp(value: number, shift: number): number {
@@ -133,7 +136,6 @@ export function last<T>(array: T[]): T {
 export function log(...args: any[])
 export function log() {
   publish(Array.from(arguments));
-  // console.log.apply(console, arguments);
 }
 
 var __publishCallback: Function;

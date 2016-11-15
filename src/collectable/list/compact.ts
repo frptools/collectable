@@ -1,6 +1,4 @@
-import * as chalk from 'chalk';
-
-import {CONST, max, min, log, publish} from './common';
+import {CONST, max, min} from './common';
 import {Slot, emptySlot} from './slot';
 
 interface CompactionState<T> {
@@ -42,7 +40,6 @@ function isCompactable<T>(node: Slot<T>): boolean {
 }
 
 function incrementPos<T>(pos: Position<T>, nodes: Slot<T>[]): void {
-// log(`[incrementPos] upper: ${pos.upperIndex}, lower: ${pos.lowerIndex}, abs: ${pos.absoluteIndex}, cutoff: ${pos.lastLowerIndex}`);
   if(pos.upperIndex === 1 && pos.lowerIndex === pos.upper.slots.length - 1) {
     return;
   }
@@ -101,27 +98,6 @@ function makePosition<T>(node: Slot<T>, lastLowerIndex: number): Position<T> {
 }
 
 export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTarget: number, lists?: any): void {
-// function publish(...args) { console.log(args[args.length - 1]); }
-// function log(arg, ...args) { console.log(arg, ...args); }
-// var allowColors = false;
-
-// function describeNode(node: Slot<T>, leftOffset: number, rightOffset: number, leftIndex: number, rightIndex: number) {
-//   return !allowColors
-//     ? `[${node.slots.map((slot: Slot<T>, i: number) => `${i + leftOffset === leftIndex ? 'L' : ''}${i + rightOffset === rightIndex ? 'R' : ''}${slot.slots.length}`)}]`
-//     : `[${node.slots.map((slot: Slot<T>, i: number) =>
-//       i + leftOffset === leftIndex
-//         ? i + rightOffset === rightIndex
-//           ? chalk.bgBlue.yellow(slot.slots.length.toString())
-//           : chalk.blue(slot.slots.length.toString())
-//         : i + rightOffset === rightIndex
-//           ? chalk.yellow(slot.slots.length.toString())
-//           : slot.slots.length)}]`;
-// }
-// function dump() {
-//   publish(lists, false, `${describeNode(nodes[0], 0, 0, left.absoluteIndex, right.absoluteIndex)} + ${describeNode(nodes[1], nodes[0].slots.length, right.lastLowerIndex + 1, left.absoluteIndex, right.absoluteIndex)}`);
-// }
-// publish(lists, false, `START COMPACTION (reduction target: ${reductionTarget})`);
-
   var isRecomputeUpdated = false;
   var isTreeBase = shift === CONST.BRANCH_INDEX_BITCOUNT;
   var finalSlotCount = nodes[0].slots.length + nodes[1].slots.length - reductionTarget;
@@ -137,19 +113,13 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
   var removed = 0;
 
   do {
-// publish(lists, false, `### LOOP (current reduction: ${removed}) ${isReductionTargetMet ? ' [REDUCTION TARGET IS MET]' : ''}`);
     // Move the position markers until the left is at a location that is eligible for receiving subslots from the right
-// log(`left is compactable: ${left.compactable}, right is compactable: ${right.compactable}`);
     if(isReductionTargetMet || !left.compactable) {
       incrementPos(left, nodes);
-// log(`incremented left: absolute index is now ${left.absoluteIndex}, lower index is ${left.lowerIndex}`);
       if(removed > 0) {
-// log(`copy slot left`);
         copySlotLeft(left, right);
       }
       incrementPos(right, nodes);
-// log(`incremented right: absolute index is now ${right.absoluteIndex}, lower index is ${right.lowerIndex}`);
-// dump();
     }
 
     if(!isReductionTargetMet && left.compactable) {
@@ -163,13 +133,10 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
       }
 
       var lslots = left.lower.slots;
-// dump();
-// log(`at this point, there are ${lslots.length} slots on the left`);
       var rslots = right.lower.slots;
       var startIndex = lslots.length;
       var slotsToMove = min(CONST.BRANCH_FACTOR - startIndex, rslots.length);
       var subcountMoved = 0;
-// log(`${slotsToMove} slots will be moved; left slot count will be changed to ${startIndex + slotsToMove}`);
       lslots.length = startIndex + slotsToMove;
 
       // Copy slots from right to left until the right node is empty or the left node is full
@@ -204,22 +171,14 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
 
       // If the right-side slot has been drained, then we are one step closer to the slot reduction target
       rslots.length -= slotsToMove;
-// log(`right slot count is now ${rslots.length}`);
-// dump();
       if(rslots.length === 0) {
-// log(`right is now empty; incrementing...`);
         removed++;
         isReductionTargetMet = removed === reductionTarget;
-// if(isReductionTargetMet) log('REDUCTION TARGET IS NOW MET');
-// log(left, right);
         incrementPos(right, nodes);
-// log(`incremented right again: absolute index is now ${right.absoluteIndex}, lower index is ${right.lowerIndex}`);
       }
     }
-// dump();
   } while(left.absoluteIndex < lastFinalIndex);
 
   nodes[1].slots.length = max(0, finalSlotCount - nodes[0].slots.length);
   nodes[1].recompute = nodes[1].slots.length;
-// dump();
 }

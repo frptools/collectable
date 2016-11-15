@@ -14,7 +14,8 @@ import {
   headSize,
   headSlot,
   rootSlot,
-  makeValues
+  makeValues,
+  text
 } from './test-utils';
 
 suite('[List]', () => {
@@ -193,7 +194,7 @@ suite('[List]', () => {
   });
 
   suite('#get()', () => {
-    test('should return undefined if the index is out of range'/*, () => {
+    test('should return undefined if the index is out of range', () => {
       var list = List.empty<string>();
       var listC = listOf(33);
       assert.strictEqual(list.get(0), void 0);
@@ -201,30 +202,30 @@ suite('[List]', () => {
       assert.strictEqual(list.get(50), void 0);
       assert.strictEqual(listC.get(-50), void 0);
       assert.strictEqual(listC.get(50), void 0);
-    }*/);
+    });
 
-    test('should return the correct element when it exists in the tail'/*, () => {
+    test('should return the correct element when it exists in the tail', () => {
       assert.strictEqual(listOf(33).get(32), text(32));
       assert.strictEqual(listOf(1057).get(1056), text(1056));
-    }*/);
+    });
 
-    test('should return the correct element when pathing through regular nodes'/*, () => {
+    test('should return the correct element when pathing through regular nodes', () => {
       assert.strictEqual(listOf(33).get(2), text(2));
       assert.strictEqual(listOf(32).get(31), text(31));
       assert.strictEqual(listOf(33).slice(0, 32).get(31), text(31));
       assert.strictEqual(listOf(1057).get(2), text(2));
-    }*/);
+    });
 
-    test('should return the correct element when pathing through relaxed nodes'/*, () => {
+    test('should return the correct element when pathing through relaxed nodes', () => {
       assert.strictEqual(listOf(1057).slice(1).get(0), text(1));
       assert.strictEqual(list70k.slice(1027).get(0), text(1027));
-    }*/);
+    });
   });
 
   suite('#concat', () => {
-    test('should work', () => {
+    test('should work'/*, () => {
       var list = listOf(5).concat(listOf(3));
-    });
+    }*/);
   });
 
   // suite('#slice()', () => {
