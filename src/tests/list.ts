@@ -205,20 +205,23 @@ suite('[List]', () => {
     });
 
     test('should return the correct element when it exists in the tail', () => {
-      assert.strictEqual(listOf(33).get(32), text(32));
+      assert.strictEqual(listOf(2).get(0), text(0));
+      assert.strictEqual(listOf(BRANCH_FACTOR + 1).get(BRANCH_FACTOR), text(BRANCH_FACTOR));
       assert.strictEqual(listOf(1057).get(1056), text(1056));
     });
 
     test('should return the correct element when pathing through regular nodes', () => {
-      assert.strictEqual(listOf(33).get(2), text(2));
-      assert.strictEqual(listOf(32).get(31), text(31));
+      assert.strictEqual(listOf(BRANCH_FACTOR + 1).get(2), text(2));
+      assert.strictEqual(listOf(BRANCH_FACTOR).get(BRANCH_FACTOR - 1), text(BRANCH_FACTOR - 1));
       assert.strictEqual(listOf(1057).get(2), text(2));
-      assert.strictEqual(listOf(15).concat(listOf(15, 15)).concat(listOf(16, 30)).get(16), text(16));
+      assert.strictEqual(listOf(1057).get(2), text(2));
     });
 
     test('should return the correct element when pathing through relaxed nodes', () => {
-      assert.strictEqual(listOf(1057).slice(1).get(0), text(1));
-      assert.strictEqual(list70k.slice(1027).get(0), text(1027));
+      assert.strictEqual(listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1)).get(1), text(1));
+      assert.strictEqual(listOf(BRANCH_FACTOR - 1)
+        .concat(listOf(BRANCH_FACTOR - 1, BRANCH_FACTOR - 1), listOf(16, BRANCH_FACTOR*2 - 2))
+        .get(BRANCH_FACTOR), text(BRANCH_FACTOR));
     });
   });
 

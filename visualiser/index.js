@@ -653,7 +653,7 @@ function main({DOM, events}) {
 publish(List.empty(), true, 'EMPTY LIST');
     var list; // = List.empty();
     // var list = listOf(95);
-    list = listOf(15).concat(listOf(15, 15)).concat(listOf(16, 30));
+    list = listOf(1).concat(listOf(32, 1), listOf(1, 33));
     // var prefix = 'A'.charCodeAt(0);
     // var sizes = [7, 56, 1, 13, 2, 5, 70];
     // var offset = 0;
