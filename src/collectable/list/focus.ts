@@ -96,7 +96,7 @@ export function viewAtOrdinal<T>(views: View<T>[], ordinal: number, setUncommitt
 
   for(var shift = CONST.BRANCH_INDEX_BITCOUNT, view = view.ascend(setUncommitted);
       !view.isInRange(ordinal);
-      shift += CONST.BRANCH_INDEX_BITCOUNT, view.ascend(setUncommitted));
+      shift += CONST.BRANCH_INDEX_BITCOUNT, view = view.ascend(setUncommitted));
   views[viewIndex] = view = view.descendToOrdinal(ordinal, shift, setUncommitted);
   return view;
 }

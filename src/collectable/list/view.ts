@@ -114,6 +114,7 @@ export class View<T> {
       start += out.offset;
       view = new View<T>(view.group, start, start + out.slot.size, out.index, 0, 0, setUncommitted, view, out.slot);
       shift -= CONST.BRANCH_INDEX_BITCOUNT;
+      slot = out.slot;
     } while(shift > 0);
     return view;
   }
