@@ -122,7 +122,7 @@ var list$ = create(add => {
         byParentId: new Map(),
         all: new Set()
       };
-      list._views.forEach((view, i) => {
+      viewsOf(list).forEach((view, i) => {
         do {
           if(!('index' in view)) view.index = i;
           views.byId.set(view.id, view);
@@ -527,6 +527,15 @@ document.addEventListener('readystatechange', () => {
   }
 })
 
+function viewsOf(list) {
+  return list._views || list._state.views;
+}
+
+function lastViewOf(list) {
+  var views = viewsOf(list);
+  return views[views.length - 1];
+}
+
 function renderList(model) {
   edges.length = 0;
   var entry = model.timeline.get(model.index);
@@ -535,7 +544,7 @@ function renderList(model) {
   }
   console.debug(`# VERSION INDEX ${model.index}${entry.message ? `: ${entry.message}` : ''}`);
   var lists = entry.lists.map(({list, views}, i) => {
-    var root = list._views[list._views.length - 1];
+    var root = lastViewOf(list);
     var unusedViews = new Set(views.all.values());
     var level = 0;
     while(root.parent.parent) {
@@ -543,13 +552,14 @@ function renderList(model) {
       level++;
     }
     var nodeContainer = renderNodeContainer(i, root.slot, null, 0, views, unusedViews, level, 0);
+    var state = list._state || list;
     return div('.list', [
       div('.props', [
-        div('.size', ['list size: ', list.size.toString()]),
-        div('.lvi', ['lv-idx: ', list._leftViewIndex === void 0 ? 'n/a' : list._leftViewIndex.toString()]),
-        div('.lvn', ['lv-end: ', list._leftItemEnd === void 0 ? 'n/a' : list._leftItemEnd.toString()]),
-        div('.rvi', ['rv-idx: ', list._rightViewIndex === void 0 ? 'n/a' : list._rightViewIndex.toString()]),
-        div('.rvn', ['rv-start: ', list._rightItemStart === void 0 ? 'n/a' : list._rightItemStart.toString()]),
+        div('.size', ['list size: ', state.size.toString()]),
+        div('.lvi', ['lv-idx: ', state.leftViewIndex === void 0 ? 'n/a' : state.leftViewIndex.toString()]),
+        div('.lvn', ['lv-end: ', state.leftItemEnd === void 0 ? 'n/a' : state.leftItemEnd.toString()]),
+        div('.rvi', ['rv-idx: ', state.rightViewIndex === void 0 ? 'n/a' : state.rightViewIndex.toString()]),
+        div('.rvn', ['rv-start: ', state.rightItemStart === void 0 ? 'n/a' : state.rightItemStart.toString()]),
       ]),
       div('.container', [
         nodeContainer,
@@ -643,17 +653,18 @@ function main({DOM, events}) {
 publish(List.empty(), true, 'EMPTY LIST');
     var list; // = List.empty();
     // var list = listOf(95);
-    var prefix = 'A'.charCodeAt(0);
-    var sizes = [7, 56, 1, 13, 2, 5, 70];
-    var offset = 0;
-    for(var i = 0; i < sizes.length; i++, prefix++) {
-      var size = sizes[i];
-      var newList = List.of(makeValues(size, offset, i => `${String.fromCharCode(prefix)}${i}`));
-      offset += size;
-      list = i === 0 ? newList : list.concat(newList);
-    }
-    list = list.append('X');
-    list = list.append('A', 'B', 'C');
+    list = listOf(15).concat(listOf(15, 15)).concat(listOf(16, 30));
+    // var prefix = 'A'.charCodeAt(0);
+    // var sizes = [7, 56, 1, 13, 2, 5, 70];
+    // var offset = 0;
+    // for(var i = 0; i < sizes.length; i++, prefix++) {
+    //   var size = sizes[i];
+    //   var newList = List.of(makeValues(size, offset, i => `${String.fromCharCode(prefix)}${i}`));
+    //   offset += size;
+    //   list = i === 0 ? newList : list.concat(newList);
+    // }
+    // list = list.append('X');
+    // list = list.append('A', 'B', 'C');
     // for(var i = 0, j = 1, c = 'A'; i < 20; i++, j = (j*257>>>1), c = String.fromCharCode(c.charCodeAt(0) + 1)) {
     //   list = list
     //     ? list.concat(List.of(makeValues(j%257 + 1, i => `${c}${i}`)))
@@ -664,8 +675,8 @@ publish(List.empty(), true, 'EMPTY LIST');
   }, 100);
 })();
 
-function listOf(size) {
-  const values = makeValues(size);
+function listOf(size, offset = 0) {
+  const values = makeValues(size, offset);
   var list = List.empty();
   while(list.size < size) {
     list = list.append(...values.slice(list.size, list.size + 13));

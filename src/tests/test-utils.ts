@@ -77,8 +77,8 @@ function getViews<T>(arg: ListType<T>): View<T>[] {
   return arg.views;
 }
 
-export function listOf(size: number): List<string> {
-  return List.of<string>(makeValues(size));
+export function listOf(size: number, offset = 0): List<string> {
+  return List.of<string>(makeValues(size, offset));
 }
 
 export function text(i: number) {

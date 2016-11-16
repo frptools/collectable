@@ -1,4 +1,4 @@
-import {CONST} from './common';
+import {CONST, publish} from './common';
 import {increaseCapacity} from './capacity';
 import {getAtOrdinal} from './focus';
 
@@ -71,8 +71,10 @@ export class List<T> {
     if(arguments.length === 0) {
       return this;
     }
+publish([this, arguments[0]], true, 'Pre-concatenation');
     var list = MutableList.transient<T>(this);
     list.concat.apply(list, arguments);
+publish([list], true, 'List concatenation completed');
     return list.immutable();
   }
 }

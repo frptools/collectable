@@ -212,8 +212,8 @@ suite('[List]', () => {
     test('should return the correct element when pathing through regular nodes', () => {
       assert.strictEqual(listOf(33).get(2), text(2));
       assert.strictEqual(listOf(32).get(31), text(31));
-      assert.strictEqual(listOf(33).slice(0, 32).get(31), text(31));
       assert.strictEqual(listOf(1057).get(2), text(2));
+      assert.strictEqual(listOf(15).concat(listOf(15, 15)).concat(listOf(16, 30)).get(16), text(16));
     });
 
     test('should return the correct element when pathing through relaxed nodes', () => {
