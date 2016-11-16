@@ -66,11 +66,13 @@ export function viewAtOrdinal<T>(views: View<T>[], ordinal: number, setUncommitt
   if(view.start <= ordinal) {
     return view.end > ordinal ? view : void 0;
   }
-  var setUncommitted = true;
 
+  var leaveUncommitted = false;
   if(views.length > 1) { // check the other views to figure out which one to use
     view = views[0];
-    if(view.isInRange(ordinal)) return view;
+    if(view.isInRange(ordinal)) {
+      return view;
+    }
     if(view.start === 0) { // this is the head view and should be preserved
       if(views.length === 2) { // a reusable focus view will be created in the middle of the views array
         views.length = 3;
@@ -78,25 +80,26 @@ export function viewAtOrdinal<T>(views: View<T>[], ordinal: number, setUncommitt
       }
       else { // the middle view exists and should be used
         view = views[1];
-        if(view.isInRange(ordinal)) return view;
+        if(view.isInRange(ordinal)) {
+          return view;
+        }
       }
       viewIndex = 1;
-      setUncommitted = view.changed;
     }
     else { // the front view is a reusable focus view, but is currently out of range
       viewIndex = 0;
-      setUncommitted = false;
     }
   }
   else { // make space at the front for a new focus view
     views.length = 2;
     views[1] = views[0];
     viewIndex = 0;
+    leaveUncommitted = true;
   }
 
-  for(var shift = CONST.BRANCH_INDEX_BITCOUNT, view = view.ascend(setUncommitted);
+  for(var shift = CONST.BRANCH_INDEX_BITCOUNT, view = view.ascend(leaveUncommitted);
       !view.isInRange(ordinal);
-      shift += CONST.BRANCH_INDEX_BITCOUNT, view = view.ascend(setUncommitted));
+      shift += CONST.BRANCH_INDEX_BITCOUNT, view = view.ascend(leaveUncommitted));
   views[viewIndex] = view = view.descendToOrdinal(ordinal, shift, setUncommitted);
   return view;
 }

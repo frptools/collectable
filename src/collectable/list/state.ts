@@ -106,8 +106,8 @@ export class MutableList<T> {
   concat(): MutableList<T> {
     for(var i = 0; i < arguments.length; i++) {
       concat(this._state, arguments[i] instanceof List
-        ? MutableState.from(this._state.group, arguments[i])
-        : arguments[i].state);
+        ? MutableState.from<T>(this._state.group, arguments[i])
+        : arguments[i]._state);
     }
     return this;
   }

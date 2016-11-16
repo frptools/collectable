@@ -1,8 +1,7 @@
-import {CONST, publish} from './common';
+import {CONST} from './common';
 import {increaseCapacity} from './capacity';
 import {getAtOrdinal} from './focus';
 
-import {Slot} from './slot';
 import {View, emptyView} from './view';
 import {MutableList, MutableState} from './state';
 
@@ -49,7 +48,6 @@ export class List<T> {
 
   append(...values: T[]): List<T>
   append(): List<T> {
-    var tail: View<T>, slot: Slot<T>;
     if(arguments.length === 0) {
       return this;
     }
@@ -71,10 +69,8 @@ export class List<T> {
     if(arguments.length === 0) {
       return this;
     }
-publish([this, arguments[0]], true, 'Pre-concatenation');
     var list = MutableList.transient<T>(this);
     list.concat.apply(list, arguments);
-publish([list], true, 'List concatenation completed');
     return list.immutable();
   }
 }

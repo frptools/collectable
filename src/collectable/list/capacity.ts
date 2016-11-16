@@ -16,7 +16,8 @@ export function increaseCapacity<T>(list: MutableState<T>, increaseBy: number): 
       shift = 0,
       group = list.group,
       nodes: T[][] = <any>void 0,
-      nodeIndex = 0;
+      nodeIndex = 0,
+      expandedChildNode = false;
 
   var views: View<T>[] = [];
 
@@ -58,11 +59,14 @@ export function increaseCapacity<T>(list: MutableState<T>, increaseBy: number): 
     if(isParentLevel || expandCurrentNode) {
       if(slot.group !== group) {
         slots = expandArray(slots, slotCount);
-        slot = new Slot<T>(group, slot.size, 0, slot.calculateRecompute(numberOfAddedSlots), slot.subcount, slots);
+        slot = new Slot<T>(group, slot.size, 0, slot.recompute, slot.subcount, slots);
         view.slot = slot;
       }
       else if(expandCurrentNode) {
         slots.length = slotCount;
+      }
+      if(expandedChildNode && slot.recompute !== -1) {
+        slot.recompute += numberOfAddedSlots + (expandedChildNode ? 1 : 0);
       }
     }
 
@@ -115,6 +119,7 @@ export function increaseCapacity<T>(list: MutableState<T>, increaseBy: number): 
       }
       slots = slot.slots;
       childView.parent = view;
+      expandedChildNode = expandCurrentNode;
     }
     else {
       view.changed = true;
@@ -147,7 +152,7 @@ function populateSubtrees<T>(views: View<T>[], nodes: T[][], nodeIndex: number, 
 
   do {
     // ---------------------------------------------------------------------------------------------------------------
-    // IF THE CURRENT SUBTREE IS FULLY POPULATED, ASCEND TO THE NEXT TREE LEVEL TO POPULATE THE NEXT ADJACENT SUBTREE
+    // If the current subtree is fully populated, ascend to the next tree level to populate the next adjacent subtree
 
     if(slotIndex === slotCount) {
       if(levelIndex === 1) {
@@ -180,7 +185,7 @@ function populateSubtrees<T>(views: View<T>[], nodes: T[][], nodeIndex: number, 
     }
 
     // ---------------------------------------------------------------------------------------------------------------
-    // CREATE NEW SLOTS FOR EACH UNPOPULATED SLOT INDEX IN THE CURRENT NODE, AND RECURSIVELY DESCEND AND POPULATE THEM
+    // Create new slots for each unpopulated slot index in the current node, and recursively descend and populate them
 
     else {
       // at leaf parent level; just populate the leaf nodes, then ascend

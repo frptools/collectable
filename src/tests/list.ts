@@ -19,15 +19,15 @@ import {
 } from './test-utils';
 
 suite('[List]', () => {
-  var empty: List<string>;
-  var listBF: List<string>;
+  // var empty: List<string>;
+  // var listBF: List<string>;
   var listH1plus1: List<string>;
   var listH2plusBFplus1: List<string>;
   var listH3plusBFplus1: List<string>;
   var listH4plusBFplus1: List<string>;
-  var list70k: List<string>;
-  var list100k: List<string>;
-  var tailSize70k: number;
+  // var list70k: List<string>;
+  // var list100k: List<string>;
+  // var tailSize70k: number;
 
   suiteSetup(function() {
     // empty = List.empty<string>();
@@ -112,7 +112,7 @@ suite('[List]', () => {
       var root = rootSlot(list1);
       assert.strictEqual(root.subcount, n0 + n1 + 4);
       assert.strictEqual(root.size, n0 + n1 + 4);
-      assert.strictEqual(root.recompute, 1);
+      assert.strictEqual(root.recompute, 2);
     });
 
     test('should create a relaxed node when growing a tree from a relaxed root', () => {
@@ -222,6 +222,27 @@ suite('[List]', () => {
       assert.strictEqual(listOf(BRANCH_FACTOR - 1)
         .concat(listOf(BRANCH_FACTOR - 1, BRANCH_FACTOR - 1), listOf(16, BRANCH_FACTOR*2 - 2))
         .get(BRANCH_FACTOR), text(BRANCH_FACTOR));
+    });
+
+    test('should perform recomputation of accumulated slot sizes during traversal', () => {
+      var list = listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
+                          .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2));
+      assert.strictEqual(list.get(40), text(40));
+    });
+
+    test('should not cause a slot to become uncommitted when creating a new view', () => {
+      var list = listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
+                          .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2));
+      var view = list._views[0];
+      assert.strictEqual(view.end, list.size);
+      list.get(40);
+      assert.strictEqual(list._views.length, 2);
+      view = list._views[1];
+      assert.strictEqual(view.end, list.size);
+      assert.strictEqual(view.start, list.size - view.slot.size);
+      view = list._views[0];
+      assert.isAbove(view.start, 0);
+      assert.strictEqual(view.slot, view.parent.slot.slots[view.slotIndex]);
     });
   });
 

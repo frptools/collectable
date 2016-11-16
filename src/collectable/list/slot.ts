@@ -80,15 +80,16 @@ export class Slot<T> {
 
     var invalidFromIndex = this.slots.length - this.recompute;
     var slot: Slot<T>, i: number;
-
     if(slotIndex < invalidFromIndex) {
       do {
         slot = <Slot<T>>this.slots[slotIndex];
-      } while(ordinal >= slot.sum && ++slotIndex);
-      out.slot = slot;
-      out.index = slotIndex;
-      out.offset = slotIndex === 0 ? 0 : (<Slot<T>>this.slots[slotIndex - 1]).sum;
-      return true;
+      } while(ordinal >= slot.sum && slotIndex < invalidFromIndex && ++slotIndex);
+      if(slotIndex < invalidFromIndex) {
+        out.slot = slot;
+        out.index = slotIndex;
+        out.offset = slotIndex === 0 ? 0 : (<Slot<T>>this.slots[slotIndex - 1]).sum;
+        return true;
+      }
     }
 
     var slotCap = 1 << shift;

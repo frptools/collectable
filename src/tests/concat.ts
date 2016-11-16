@@ -272,14 +272,6 @@ suite('[concatenation functions]', () => {
   });
 
   suite('concat()', () => {
-    function makeTestRange(n: number, offset: number): string[][] {
-      var range: string[][] = [];
-      for(var i = 0; i < n; i += BRANCH_FACTOR) {
-        range.push(makeValues(Math.min(BRANCH_FACTOR, n - i), offset + i));
-      }
-      return range;
-    }
-
     test('joins two minimal single-node lists', () => {
       var left = MutableList.empty<any>().append(...makeValues(1));
       var right = MutableList.empty<any>().append(...makeValues(2, 1));
@@ -384,6 +376,15 @@ suite('[concatenation functions]', () => {
 
       assert.strictEqual((<Slot<any>>v1.slot.slots[v0.slotIndex]).group, 0);
       assert.strictEqual((<Slot<any>>v2.slot.slots[v1.slotIndex]).group, 0);
+    });
+
+    test('front view not used as head if start > 0', () => {
+      var left = MutableList.empty<any>().append(...makeValues(BRANCH_FACTOR));
+      var right = MutableList.empty<any>().append(...makeValues(BRANCH_FACTOR*3, BRANCH_FACTOR));
+      right.get(BRANCH_FACTOR);
+      left.concat(right);
+      commitToRoot(left);
+      assert.deepEqual(gatherLeafValues(rootSlot(left), true), makeValues(BRANCH_FACTOR*4));
     });
   });
 });

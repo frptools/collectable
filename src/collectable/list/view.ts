@@ -1,4 +1,4 @@
-import {CONST, arrayIndex, max, nextId} from './common';
+import {CONST, max, nextId} from './common';
 import {Slot, emptySlot} from './slot';
 
 export class View<T> {

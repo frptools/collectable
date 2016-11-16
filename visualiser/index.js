@@ -3,7 +3,8 @@ import {fromEvent} from 'most';
 import {create} from '@most/create'
 import {a, h, div, span, thunk, makeDOMDriver} from '@motorcycle/dom';
 import {List, setCallback} from '../lib/collectable/list';
-import {nextId as nextInternalId, publish} from '../lib/collectable/list/common';
+import {MutableList} from '../lib/collectable/list/state';
+import {nextId as nextInternalId, log, publish} from '../lib/collectable/list/common';
 import {Slot} from '../lib/collectable/list/slot';
 import {View, voidView} from '../lib/collectable/list/view';
 import Immutable from 'immutable';
@@ -74,7 +75,7 @@ function getViewSlotKey() {
   var id, index;
   if(arguments.length === 1) {
     var view = arguments[0];
-    if(!view.parent.parent) return null;
+    if(!view.parent || !view.parent.parent) return null;
     id = view.parent.slot.id;
     index = view.slotIndex;
   }
@@ -128,7 +129,7 @@ var list$ = create(add => {
           views.byId.set(view.id, view);
           views.all.add(view);
           addView(views.bySlotId, view.slot.id, view);
-          if(view.parent.parent) {
+          if(view.parent && view.parent.parent) {
             addView(views.byLocation, getViewSlotKey(view), view);
             addView(views.byParentId, view.parent.id, view);
           }
@@ -428,7 +429,7 @@ function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, paren
     if(unusedViews.has(view) && !viewRefs.has(view)) {
       var item;
       viewRefs.add(view);
-      if(view.parent.parent) {
+      if(view.parent && view.parent.parent) {
         edges.push([
           {type: 'view', listIndex, id: view.id},
           {type: 'view', listIndex, id: view.parent.id}
@@ -528,7 +529,7 @@ document.addEventListener('readystatechange', () => {
 })
 
 function viewsOf(list) {
-  return list._views || list._state.views;
+  return list._views || list.views || list._state.views;
 }
 
 function lastViewOf(list) {
@@ -547,7 +548,7 @@ function renderList(model) {
     var root = lastViewOf(list);
     var unusedViews = new Set(views.all.values());
     var level = 0;
-    while(root.parent.parent) {
+    while(root.parent && root.parent.parent) {
       root = root.parent;
       level++;
     }
@@ -628,7 +629,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 98;
+        var startIndex = 8;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -653,7 +654,18 @@ function main({DOM, events}) {
 publish(List.empty(), true, 'EMPTY LIST');
     var list; // = List.empty();
     // var list = listOf(95);
-    list = listOf(1).concat(listOf(32, 1), listOf(1, 33));
+    // list = listOf(1).concat(listOf(32, 1), listOf(1, 33)).append(...makeValues(70, 34));
+    var BRANCH_FACTOR = 32;
+      var left = MutableList.empty().append(...makeValues(BRANCH_FACTOR));
+publish([left], true, 'left');
+      var right = MutableList.empty().append(...makeValues(BRANCH_FACTOR*3, BRANCH_FACTOR));
+publish([right], true, 'right; pre-get');
+log(`the value at position #40 is ${right.get(BRANCH_FACTOR + 8)}`);
+publish([right], true, 'post-get');
+publish([left, right], true, 'pre-concat');
+      left.concat(right);
+
+publish(left, true, 'FINAL');
     // var prefix = 'A'.charCodeAt(0);
     // var sizes = [7, 56, 1, 13, 2, 5, 70];
     // var offset = 0;
