@@ -3,15 +3,14 @@ import {increaseCapacity} from './capacity';
 import {getAtOrdinal} from './focus';
 
 import {View, emptyView} from './view';
-import {MutableList, MutableState} from './state';
+import {MutableList, ListState} from './state';
 
 export type ListMutationCallback<T> = (list: MutableList<T>) => void;
 
 export class List<T> {
   constructor(
     public size: number,
-    public _views: View<T>[],
-    public _delta: number[]
+    public _state: ListState<T>
   ) {}
 
   static empty<T>(): List<T> {
@@ -23,9 +22,8 @@ export class List<T> {
       throw new Error('First argument must be an array of values');
     }
 
-    var state = MutableState.empty<T>();
-    state.size = values.length;
-    var nodes = increaseCapacity(state, values.length);
+    var state = ListState.empty<T>();
+    var nodes = increaseCapacity(state, values.length, false);
 
     for(var i = 0, nodeIndex = 0, slotIndex = 0, node = nodes[0];
         i < values.length;
@@ -56,6 +54,16 @@ export class List<T> {
     return list.immutable();
   }
 
+  prepend(...values: T[]): List<T>
+  prepend(): List<T> {
+    if(arguments.length === 0) {
+      return this;
+    }
+    var list = MutableList.transient<T>(this);
+    list.prepend.apply(list, arguments);
+    return list.immutable();
+  }
+
   pop(): T|undefined {
     return void 0;
   }
@@ -79,4 +87,4 @@ export function isDefaultEmptyList(list: List<any>): boolean {
   return list === _emptyList;
 }
 
-export var _emptyList = new List<any>(0, [emptyView], []);
+export var _emptyList = new List<any>(0, [emptyView]);

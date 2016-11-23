@@ -1,75 +1,105 @@
-import {CONST, copyArray, last, nextId} from './common';
+import {CONST, copyArray, last, nextId, log, publish} from './common';
 import {concat} from './concat';
 import {increaseCapacity} from './capacity';
 import {getAtOrdinal} from './focus';
 
 import {List, isDefaultEmptyList} from './list';
-import {View} from './view';
+import {OFFSET_ANCHOR, View} from './view';
 
-export class MutableState<T> {
-  static from<T>(group: number, list: List<T>): MutableState<T> {
-    return new MutableState<T>(group, list.size,
-      isDefaultEmptyList(list) ? [] : copyArray(list._views),
-      copyArray(list._delta));
+export class ListState<T> {
+  // static from<T>(group: number, list: List<T>): ListState<T> {
+  //   return new ListState<T>(group, list.size,
+  //     isDefaultEmptyList(list) ? [] : copyArray(list._views));
+  // }
+
+  static empty<T>(): ListState<T> {
+    return new ListState<T>(nextId(), 0, OFFSET_ANCHOR.RIGHT, View.empty<T>(), View.empty<T>());
   }
 
-  static empty<T>(): MutableState<T> {
-    return new MutableState<T>(nextId(), 0, [View.empty<T>()], []);
-  }
-
-  static transient<T>(list: List<T>): MutableState<T> {
+  static transient<T>(list: List<T>): ListState<T> {
     return reuseMutableState(nextId(), list);
   }
 
-  public leftViewIndex = -1;
-  public rightViewIndex = -1;
-  public leftItemEnd = -1;
-  public rightItemStart = -1;
-
+  /**
+   * Creates an instance of MutableState.
+   *
+   * @param {number} group The identifier for the current batch of mutations
+   * @param {number} size The current size of the list
+   * @param {LAST_WRITE} target The most recent write target
+   * @param {View<T>} left The left-side view
+   * @param {View<T>} right The right-side view
+   *
+   * @memberOf MutableState
+   */
   constructor(
     public group: number,
     public size: number,
-    public views: View<T>[],
-    public delta: number[],
+    public lastWrite: number,
+    public left: View<T>,
+    public right: View<T>,
   ) {}
 
-  toList() {
-    if(isReusableMutableState(this)) {
-      var list = new List<T>(this.size, this.views, this.delta);
-      this.views = [];
-      this.delta = [];
-      return list;
-    }
-    this.group = nextId(); // ensure that subsequent operations don't mutate the returned immutable list
-    return new List<T>(this.size, copyArray(this.views), copyArray(this.delta));
+  clone(group: number): ListState<T> {
+    return new ListState<T>(group, this.size, this.lastWrite, this.left, this.right);
   }
 
-  clone(group: number): MutableState<T> {
-    return new MutableState<T>(group, this.size, copyArray(this.views), copyArray(this.delta));
+  /**
+   * Selects and returns either the left or the right view for further operations at the specified ordinal position. The
+   * view is selected with a preference for preserving the position of the last view that was written to, so that the
+   * reading and writing of views will implicitly optimise itself according to the way the list is being used.
+   *
+   * @param {number} ordinal A hint to indicate the next ordinal position to be queried
+   * @returns {View<T>} One of either the left or the right view
+   *
+   * @memberOf ListState
+   */
+  selectView(ordinal: number): View<T> {
+    if(this.left === View.none()) {
+      return this.right;
+    }
+    var leftEnd = this.left.bound();
+    var rightStart = this.size - this.right.bound();
+    var lastWriteWasLeft = this.lastWrite < leftEnd;
+    return rightStart <= ordinal ? this.right
+        : leftEnd > ordinal ? this.left
+        : lastWriteWasLeft ? this.right : this.left;
+  }
+
+  getView(side: OFFSET_ANCHOR): View<T> {
+    return side === OFFSET_ANCHOR.LEFT ? this.left : this.right;
+  }
+
+  setView(view: View<T>): void {
+    if(view.anchor === OFFSET_ANCHOR.LEFT) {
+      this.left = view;
+    }
+    else {
+      this.right = view;
+    }
   }
 }
 
 export class MutableList<T> {
   static empty<T>(): MutableList<T> {
-    return new MutableList<T>(MutableState.empty<T>());
+    return new MutableList<T>(ListState.empty<T>());
   }
 
   static from<T>(list: List<T>): MutableList<T> {
-    return new MutableList<T>(MutableState.from(nextId(), list));
+    return new MutableList<T>(ListState.from(nextId(), list));
   }
 
   static transient<T>(list: List<T>): MutableList<T> {
     return reuseMutableList(nextId(), list);
   }
 
-  constructor(public _state: MutableState<T>) {}
+  constructor(public _state: ListState<T>) {}
 
   immutable(): List<T> {
     return this._state.toList();
   }
 
   get(index: number): T|undefined {
-    return getAtOrdinal(this._state.views, index);
+    return getAtOrdinal(this._state, index);
   }
 
   append(...values: T[]): MutableList<T>
@@ -80,12 +110,29 @@ export class MutableList<T> {
     }
 
     var state = this._state;
-    state.size += values.length;
     var tail = last(state.views);
-    var nodes = increaseCapacity(state, values.length);
-
-    for(var i = 0, nodeIndex = 0, node = nodes[nodeIndex], slotIndex = (tail.end - tail.start) % CONST.BRANCH_FACTOR;
+    var slotIndex = (tail.end - tail.start) % CONST.BRANCH_FACTOR;
+    var nodes = increaseCapacity(state, values.length, false);
+log(`tail.end - tail.start = ${tail.end} - ${tail.start} = ${tail.end - tail.start}`);
+    for(var i = 0, nodeIndex = 0, node = nodes[nodeIndex];
         i < values.length;
+        i++, slotIndex >= node.length - 1 ? (slotIndex = 0, node = nodes[++nodeIndex]) : (++slotIndex)) {
+      node[slotIndex] = values[i];
+    }
+log(`done`);
+    return this;
+  }
+
+  prepend(...values: T[]): MutableList<T>
+  prepend(): MutableList<T> {
+    var values = arguments;
+    if(values.length === 0) {
+      return this;
+    }
+
+    var state = this._state;
+    var nodes = increaseCapacity(state, values.length, true);
+    for(var i = 0, nodeIndex = 0, node = nodes[0], slotIndex = 0; i < values.length;
         i++, slotIndex >= node.length - 1 ? (slotIndex = 0, node = nodes[++nodeIndex]) : (++slotIndex)) {
       node[slotIndex] = values[i];
     }
@@ -106,14 +153,14 @@ export class MutableList<T> {
   concat(): MutableList<T> {
     for(var i = 0; i < arguments.length; i++) {
       concat(this._state, arguments[i] instanceof List
-        ? MutableState.from<T>(this._state.group, arguments[i])
+        ? ListState.from<T>(this._state.group, arguments[i])
         : arguments[i]._state);
     }
     return this;
   }
 }
 
-function reuseMutableState<T>(group: number, list: List<T>): MutableState<T> {
+function reuseMutableState<T>(group: number, list: List<T>): ListState<T> {
   if(!_initialized) initializeReusableState();
   var state = initializeReusableState();
   state.group = group;
@@ -123,20 +170,19 @@ function reuseMutableState<T>(group: number, list: List<T>): MutableState<T> {
   state.leftViewIndex = -1;
   state.rightViewIndex = -1;
   state.views = copyArray(list._views);
-  state.delta = copyArray(state.delta);
   return state;
 }
 
-function initializeReusableState(): MutableState<any> {
+function initializeReusableState(): ListState<any> {
   if(!_initialized) {
-    _mutableState = new MutableState<any>(0, 0, [], []);
+    _mutableState = new ListState<any>(0, 0, []);
     _mutableList = new MutableList<any>(_mutableState);
     _initialized = true;
   }
   return _mutableState;
 }
 
-function isReusableMutableState<T>(state: MutableState<T>): boolean {
+function isReusableMutableState<T>(state: ListState<T>): boolean {
   return state === _mutableState;
 }
 
@@ -146,5 +192,5 @@ function reuseMutableList<T>(group: number, list: List<T>): MutableList<T> {
 }
 
 var _initialized = false;
-var _mutableState: MutableState<any>;
+var _mutableState: ListState<any>;
 var _mutableList: MutableList<any>;

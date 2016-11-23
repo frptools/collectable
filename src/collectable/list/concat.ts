@@ -1,13 +1,13 @@
-import {CONST, nextId, concatArray, concatSlots, last} from './common';
+import {CONST, nextId, concatToNewArray, concatSlotsToNewArray, last} from './common';
 import {CREATE_VIEW, focusHead, focusTail} from './focus';
 import {compact} from './compact';
 import {COMMIT_DIRECTION, commitAdjacent} from './commit';
 
 import {Slot} from './slot';
 import {View} from './view';
-import {MutableState} from './state';
+import {ListState} from './state';
 
-export function concat<T>(leftList: MutableState<T>, rightList: MutableState<T>): void {
+export function concat<T>(leftList: ListState<T>, rightList: ListState<T>): void {
   if((leftList === rightList && (leftList.group = nextId())) || rightList.group !== leftList.group) {
     rightList = rightList.clone(leftList.group);
   }
@@ -23,21 +23,21 @@ export function concat<T>(leftList: MutableState<T>, rightList: MutableState<T>)
       shift = 0;
 
   if(leftSeamView.group !== leftList.group) {
-    leftList.views[leftList.views.length - 1] = leftSeamView = leftSeamView.clone(leftList.group);
+    leftList.views[leftList.views.length - 1] = leftSeamView = leftSeamView.cloneToGroup(leftList.group);
   }
   if(leftSeamView.slot.group !== leftList.group) {
-    leftSeamView.slot = leftSeamView.slot.clone(leftList.group);
+    leftSeamView.slot = leftSeamView.slot.cloneToGroup(leftList.group);
   }
 
   do {
     if(!isJoined) {
       if(level > 0) {
         if(!isLeftRoot) {
-          commitAdjacent(leftList, leftSeamView, level, COMMIT_DIRECTION.LEFT);
+          commitAdjacent(leftList, leftSeamView, level, 0, false, COMMIT_DIRECTION.LEFT);
         }
         if(!isRightConverged) {
-          commitAdjacent(rightList, rightSeamView, level, COMMIT_DIRECTION.RIGHT);
-          commitAdjacent(rightList, rightEdgeView, level, COMMIT_DIRECTION.LEFT);
+          commitAdjacent(rightList, rightSeamView, level, 0, false, COMMIT_DIRECTION.RIGHT);
+          commitAdjacent(rightList, rightEdgeView, level, 0, false, COMMIT_DIRECTION.LEFT);
         }
       }
 
@@ -60,13 +60,13 @@ export function concat<T>(leftList: MutableState<T>, rightList: MutableState<T>)
         }
         else {
           var slotCountDelta = nodes[1].slots.length - rightSlotCount;
-          leftSeamView.changed = true;
+          leftSeamView.uncommitted = true;
           leftSeamView.slotsDelta -= slotCountDelta;
           leftSeamView.replaceSlot(nodes[0]);
           rightSeamView.replaceSlot(nodes[1]);
           rightSeamView.slotsDelta += slotCountDelta;
         }
-        rightSeamView.changed = true;
+        rightSeamView.uncommitted = true;
         if(level > 0) {
           edgeChildView.slotIndex = rightSeamView.slotCount() - 1;
         }
@@ -91,7 +91,7 @@ export function concat<T>(leftList: MutableState<T>, rightList: MutableState<T>)
           rightSeamView.slot.size = rightSeamView.end - rightSeamView.start;
         }
         if(shift > 0) {
-          rightSeamView.slot.childAtIndex(-1, true);
+          rightSeamView.slot.reserveChildAtIndex(-1);
         }
         rightSeamView = rightSeamView.ascend(false);
         if(isJoined) {
@@ -105,7 +105,7 @@ export function concat<T>(leftList: MutableState<T>, rightList: MutableState<T>)
       rightEdgeView.start = rightEdgeView.end - rightEdgeView.slot.size;
       edgeChildView = rightEdgeView;
       if(shift > 0) {
-        rightEdgeView.slot.childAtIndex(-1, true);
+        rightEdgeView.slot.reserveChildAtIndex(-1);
       }
       if(rightEdgeView.parent === rightSeamView.parent) {
         rightEdgeView = rightEdgeView.ascend(false);
@@ -119,7 +119,7 @@ export function concat<T>(leftList: MutableState<T>, rightList: MutableState<T>)
         rightSeamView = rightSeamView.ascend(false);
       }
     }
-    childView.changed = true;
+    childView.uncommitted = true;
 
     level++;
     shift += CONST.BRANCH_INDEX_BITCOUNT;
@@ -129,9 +129,9 @@ export function concat<T>(leftList: MutableState<T>, rightList: MutableState<T>)
   leftList.size += rightList.size;
   rightSeamView.end = leftList.size;
   rightSeamView.slot.size = rightSeamView.end - rightSeamView.start;
-  rightSeamView.changed = false;
+  rightSeamView.uncommitted = false;
   if(level > 1) {
-    rightSeamView.slot.childAtIndex(-1, true);
+    rightSeamView.slot.reserveChildAtIndex(-1);
   }
 
   leftList.leftViewIndex = -1;
@@ -148,8 +148,8 @@ export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoi
     var relaxed = left.isRelaxed() || right.isRelaxed() || !left.isSubtreeFull(shift);
 
     left.slots = shift === 0
-      ? concatArray(left.slots, right.slots, 0)
-      : concatSlots<T>(<Slot<T>[]>left.slots, <Slot<T>[]>right.slots);
+      ? concatToNewArray(left.slots, right.slots, 0)
+      : concatSlotsToNewArray<T>(<Slot<T>[]>left.slots, <Slot<T>[]>right.slots);
     left.size += right.size;
     left.subcount += right.subcount;
     left.recompute = relaxed ? 0 : -1;

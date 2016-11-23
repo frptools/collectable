@@ -6,11 +6,11 @@ import {Slot} from '../collectable/list/slot';
 
 import {
   BRANCH_FACTOR,
-  arrayOf,
   listOf,
+  gatherLeafValues,
   slotValues,
   tailSize,
-  tailView,
+  // tailView,
   headSize,
   headSlot,
   rootSlot,
@@ -18,7 +18,7 @@ import {
   text
 } from './test-utils';
 
-suite('[List]', () => {
+suite('[List: public]', () => {
   // var empty: List<string>;
   // var listBF: List<string>;
   var listH1plus1: List<string>;
@@ -41,14 +41,14 @@ suite('[List]', () => {
     // tailSize70k = (<LNode<string>>list70k._tail).size;
   });
 
-  suite('.empty()', () => {
+  suite.only('.empty()', () => {
     test('should have size 0', () => {
       const list = List.empty<string>();
       assert.strictEqual(list.size, 0);
     });
   });
 
-  suite('#append()', () => {
+  suite.only('#append()', () => {
     test('should not mutate the original List', () => {
       const empty = List.empty<string>();
       const pushed = empty.append('foo');
@@ -68,63 +68,57 @@ suite('[List]', () => {
     test('should have size:1 after adding the first element', () => {
       const list = List.empty<string>().append('foo');
       assert.strictEqual(list.size, 1);
-      assert.deepEqual(slotValues(tailView(list)), ['foo']);
+      assert.deepEqual(gatherLeafValues(list), ['foo']);
     });
 
     test('should have size:2 after adding the second element', () => {
       const list = List.empty<string>().append('foo').append('bar');
       assert.strictEqual(list.size, 2);
-      assert.deepEqual(slotValues(tailView(list)), ['foo', 'bar']);
+      assert.deepEqual(gatherLeafValues(list), ['foo', 'bar']);
     });
 
     test('should push each additional argument as an independent value', () => {
-      const list = List.empty<string>().append('foo', 'bar', 'baz');
+      var values = ['foo', 'bar', 'baz'];
+      const list = List.empty<string>().append(...values);
       assert.strictEqual(list.size, 3);
-      var headValues = slotValues(headSlot(list));
-      var tailValues = slotValues(tailView(list));
-      assert.strictEqual(headValues[0], 'foo');
-      assert.strictEqual(headValues[1], 'bar');
-      assert.strictEqual(tailValues[tailValues.length - 1], 'baz');
+      assert.deepEqual(gatherLeafValues(list), values)
+    });
+  });
+
+
+  suite('#prepend()', () => {
+    test('should not mutate the original List', () => {
+      const empty = List.empty<string>();
+      const pushed = empty.prepend('foo');
+      assert.strictEqual(empty.size, 0);
+      assert.strictEqual(empty._views[0].slot.slots.length, 0);
+      assert.notStrictEqual(empty, pushed);
+      assert.notDeepEqual(empty, pushed);
     });
 
-    test('should be able to grow beyond the size of the default branching factor', () => {
-      assert.strictEqual(listH1plus1.size, BRANCH_FACTOR + 1);
-      assert.deepEqual(slotValues(headSlot(listH1plus1)), arrayOf(0, BRANCH_FACTOR));
-      assert.deepEqual(slotValues(tailView(listH1plus1)), arrayOf(BRANCH_FACTOR, BRANCH_FACTOR + 1));
-      assert.strictEqual(headSize(listH1plus1), BRANCH_FACTOR);
-      assert.strictEqual(tailSize(listH1plus1), 1);
+    test('should return the original list if called with no arguments', () => {
+      const empty = List.empty<string>();
+      const pushed = empty.prepend();
+      assert.strictEqual(empty.size, 0);
+      assert.strictEqual(empty, pushed);
     });
 
-    test('should be able to increase capacity when the root is full', () => {
-      var h2Count = Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1;
-      var h3Count = Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1;
-      var h4Count = Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1;
-      assert.strictEqual(listH2plusBFplus1.size, h2Count);
-      assert.strictEqual(listH3plusBFplus1.size, h3Count);
-      assert.strictEqual(listH4plusBFplus1.size, h4Count);
+    test('should have size:1 after adding the first element', () => {
+      const list = List.empty<string>().prepend('foo');
+      assert.strictEqual(list.size, 1);
+      assert.deepEqual(gatherLeafValues(list), ['foo']);
     });
 
-    test('should maintain the recompute property of relaxed nodes', () => {
-      var n0 = BRANCH_FACTOR - 1;
-      var n1 = BRANCH_FACTOR - 2;
-      var list0 = List.of(makeValues(n0)).concat(List.of(makeValues(n1, n0)));
-      var list1 = list0.append('X', 'Y', 'Z', 'K');
-      var root = rootSlot(list1);
-      assert.strictEqual(root.subcount, n0 + n1 + 4);
-      assert.strictEqual(root.size, n0 + n1 + 4);
-      assert.strictEqual(root.recompute, 2);
+    test('should have size:2 after adding the second element', () => {
+      const list = List.empty<string>().prepend('foo').prepend('bar');
+      assert.strictEqual(list.size, 2);
+      assert.deepEqual(gatherLeafValues(list), ['bar', 'foo']);
     });
 
-    test('should create a relaxed node when growing a tree from a relaxed root', () => {
-      var n0 = BRANCH_FACTOR - 1;
-      var n1 = Math.pow(BRANCH_FACTOR, 2) - n0 - 1;
-      var list0 = List.of(makeValues(n0)).concat(List.of(makeValues(n1)));
-      var list1 = list0.append('X');
-      var root = rootSlot(list1);
-      assert.strictEqual(root.subcount, BRANCH_FACTOR + 1);
-      assert.strictEqual(root.size, n0 + n1 + 1);
-      assert.strictEqual((<Slot<any>>root.slots[0]).sum, n0 + n1);
-      assert.strictEqual(root.recompute, 1);
+    test('should push multiple arguments so that they appear in the order they were specified', () => {
+      const list = List.of<string>(['test']).prepend('foo', 'bar', 'baz');
+      assert.strictEqual(list.size, 3);
+      assert.deepEqual(gatherLeafValues(list), ['foo', 'bar', 'baz', 'test']);
     });
   });
 

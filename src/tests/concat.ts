@@ -32,7 +32,7 @@ function makeJoinablePair(height: number, subtractLeftSize = 0, subtractRightSiz
   return [left, right];
 }
 
-suite('[concatenation functions]', () => {
+suite('[List: concatenation]', () => {
   suite('compact()', () => {
     test('child slots are moved from right to left until the slot distribution is balanced', () => {
       function makeRelaxedPair(): [Slot<string>, Slot<string>] {

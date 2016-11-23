@@ -77,7 +77,7 @@ function copySlotLeft<T>(left: Position<T>, right: Position<T>): void {
 
 function ensureEditable<T>(pos: Position<T>): void {
   if(pos.lower.group !== pos.upper.group) {
-    var lower = pos.lower.clone(pos.upper.group);
+    var lower = pos.lower.cloneToGroup(pos.upper.group);
     pos.lower = lower;
     pos.upper.slots[pos.lowerIndex] = lower;
   }

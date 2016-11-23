@@ -5,7 +5,7 @@ export const enum CONST {
   // represents a different order of magnitude (base 32) of a given index in the list. The branch factor bit count and
   // mask are used to isolate each different order of magnitude (groups of 5 bits in the binary representation of a
   // given list index) in order to descend the tree to the leaf node containing the value at the specified index.
-  BRANCH_INDEX_BITCOUNT = 5,
+  BRANCH_INDEX_BITCOUNT = 3,
   BRANCH_FACTOR = 1 << BRANCH_INDEX_BITCOUNT,
   BRANCH_INDEX_MASK = BRANCH_FACTOR - 1,
 
@@ -17,12 +17,14 @@ export function nextId() {
   return ++_nextId;
 }
 
-export function ordinalIndex(size: number, index: number): number {
-  return index < 0 ? index < -size ? -1 : size + index : index >= size ? -1 : index;
+export function normalizeIndex(size: number, index: number): number {
+  return index < 0
+    ? (index < -size ? -1 : size + index)
+    : (index >= size ? -1 : index);
 }
 
-export function arrayIndex(array: any[], index: number): number {
-  return ordinalIndex(array.length, index);
+export function normalizeArrayIndex(array: any[], index: number): number {
+  return normalizeIndex(array.length, index);
 }
 
 export function shiftDownRoundUp(value: number, shift: number): number {
@@ -34,7 +36,7 @@ export function modulo(value: number, shift: number): number {
   return value - ((value >>> shift) << shift);
 }
 
-export function concatSlots<T>(left: Slot<T>[], right: Slot<T>[]): Slot<T>[] {
+export function concatSlotsToNewArray<T>(left: Slot<T>[], right: Slot<T>[]): Slot<T>[] {
   var arr = new Array<Slot<T>>(left.length + right.length);
   var sum = 0;
   for(var i = 0; i < left.length; i++) {
@@ -48,7 +50,7 @@ export function concatSlots<T>(left: Slot<T>[], right: Slot<T>[]): Slot<T>[] {
   return arr;
 }
 
-export function concatArray<T>(left: T[], right: T[], spaceBetween: number): T[] {
+export function concatToNewArray<T>(left: T[], right: T[], spaceBetween: number): T[] {
   var arr = new Array(left.length + right.length + spaceBetween);
   for(var i = 0; i < left.length; i++) {
     arr[i] = left[i];
@@ -60,7 +62,7 @@ export function concatArray<T>(left: T[], right: T[], spaceBetween: number): T[]
   return arr;
 }
 
-export function padArrayLeft<T>(values: T[], amount: number): T[] {
+export function padLeftToNewArray<T>(values: T[], amount: number): T[] {
   var arr = new Array(values.length + amount);
   for(var i = 0; i < values.length; i++) {
     arr[i + amount] = values[i];
@@ -68,11 +70,11 @@ export function padArrayLeft<T>(values: T[], amount: number): T[] {
   return arr;
 }
 
-export function padArrayRight<T>(values: T[], amount: number): T[] {
-  return expandArray(values, values.length + amount);
+export function padRightToNewArray<T>(values: T[], amount: number): T[] {
+  return expandToNewArray(values, values.length + amount);
 }
 
-export function expandArray<T>(values: T[], newSize: number): T[] {
+export function expandToNewArray<T>(values: T[], newSize: number): T[] {
   var arr = new Array(newSize);
   for(var i = 0; i < values.length; i++) {
     arr[i] = values[i];
@@ -112,10 +114,21 @@ export function truncateFront<T>(values: T[], amount: number): void {
   values.length -= amount;
 }
 
-export function blockCopy<T>(sourceValues: T[], targetValues: T[], sourceIndex: number, destIndex: number, count: number): void {
-  for(var i = sourceIndex, j = destIndex, c = 0; c < count; i++, j++, c++) {
-    targetValues[j] = sourceValues[i];
+export function blockCopy<T>(sourceValues: T[], targetValues: T[], sourceIndex: number, targetIndex: number, count: number): void {
+  if(sourceValues === targetValues && sourceIndex < targetIndex) {
+    for(var i = sourceIndex + count - 1, j = targetIndex + count - 1, c = 0; c < count; i--, j--, c++) {
+      targetValues[j] = sourceValues[i];
+    }
   }
+  else {
+    for(var i = sourceIndex, j = targetIndex, c = 0; c < count; i++, j++, c++) {
+      targetValues[j] = sourceValues[i];
+    }
+  }
+}
+
+export function abs(value: number): number {
+  return value < 0 ? -value : value;
 }
 
 export function min(a: number, b: number): number {
@@ -128,6 +141,10 @@ export function max(a: number, b: number): number {
 
 export function last<T>(array: T[]): T {
   return array[array.length - 1];
+}
+
+export function isDefined<T>(value: T|undefined): value is T {
+  return value !== void 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
