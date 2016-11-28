@@ -110,7 +110,7 @@ body
   align-items: center
   + .branch
     margin-left: 5px
-  &.is-dummy.is-leaf + &.is-node.is-leaf
+  &.is-pnode.is-leaf + &.is-node.is-leaf
     margin-left: 30px
 
 .branch-children
@@ -148,9 +148,9 @@ body
   .slotIndex:before
     content: 'index'
   .start:before
-    content: 'start'
-  .end:before
-    content: 'end'
+    content: 'offset'
+  .anchor:before
+    content: 'side'
   .sizeDelta:before
     content: 'size Δ'
   .slotsDelta:before
@@ -191,15 +191,15 @@ body
   border: 2px solid #333
   border-radius: 3px
   background-color: white
-  &.dummy
+  &.placeholder
     filter: grayscale(100%) opacity(50%)
     border-color: rgba(black, 0.25)
     .prop:nth-child(2)
       font-weight: 700
       filter: initial
-    .prop
-    .slots
-      filter: blur(1px)
+    // .prop
+    // .slots
+    //   filter: blur(1px)
   &.leaf
     > .props
       > .recompute
@@ -220,7 +220,7 @@ body
       color: #8da500
       background-color: #f6ffbe
     .slots
-      .slot:not(.dummy):not(.void)
+      .slot:not(.placeholder):not(.void)
         border-top-color: #95d283 !important
         .slot-index
         .slot-prop
@@ -317,7 +317,7 @@ body
         font-weight: 400
       .slot-index:before
         color: #c00
-    &.dummy
+    &.placeholder
       background-color: #ccc
       color: #666
       align-items: flex-start
@@ -338,6 +338,7 @@ body
       border-top: 1px solid #e7e7e7
       font-weight: 400
       background-color: #f3f3f3
+      white-space: nowrap
       &.sum:before
         content: '→'
         font-weight: 700
@@ -355,6 +356,17 @@ body
           font-size: 12px
           line-height: 8px
           color: #666
+      &.id
+        &:before
+          content: '[ '
+          position: relative
+          opacity: 0.5
+          top: -1px
+        &:after
+          content: ' ]'
+          position: relative
+          opacity: 0.5
+          top: -1px
 
     .slot-index
       align-self: stretch

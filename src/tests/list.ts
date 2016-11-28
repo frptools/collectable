@@ -32,10 +32,10 @@ suite('[List: public]', () => {
   suiteSetup(function() {
     // empty = List.empty<string>();
     // listBF = listOf(BRANCH_FACTOR);
-    listH1plus1 = listOf(BRANCH_FACTOR + 1);
-    listH2plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
-    listH3plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1);
-    listH4plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1);
+    // listH1plus1 = listOf(BRANCH_FACTOR + 1);
+    // listH2plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
+    // listH3plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1);
+    // listH4plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1);
     // list70k = listOf(70000);
     // list100k = listOf(100000);
     // tailSize70k = (<LNode<string>>list70k._tail).size;

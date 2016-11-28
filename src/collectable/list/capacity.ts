@@ -1,9 +1,36 @@
-import {CONST, expandToNewArray, padLeftToNewArray, blockCopy, max, min, last, shiftDownRoundUp, modulo, publish, log} from './common';
+import {CONST, min, last, modulo, shiftDownRoundUp, publish, log} from './common';
 import {focusHead, focusTail, ascend, tryCommitOtherView} from './focus';
-import {COMMIT_DIRECTION, commitAdjacent} from './commit';
-import {SLOT_STATUS, Slot} from './slot';
+import {SLOT_STATUS, Slot, ExpansionState} from './slot';
 import {OFFSET_ANCHOR, View} from './view';
 import {ListState} from './state';
+
+export function append<T>(state: ListState<T>, values: T[]): void {
+publish(state, false, `[BEGIN APPEND] total values: ${values.length}, initial size: ${state.size}, group: ${state.group}`);
+  var tail = focusTail(state, true);
+  var innerIndex = tail.slot.size % CONST.BRANCH_FACTOR;
+publish(state, false, `ready to expand nodes to increase capacity`);
+  var elements = increaseCapacity(state, values.length, false);
+  for(var i = 0, outerIndex = 0, inner = elements[0]; i < values.length;
+      i++, innerIndex >= inner.length - 1 ? (innerIndex = 0, inner = elements[++outerIndex]) : (++innerIndex)) {
+    inner[innerIndex] = values[i];
+  }
+publish(state, true, `append completed`);
+  log('elements:', elements);
+  log('tail:', tail);
+  log('state:', state);
+}
+
+export function prepend<T>(state: ListState<T>, values: T[]): void {
+publish(state, false, `[BEGIN PREPEND] total values: ${values.length}, initial size: ${state.size}, group: ${state.group}`);
+  focusHead(state, true);
+  var elements = increaseCapacity(state, values.length, true);
+log('elements:', elements);
+  for(var i = 0, innerIndex = 0, outerIndex = 0, inner = elements[0]; i < values.length;
+      i++, innerIndex >= inner.length - 1 ? (innerIndex = 0, inner = elements[++outerIndex]) : (++innerIndex)) {
+    inner[innerIndex] = values[i];
+  }
+publish(state, true, `prepend completed`);
+}
 
 /**
  * Increases the capacity of the list by appending or prepending additional slots/nodes. An array of arrays is returned,
@@ -20,16 +47,13 @@ import {ListState} from './state';
  *     with additional elements as part of the operation.
  */
 export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, prepend: boolean): T[][] {
-  var childView = prepend ? focusHead(state, true) : focusTail(state, true);
+  var childView = prepend ? state.left : state.right;
+
   var slot = childView.slot;
   var group = state.group;
   var numberOfAddedSlots = slot.calculateSlotsToAdd(increaseBy);
 
-  state.size += increaseBy;
-
-  if(!childView.isEditable(group)) {
-    childView = childView.cloneToGroup(group);
-  }
+  state.size += numberOfAddedSlots;
 
   // If the leaf node was already full, it does not need to be modified.
   if(numberOfAddedSlots > 0) {
@@ -37,6 +61,7 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
       slot.adjustRange(prepend ? numberOfAddedSlots : 0, prepend ? 0 : numberOfAddedSlots, true);
     }
     else {
+log(`adjusting range of child (group: ${group})`);
       childView.slot = slot = slot.cloneWithAdjustedRange(group, prepend ? numberOfAddedSlots : 0, prepend ? 0 : numberOfAddedSlots, true);
     }
 
@@ -48,6 +73,7 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
 
     // If the leaf node had sufficient room for the additional requested capacity, then we're done.
     if(numberOfAddedSlots === increaseBy) {
+publish(state, false, 'Slot capacity increased at edge/leaf node. No secondary expansion was required.');
       return [<T[]>slot.slots];
     }
   }
@@ -57,7 +83,7 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
   var elements = new Array<T[]>((numberOfAddedSlots > 0 ? 1 : 0) + shiftDownRoundUp(increaseBy - numberOfAddedSlots, CONST.BRANCH_INDEX_BITCOUNT));
   if(numberOfAddedSlots > 0) {
     if(prepend) {
-      elements[elements.length] = <T[]>slot.slots;
+      elements[elements.length - 1] = <T[]>slot.slots;
     }
     else {
       elements[0] = <T[]>slot.slots;
@@ -67,11 +93,17 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
 
   // The ascend function is capable of expanding the parent slot during ascension. An expansion argument is provided and
   // updated with output values by the ascend function to allow the calling function to keep track of what was changed.
-  var expand = {size: state.size - numberOfAddedSlots, shift: 0, prepend, added: 0};
+log(`number of added slots: ${numberOfAddedSlots} (total capacity to add: ${increaseBy}, for a total list size of: ${state.size})`);
+log(`(${state.size} - ${increaseBy} === ${state.size - increaseBy}) %>> ${CONST.BRANCH_INDEX_BITCOUNT} << ${CONST.BRANCH_INDEX_BITCOUNT} === ${state.size - (shiftDownRoundUp((state.size - increaseBy), CONST.BRANCH_INDEX_BITCOUNT) << CONST.BRANCH_INDEX_BITCOUNT)}`)
+publish(state, false, `Leaf capacity increased. Upper branches will be expanded next.`);
+  // TODO: reuse a preallocated object
+  var expand = new ExpansionState(state.size, increaseBy - numberOfAddedSlots, 0, prepend);
+  // var expand = new ExpansionState(state.size - (shiftDownRoundUp((state.size - increaseBy), CONST.BRANCH_INDEX_BITCOUNT) << CONST.BRANCH_INDEX_BITCOUNT), 0, prepend);
   var viewPath = [childView]; // An array of the views along the edge of the tree, used during subtree population.
   var shift = 0, level = 0;
-  var isOtherViewUncommitted = true;
-  var otherView = childView.anchor === OFFSET_ANCHOR.LEFT ? state.right : state.left;
+  var otherView = state.getOtherView(childView.anchor);
+  var hasOtherView = !otherView.isDefaultEmpty();
+  var isOtherViewUncommitted = hasOtherView;
 
   // Starting with the head or tail, ascend to each node along the edge, expanding any nodes with additional slots until
   // the requested capacity has been added. At each level, the additional slots are populated with a subtree of the
@@ -79,23 +111,86 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
   // of list element values by the calling function. If the root is reached and additional capacity is still required,
   // additional nodes are added above the root, increasing the depth of the tree.
   do {
-    shift += CONST.BRANCH_INDEX_BITCOUNT;
-    var oldSize = expand.size;
-    var view = ascend(group, childView, SLOT_STATUS.RESERVE, expand);
+publish(state, false, `[INCREASE CAPACITY | LOOP START] expand.totalSize: ${expand.totalSize}`);
 
-    if(isOtherViewUncommitted && tryCommitOtherView(state, otherView, childView.parent, view, prepend ? expand.added : 0)) {
+    shift += CONST.BRANCH_INDEX_BITCOUNT;
+    expand.shift = shift;
+    var view = ascend(group, childView, SLOT_STATUS.RELEASE, expand);
+    state.size += expand.addedSize;
+    expand.totalSize = state.size;
+
+log(`going to try and commit the other view now`, expand, otherView, childView.parent);
+    if(isOtherViewUncommitted && tryCommitOtherView(state, otherView, childView.parent, view, prepend ? expand.addedSlots : 0)) {
+log(`Committed other view`);
       isOtherViewUncommitted = false;
     }
 
-    if(expand.size > 0 || expand.added > 0) {
-      viewPath.push(view);
-      if(expand.added > 0) {
-        nextElementsIndex = populateSubtrees(viewPath, elements, nextElementsIndex, ++level,
-          prepend ? -expand.added : view.slotCount() - expand.added, oldSize - expand.size);
+    childView.parent = view;
+    childView.sizeDelta = 0;
+    childView.slotsDelta = 0;
+
+    if(prepend) {
+      childView.slotIndex += expand.addedSlots;
+    }
+
+publish(state, false, `Ascended to level ${level + 1}. Added slots: ${expand.addedSlots}. Remaining: ${expand.remainingSize}`);
+
+    // If the other view exists and has now been committed, we can't modify the upper views in the shared path of both
+    // leaf views, which is what would normally happen during subtree population in order to keep a set of views focused
+    // on that edge as a result of the expanded capacity. To resolve this, retroactively clone any upper views that have
+    // already been added to the view path, and replace them in the array before subtree population takes place.
+    if(hasOtherView && !isOtherViewUncommitted) {
+log(`[ROOT BRANCH CLONE] the other view is committed, so this view (${childView.id}) can't just be moved around willy nilly`)
+      childView = childView.cloneToGroup(childView.group);
+      viewPath[viewPath.length - 1] = childView;
+      if(viewPath.length > 1) {
+log(`Also need to update grandchild view`);
+        var grandChildView = viewPath[viewPath.length - 2];
+        grandChildView.parent = childView;
+        childView.offset = 0;
+        childView.anchor = grandChildView.anchor;
+        if(viewPath.length === 2) {
+          state.setView(grandChildView);
+        }
       }
+      else {
+        state.setView(childView);
+      }
+    }
+
+
+    level++;
+    if(expand.remainingSize > 0 || expand.addedSlots > 0) {
+      // if(childView.slot.isReserved()) {
+      //   if(view.slot.group !== -group) {
+      //     view.slot = view.slot.shallowCloneToGroup(group);
+      //   }
+      //   view.slot.slots[childView.slotIndex] = view.slot;
+      // }
+      if(!hasOtherView || (hasOtherView && isOtherViewUncommitted)) {
+        if((prepend && view.anchor === OFFSET_ANCHOR.RIGHT) || (!prepend && view.anchor === OFFSET_ANCHOR.LEFT)) {
+log(`view ${view.id} should be flipped`);
+          view.flipAnchor(state.size);
+        }
+      }
+log(`add view ${view.id} to the subtree view path`);
+      viewPath.push(view);
+      if(expand.addedSlots > 0) {
+        nextElementsIndex = populateSubtrees(viewPath, elements, nextElementsIndex, level,
+          prepend ? -expand.addedSlots : view.slotCount() - expand.addedSlots, expand.addedSize + expand.remainingSize, state);
+      }
+
       childView = view;
     }
-  } while(expand.size > 0);
+  } while(expand.remainingSize > 0);
+
+log(state.right);
+publish(state, false, 'Slot capacity increased.');
+
+  if(view.isRoot()) {
+    view.sizeDelta = 0;
+    view.slotsDelta = 0;
+  }
 
   return elements;
 }
@@ -113,8 +208,9 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
  * @param {number} remaining The total capacity represented by this set of subtrees
  * @returns {number} An updated `nodeIndex` value to be used in subsequent subtree population operations
  */
-function populateSubtrees<T>(viewPath: View<T>[], elements: T[][], elementsIndex: number, level: number, slotIndexBoundary: number, remaining: number): number {
+function populateSubtrees<T>(viewPath: View<T>[], elements: T[][], elementsIndex: number, level: number, slotIndexBoundary: number, capacity: number, state: ListState<T>): number {
   var levelIndex = level;
+  var remaining = capacity;
   var shift = CONST.BRANCH_INDEX_BITCOUNT * levelIndex;
   var view = last(viewPath);
   var leafView = viewPath[0];
@@ -126,41 +222,55 @@ function populateSubtrees<T>(viewPath: View<T>[], elements: T[][], elementsIndex
   var slotIndices = new Array<number>(viewPath.length);
   var slotCounts = new Array<number>(viewPath.length);
   var delta = 0, subcount = 0;
+
   slotIndices[levelIndex] = slotIndex;
   slotCounts[levelIndex] = slotCount;
 
+log(`populate subtrees from level ${level}, node index: ${elementsIndex}, slot index ${slotIndex} (${prepend ? 'prepend' : 'append'} from index ${slotIndexBoundary}, remaining: ${remaining})`);
+
   do {
-publish(viewPath[0], false, `begin populate subtree at level ${level}, node index: ${elementsIndex}, slot index ${slotIndex} (${prepend ? 'prepend' : 'append'} at ${slotIndexBoundary}, remaining: ${remaining})`);
+publish(state, false, `[POPULATE SUBTREE | LOOP START | REMAINING: ${remaining} | LEVEL: ${levelIndex}]`);
 
     // If the current subtree is fully populated, ascend to the next tree level to populate the next adjacent subtree.
     // The last slot at each level should be reserved for writing when remaining capacity to add reaches zero.
     if(slotIndex === slotCount) {
+log(`ASCENDING. view:`, view)
       if(levelIndex === 1) {
-        view.slot.size += delta;
+        // if(levelIndex < level) {
+          // view.slot.size += delta;
+// log(`size of level 1 slot ${view.slot.id} increased to ${view.slot.size}`);
+        // }
         view.slot.subcount += subcount;
-        if(levelIndex === level) {
-          view.sizeDelta += delta;
-        }
+        // if(levelIndex === level) {
+        //   view.sizeDelta += delta;
+        // }
       }
       levelIndex++;
+log(`level: ${level}, levelIndex: ${levelIndex}, remaining: ${remaining}`);
 
       if(remaining === 0) {
+log(`reserve child; view.slot.reserveChildAtIndex(prepend ? 0 : -1) ==> view.slot.reserveChildAtIndex(${prepend} ? 0 : -1)`);
         view.slot.reserveChildAtIndex(prepend ? 0 : -1);
       }
 
+      if(remaining === 0) {
+log(`group set to -1 [A]`)
+        view.slot.group = -group;
+      }
+
       if(levelIndex <= level) {
-        if(remaining === 0) {
-          view.slot.group = -group;
-        }
         slotIndex = ++slotIndices[levelIndex];
         subcount = slotCount;
         slotCount = slotCounts[levelIndex];
         shift += CONST.BRANCH_INDEX_BITCOUNT;
-        view.sizeDelta = 0;
+        // view.sizeDelta = 0;
         view = viewPath[levelIndex];
-        view.slot.size += delta;
-        delta += view.sizeDelta;
-        view.sizeDelta = delta;
+        // if(levelIndex < level) {
+          // view.slot.size += delta;
+// log(`size of slot ${view.slot.id} increased to ${view.slot.size}`);
+          // delta += view.sizeDelta;
+          // view.sizeDelta = delta;
+        // }
         view.slot.subcount += subcount;
         slots = view.slot.slots;
       }
@@ -168,27 +278,39 @@ publish(viewPath[0], false, `begin populate subtree at level ${level}, node inde
 
     // Create new slots for each unpopulated slot index in the current node, and recursively descend and populate them
     else {
+
       // If we're currently at leaf parent level, just populate the leaf nodes, then ascend when done
       if(levelIndex === 1) {
-        var elementCount: number, leafSlots: T[];
-
-        if(remaining <= CONST.BRANCH_FACTOR) {
-          elementCount = remaining;
-          leafSlots = new Array<T>(remaining);
-          remaining = 0;
-        }
-        else {
-          elementCount = CONST.BRANCH_FACTOR;
-          leafSlots = new Array<T>(CONST.BRANCH_FACTOR);
-          remaining -= CONST.BRANCH_FACTOR;
-        }
+        // var elementCount: number, leafSlots: T[];
+        var elementCount = prepend
+          ? (remaining === capacity && slotCount << shift >= remaining) ? (modulo(remaining, 0) || CONST.BRANCH_FACTOR) : CONST.BRANCH_FACTOR
+          : min(remaining, CONST.BRANCH_FACTOR);
+log(`POPULATING LEAVES; capacity: ${capacity}, remaining: ${remaining}, element count: ${elementCount}, mod: ${modulo(remaining, 0)}`);
+        var leafSlots = new Array<T>(elementCount);
+        // remaining -= elementCount;
+        // if(remaining <= CONST.BRANCH_FACTOR) {
+        //   elementCount = remaining;
+        //   leafSlots = new Array<T>(remaining);
+        //   remaining = 0;
+        // }
+        // else {
+        //   elementCount = CONST.BRANCH_FACTOR;
+        //   leafSlots = new Array<T>(CONST.BRANCH_FACTOR);
+        //   remaining -= CONST.BRANCH_FACTOR;
+        // }
 
 log(`empty set of nodes stored at index ${elementsIndex} (nodes.length: ${elements.length})`);
         elements[elementsIndex++] = leafSlots;
-publish(viewPath[0], false, `will update slot at index ${slotIndex}`);
-        slots[slotIndex] = leafView.slot = new Slot<T>(group, elementCount, 0, -1, 0, leafSlots);
-publish(viewPath[0], false, `updated slot at index ${slotIndex}`);
-        leafView.slotIndex = slotIndex;
+publish(state, false, `will update slot at index ${slotIndex}`);
+        slots[slotIndex] = new Slot<T>(group, elementCount, 0, -1, 0, leafSlots);
+        if(!prepend || remaining === capacity) {
+log(`update leaf view (${leafView.id}) slot index to ${slotIndex}`);
+          leafView.slot = <Slot<T>>slots[slotIndex];
+          leafView.slotIndex = slotIndex;
+        }
+        remaining -= elementCount;
+
+publish(state, false, `updated slot at index ${slotIndex}`);
         delta += elementCount;
         subcount += elementCount;
         slotIndex++;
@@ -196,12 +318,13 @@ publish(viewPath[0], false, `updated slot at index ${slotIndex}`);
 
       // Descend and populate the subtree of the current slot at this level
       else {
+log(`DESCENDING`)
         shift -= CONST.BRANCH_INDEX_BITCOUNT;
         view = viewPath[--levelIndex];
         delta = 0;
         subcount = 0;
-
-        slotCount = min(CONST.BRANCH_FACTOR, shiftDownRoundUp(remaining, shift));
+        slotCount = min(CONST.BRANCH_FACTOR, shiftDownRoundUp(/*prepend ? capacity - remaining : */remaining, shift));
+log(`slot count changed to: ${slotCount} (prepend: ${prepend}, capacity: ${capacity}, remaining: ${remaining}, shift: ${shift})`);
         // slotCount = remaining >>> shift;
         // var remainder = 0;
         // if(slotCount > CONST.BRANCH_FACTOR) {
@@ -211,7 +334,7 @@ publish(viewPath[0], false, `updated slot at index ${slotIndex}`);
         //   remainder = modulo(remaining, shift);
         // }
         // if(remainder > 0) slotCount++;
-        view.slot = new Slot<T>(group, 0, 0, -1, 0, new Array<T>(slotCount));
+        view.slot = new Slot<T>(group, min(remaining, slotCount << shift), 0, -1, 0, new Array<T>(slotCount));
         view.slotIndex = slotIndex;
         slots[slotIndex] = view.slot;
         slots = view.slot.slots;
@@ -222,8 +345,10 @@ publish(viewPath[0], false, `updated slot at index ${slotIndex}`);
     }
   } while(levelIndex <= level);
 
-  leafView.slot.group = -group;
+  if(remaining === 0) {
+    leafView.slot.group = -group;
+  }
 
-publish(viewPath[0], false, `subtree population completed`);
+publish(state, false, `subtree population completed`);
   return elementsIndex;
 }

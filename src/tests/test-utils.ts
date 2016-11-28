@@ -2,14 +2,14 @@ import {assert} from 'chai';
 
 import {CONST, last} from '../collectable/list/common';
 import {List} from '../collectable/list';
-import {MutableList, ListState} from '../collectable/list/state';
+import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
 import {View} from '../collectable/list/view';
 
 export const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
 export const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
 
-export type ListType<T> = List<T>|MutableList<T>|ListState<T>;
+export type ListType<T> = List<T>|ListState<T>;
 export type ListOrView<T> = ListType<T>|View<T>;
 export type ViewOrSlot<T> = View<T>|Slot<T>;
 export type AnyListType<T> = ListType<T>|ViewOrSlot<T>;

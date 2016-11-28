@@ -17,6 +17,20 @@ export function nextId() {
   return ++_nextId;
 }
 
+/**
+ * Flips an inward-facing offset value so that it is equal to the distance from the other end of the list to the
+ * opposite bound of a given slot
+ *
+ * @param {number} offset The original internal offset value, relative to one end of the list
+ * @param {number} slotSize The size of the slot that the offset is relative to
+ * @param {number} listSize The size of the list
+ * @returns {number} The inverted offset value
+ */
+export function invertOffset(offset: number, slotSize: number, listSize: number): number {
+log(`[invertOffset] offset: ${offset}, slotSize: ${slotSize}, listSize: ${listSize}, result: ${listSize - offset - slotSize}`);
+  return listSize - offset - slotSize;
+}
+
 export function normalizeIndex(size: number, index: number): number {
   return index < 0
     ? (index < -size ? -1 : size + index)
@@ -33,7 +47,7 @@ export function shiftDownRoundUp(value: number, shift: number): number {
 }
 
 export function modulo(value: number, shift: number): number {
-  return value - ((value >>> shift) << shift);
+  return value & ((CONST.BRANCH_FACTOR << shift) - 1);
 }
 
 export function concatSlotsToNewArray<T>(left: Slot<T>[], right: Slot<T>[]): Slot<T>[] {
@@ -145,6 +159,10 @@ export function last<T>(array: T[]): T {
 
 export function isDefined<T>(value: T|undefined): value is T {
   return value !== void 0;
+}
+
+export function isUndefined<T>(value: T|undefined): value is undefined {
+  return value === void 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

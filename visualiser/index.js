@@ -3,10 +3,10 @@ import {fromEvent} from 'most';
 import {create} from '@most/create'
 import {a, h, div, span, thunk, makeDOMDriver} from '@motorcycle/dom';
 import {List, setCallback} from '../lib/collectable/list';
-import {MutableList} from '../lib/collectable/list/state';
+// import {ListState} from '../lib/collectable/list/state';
 import {nextId as nextInternalId, log, publish} from '../lib/collectable/list/common';
 import {Slot} from '../lib/collectable/list/slot';
-import {View, voidView} from '../lib/collectable/list/view';
+import {View} from '../lib/collectable/list/view';
 import Immutable from 'immutable';
 import CJ from 'circular-json';
 
@@ -29,9 +29,9 @@ var colors = {
   11: ['white', '#94d4a9', '#2aaa54'],
   12: ['black', '#797a7a', '#f2f4f4'],
   13: ['black', '#333339', '#676773'],
-  main: i => colors[i][2],
-  inverse: i => colors[i][0],
-  mid: i => colors[i][1],
+  main: i => colors[Math.abs(i)][2],
+  inverse: i => colors[Math.abs(i)][0],
+  mid: i => colors[Math.abs(i)][1],
 };
 
 function colorText(i, mid = false) {
@@ -124,6 +124,7 @@ var list$ = create(add => {
         all: new Set()
       };
       viewsOf(list).forEach((view, i) => {
+        if(!view.group) return;
         do {
           if(!('index' in view)) view.index = i;
           views.byId.set(view.id, view);
@@ -162,8 +163,12 @@ function isLeafNode(slot) {
   return !slot || !slot.slots || slot.slots.length === 0 || !slot.slots.find(s => s && s.slots);
 }
 
-function isDummyNode(slot) {
-  return !!slot && slot.slots && !slot.group;
+function isReservedNode(slot) {
+  return !!slot && slot.slots && slot.group <= 0;
+}
+
+function isPlaceholderNode(slot) {
+  return isReservedNode(slot); // && slot.slots[0] === null && slot.slots[slot.slots.length - 1] === null;
 }
 
 var containers = [];
@@ -184,16 +189,16 @@ function getEndpointElements(endpoint) {
       vEl = getElement(`slot-${endpoint.listIndex}-${endpoint.id}-${endpoint.index}`);
       hEl = vEl && vEl.parentNode.parentNode;
       break;
-    case 'dslot':
-      vEl = getElement(`dslot-${endpoint.listIndex}-${endpoint.branch}-${endpoint.index}`);
+    case 'pslot':
+      vEl = getElement(`pslot-${endpoint.listIndex}-${endpoint.branch}-${endpoint.index}`);
       hEl = vEl && vEl.parentNode.parentNode;
       break;
     case 'view':
       vEl = getElement(`view-${endpoint.listIndex}-${endpoint.id}`);
       hEl = vEl && vEl.parentNode;
       break;
-    case 'dummy':
-      vEl = getElement(`dummy-${endpoint.listIndex}-${endpoint.branch}-${endpoint.index}`);
+    case 'pnode':
+      vEl = getElement(`pnode-${endpoint.listIndex}-${endpoint.branch}-${endpoint.index}`);
       break;
     case 'node':
       vEl = getElement(`node-${endpoint.listIndex}-${endpoint.id}`);
@@ -213,13 +218,13 @@ function getPathMarkup(edge, path) {
       extra = ' stroke-dasharray="3, 2"';
       break;
 
-    case 'dummy':
+    case 'pnode':
       color = '#03a9f4';
       width = 4;
       extra = ' stroke-dasharray="3, 1"';
       break;
 
-    case 'dslot':
+    case 'pslot':
       color = '#999';
       width = 2;
       extra = ' stroke-dasharray="5, 1"';
@@ -257,14 +262,17 @@ function drawLines() {
   var paths = `
     ${arrow('view-arrow', '#0680b7')}
     ${arrow('slot-arrow', '#333')}
-    ${arrow('dslot-arrow', '#999')}
-    ${arrow('dummy-arrow', '#03a9f4')}
+    ${arrow('pslot-arrow', '#999')}
+    ${arrow('pnode-arrow', '#03a9f4')}
   `;
   edges.forEach(edge => {
     var type = `${edge[0].type}-${edge[1].type}`;
     var [vStartEl, hStartEl] = getEndpointElements(edge[0]);
     var [vEndEl, hEndEl] = getEndpointElements(edge[1]);
-    if(!vStartEl || !vEndEl) return;
+    if(!vStartEl || !vEndEl) {
+      console.warn('unable to render edge:', edge);
+      return;
+    }
     var x0, y0, x1, y1, cx0, cy0, cx1, cy1, h, w;
     switch(type) {
       case 'view-view':
@@ -294,7 +302,8 @@ function drawLines() {
         break;
 
       case 'slot-node':
-      case 'dslot-dummy':
+      case 'pslot-pnode':
+      case 'pslot-node':
         x0 = getMidX(vStartEl);
         x1 = getMidX(vEndEl);
         y0 = hStartEl.offsetTop + hStartEl.offsetHeight;
@@ -307,7 +316,7 @@ function drawLines() {
         cy1 = y1 - h;
         break;
 
-      case 'dummy-node':
+      case 'pnode-node':
         y0 = getMidY(vStartEl);
         y1 = getMidY(vEndEl);
         if(isLeftDirected) {
@@ -339,8 +348,9 @@ function drawLines() {
       el.scrollLeft = listsEl.children[1].offsetLeft - (el.offsetWidth/2)
     }
     else {
-      el.scrollLeft = el.scrollWidth;
-  }
+      // el.scrollLeft = el.scrollWidth/2 - el.offsetWidth/2;
+      // el.scrollLeft = el.scrollWidth;
+    }
     el.scrollTop = el.scrollHeight;
   }, 100);
 }
@@ -351,8 +361,8 @@ function renderView(listIndex, {view, isCorrectSlotRef}, index) {
     span('.prop.parent', [span('.value', view.parent && view.parent.parent ? view.parent.id.toString() : 'n/a')]),
     span('.prop.group', [span('.value', {style: chooseStyle(view.group)}, [view.group])]),
     span('.prop.slotIndex', [span('.value', view.slotIndex.toString())]),
-    span('.prop.start', [span('.value', view.start.toString())]),
-    span('.prop.end', [span('.value', view.end.toString())]),
+    span('.prop.start', [span('.value', view.offset.toString())]),
+    span('.prop.anchor', [span('.value', view.anchor ? 'RIGHT' : 'LEFT')]),
     span('.prop.sizeDelta', [span('.value', (view.sizeDelta > 0 ? '+' : '') + view.sizeDelta)]),
     span('.prop.slotsDelta', [span('.value', (view.slotsDelta > 0 ? '+' : '') + view.slotsDelta)]),
     // span('.prop.changed', [span('.value', view.uncommitted.toString())]),
@@ -368,7 +378,7 @@ function renderView(listIndex, {view, isCorrectSlotRef}, index) {
   ]);
 }
 
-function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branchId, parentBranchId}, slotIndex) {
+function renderNode(listIndex, {slot, hasChildren, isLeaf, isPlaceholder, views, branchId, parentBranchId}, slotIndex) {
   var recompute = slot.recompute;
   var isRelaxed = slot.recompute !== -1;
   var slots = isLeaf || hasChildren
@@ -376,7 +386,8 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
       ? div('.slot.void', {class: {leaf: isLeaf}}, [span('.slot-index', i.toString())])
       : isLeaf
         ? div('.slot.leaf', value === void 0 || value === null ? '-' : value.toString())
-        : div(isDummyNode(value) ? `.dslot-${listIndex}-${branchId}-${i}.slot.mid.dummy` : `.slot-${listIndex}-${value.id}-${i}.slot.mid`, [
+        : div(isPlaceholderNode(value) ? `.pslot-${listIndex}-${branchId}-${i}.slot.mid.placeholder` : `.slot-${listIndex}-${value.id}-${i}.slot.mid`, [
+          span('.slot-prop.id', value.id.toString()),
           span('.slot-index', i.toString()),
           span('.slot-prop.size', value.size.toString()),
           span('.slot-prop.sum', {class: {invalid: i >= slot.slots.length - recompute}}, value.sum),
@@ -384,8 +395,8 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isDummy, views, branc
     : [span('.no-slots', 'Empty')];
 
   const nodeViews = [
-    div(`${isDummy ? `.dummy-${listIndex}-${parentBranchId}-${slotIndex}` : `.node-${listIndex}-${slot.id}`}.node`,
-      {class: {leaf: isLeaf, dummy: isDummy, relaxed: isRelaxed}}, [
+    div(`${isPlaceholder ? `.pnode-${listIndex}-${parentBranchId}-${slotIndex}` : `.node-${listIndex}-${slot.id}`}.node`,
+      {class: {leaf: isLeaf, placeholder: isPlaceholder, relaxed: isRelaxed}}, [
       div('.props', [
         span('.prop.group', [span('.value', {style: chooseStyle(slot.group)}, [slot.group.toString()])]),
         span('.prop.id', [span('.value', [slot.id.toString()])]),
@@ -413,7 +424,7 @@ function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, paren
   var slotRefs = new Set();
   var viewRefs = new Set();
   var items = [];
-  var isInputSlotDummy = isDummyNode(slot);
+  var isInputSlotPlaceholder = isPlaceholderNode(slot);
   var makeItem = (slot, views) => {
     var isLeaf = level === 0 || isLeafNode(slot);
     var item = {
@@ -422,7 +433,7 @@ function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, paren
       slot,
       views,
       isLeaf,
-      isDummy: isDummyNode(slot),
+      isPlaceholder: !views && isPlaceholderNode(slot),
       hasChildren: !isLeaf && !!slot.slots && slot.slots.length > 0
     };
     return item;
@@ -444,7 +455,7 @@ function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, paren
         items.push(item = makeItem(view.slot, []));
         slotRefs.add(view.slot);
       }
-      item.views.push({view, isCorrectSlotRef: slot === view.slot || isInputSlotDummy});
+      item.views.push({view, isCorrectSlotRef: slot === view.slot || isInputSlotPlaceholder});
     }
   };
   if(viewsBySlotIndex) viewsBySlotIndex.forEach(addView);
@@ -459,14 +470,17 @@ function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, paren
 }
 
 function renderNodeContainer(listIndex, slot, parent, parentSlotIndex, views, unusedViews, level, parentBranchId, parentView) {
-  var isDummy = isDummyNode(slot);
+  var isPlaceholder = isPlaceholderNode(slot);
   var isLeaf = isLeafNode(slot);
 
   if(parent && parentSlotIndex >= 0) {
-    if(isDummy) {
+    if(isPlaceholder) {
+      var vspid = views.byParentId.get(parentView && parentView.id);
+      var hasView = vspid && Array.from(vspid).find(v => v.slot.id === slot.id);
       edges.push([
-        {type: 'dslot', listIndex, branch: parentBranchId, index: parentSlotIndex},
-        {type: 'dummy', listIndex, branch: parentBranchId, index: parentSlotIndex}
+        {type: 'pslot', listIndex, branch: parentBranchId, index: parentSlotIndex},
+        hasView ? {type: 'node', listIndex, id: slot.id} :
+          {type: 'pnode', listIndex, branch: parentBranchId, index: parentSlotIndex}
       ]);
     }
     else if(parentSlotIndex >= 0) {
@@ -478,9 +492,9 @@ function renderNodeContainer(listIndex, slot, parent, parentSlotIndex, views, un
   }
 
   var items = matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, parentBranchId, parentView && parentView.id, views, unusedViews);
-  if(parentSlotIndex >= 0 && items.length > 1 && items[0].isDummy && items[1].views) {
+  if(parentSlotIndex >= 0 && items.length > 1 && items[0].isPlaceholder && items[1].views) {
     edges.push([
-      {type: 'dummy', listIndex, branch: items[0].parentBranchId, index: parentSlotIndex},
+      {type: 'pnode', listIndex, branch: items[0].parentBranchId, index: parentSlotIndex},
       {type: 'node', listIndex, id: items[1].slot.id}
     ]);
   }
@@ -500,7 +514,7 @@ function renderNodeContainer(listIndex, slot, parent, parentSlotIndex, views, un
       orphaned = true;
     }
     branches.push(div(`.branch-${listIndex}-${item.branchId}.branch`, {
-      class: {'is-dummy': item.isDummy, 'is-node': !item.isDummy, 'is-leaf': item.isLeaf}}, [
+      class: {'is-pnode': item.isPlaceholder, 'is-node': !item.isPlaceholder, 'is-leaf': item.isLeaf}}, [
       renderNode(listIndex, item, parentSlotIndex),
       item.hasChildren || !item.isLeaf
         ? div('.branch-children', childSlots.map((slot, i) =>
@@ -530,8 +544,8 @@ document.addEventListener('readystatechange', () => {
   }
 })
 
-function viewsOf(list) {
-  return (list.slot && [list]) || list._views || list.views || list._state.views;
+function viewsOf(arg) {
+  return (arg.slot && [arg]) || (arg.left && [arg.left, arg.right]) || (arg._state && viewsOf(arg._state));
 }
 
 function lastViewOf(list) {
@@ -539,15 +553,17 @@ function lastViewOf(list) {
   return views[views.length - 1];
 }
 
-function findRoot(list) {
+function findRoot(list, right) {
   var views = viewsOf(list);
-  var view = views[0];
+  var view = views[right ? 1 : 0];
+  var otherView = views.length > 1 ? views[right ? 0 : 1] : null;
+  if((right && !otherView) || (otherView && otherView.id !== 0 && view.id === 0)) return null;
   var level = 0;
   while(view.parent && view.parent.parent) {
     view = view.parent;
     level++;
   }
-  return [view, level];
+  return {view, level};
 }
 
 function renderList(model) {
@@ -557,25 +573,33 @@ function renderList(model) {
     entry.logs.forEach(logs => console.log.apply(console, logs));
   }
   console.debug(`# VERSION INDEX ${model.index}${entry.message ? `: ${entry.message}` : ''}`);
-  var lists = entry.lists.map(({list, views}, i) => {
-    var unusedViews = new Set(views.all.values());
-    var [root, level] = findRoot(list);
-    var nodeContainer = renderNodeContainer(i, root.slot, null, 0, views, unusedViews, level, 0);
-    var state = list._state || list;
-    return div('.list', [
-      div('.props', [
-        div('.size', ['list size: ', ('size' in state ? state.size : state.end).toString()]),
-        div('.lvi', ['lv-idx: ', state.leftViewIndex === void 0 ? 'n/a' : state.leftViewIndex.toString()]),
-        div('.lvn', ['lv-end: ', state.leftItemEnd === void 0 ? 'n/a' : state.leftItemEnd.toString()]),
-        div('.rvi', ['rv-idx: ', state.rightViewIndex === void 0 ? 'n/a' : state.rightViewIndex.toString()]),
-        div('.rvn', ['rv-start: ', state.rightItemStart === void 0 ? 'n/a' : state.rightItemStart.toString()]),
-      ]),
-      div('.container', [
-        nodeContainer,
-        ...Array.from(unusedViews).map(view => renderView(i, {view, isCorrectSlotRef: false}, -1))
-      ])
-    ]);
-  })
+  var i = 0;
+  var lists = entry.lists.map(({list, views}) => {
+    function renderRoot(root, withProps) {
+      var unusedViews = new Set(views.all.values());
+      var nodeContainer = renderNodeContainer(i++, root.view.slot, null, 0, views, unusedViews, root.level, 0);
+      var state = list._state || list;
+      return div('.list', [
+        div('.props', [
+          div('.size', withProps ? ['list size: ', ('size' in state ? state.size : state.slot.size).toString()] : '!')
+        ]),
+        div('.container', [
+          nodeContainer,
+          // ...Array.from(unusedViews).map(view => renderView(i, {view, isCorrectSlotRef: false}, -1))
+        ])
+      ]);
+    }
+    var left = findRoot(list, false);
+    var right = findRoot(list, true);
+    var dom = [];
+    if(left) {
+      dom.push(renderRoot(left, true));
+    }
+    if(right && (!left || left.view.id !== right.view.id)) {
+      dom.push(renderRoot(right, dom.length === 0));
+    }
+    return dom;
+  }).reduce((acc, dom) => acc.concat(dom), []);
 
   var message = entry.message || '';
   return div('.list-container', {class: {done: !!entry.done}}, [
@@ -637,7 +661,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 7;
+        var startIndex = 148;//175;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -659,16 +683,24 @@ function main({DOM, events}) {
   });
 
   setTimeout(() => {
-publish(List.empty(), true, 'EMPTY LIST');
-    var list; // = List.empty();
+    var list = List.empty();
+publish(list, true, 'EMPTY LIST');
     // var list = listOf(95);
     // list = listOf(1).concat(listOf(32, 1), listOf(1, 33)).append(...makeValues(70, 34));
     var BRANCH_FACTOR = 8;
-      var left = MutableList.empty().append('X');
-publish(left, true, 'FINAL STATE #1');
-      left = left.prepend(...makeValues(BRANCH_FACTOR + BRANCH_FACTOR/2));
-publish(left, true, 'FINAL STATE #2');
-      left = left.append(...makeValues(BRANCH_FACTOR*BRANCH_FACTOR*BRANCH_FACTOR+1, 100));
+      list = list.append('X');
+// publish(left, true, 'FINAL STATE #1');
+      list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+      list = list.prepend(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
+      list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+      list = list.append(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
+      list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+      list = list.append(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
+      list = list.append(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+      list = list.prepend(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
+      list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+// publish(left, true, 'FINAL STATE #2');
+      // left = left.prepend(...makeValues(BRANCH_FACTOR*BRANCH_FACTOR*BRANCH_FACTOR+1, 99));
 // publish([left], true, 'left');
 //       var right = MutableList.empty().append(...makeValues(BRANCH_FACTOR*3, BRANCH_FACTOR));
 // publish([right], true, 'right; pre-get');
@@ -677,7 +709,7 @@ publish(left, true, 'FINAL STATE #2');
 // publish([left, right], true, 'pre-concat');
 //       left.concat(right);
 
-publish(left, true, 'FINAL STATE');
+publish(list, true, 'FINAL STATE');
     // var prefix = 'A'.charCodeAt(0);
     // var sizes = [7, 56, 1, 13, 2, 5, 70];
     // var offset = 0;
@@ -715,7 +747,7 @@ function text(i) {
 function makeValues(count, offset = 0, format = text) {
   var values = [];
   if(typeof offset === 'function') format = offset, offset = 0;
-  for(var i = 0; i < count; i++) {
+  for(var i = 1; i <= count; i++) {
     values.push(format(i + offset));
   }
   return values;
@@ -812,7 +844,7 @@ function runTest() {
   }
   function createViewFromSlot(slot) {
     var start = 0, end = slot.size, index = 0, group = slot.group;
-    var view = voidView;
+    var view = View.none();
     do {
       start = end - slot.size;
       view = new View(group, start, end, index, 0, 0, false, view, slot);

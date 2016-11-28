@@ -30,7 +30,7 @@ const values_h2_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR +
 const values_h3_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1);
 
 function makeList(values: any[], initialSize: number, prepend: boolean): ListState<any> {
-  const list = ListState.empty<any>();
+  const list = ListState.empty<any>(true);
   if(initialSize > 0) {
     populateValues(increaseCapacity(list, initialSize, false), values.slice(0, initialSize));
     commitToRoot(list);

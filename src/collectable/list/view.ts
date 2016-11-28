@@ -1,6 +1,5 @@
-import {CONST, abs, max, isDefined, nextId} from './common';
+import {CONST, abs, max, isDefined, nextId, invertOffset, log} from './common';
 import {Slot, emptySlot} from './slot';
-
 
 /**
  * An offset value is relative to either the left or the right of the list. Flipping the offset and anchor of an
@@ -26,10 +25,12 @@ export class View<T> {
     public slotsDelta: number,
     public parent: View<T>,
     public slot: Slot<T>,
-  ) {}
+  ) {
+log(`construct new view ${this.id} for slot ${slot.id}`);
+  }
 
-  static empty<T>(): View<T> {
-    return emptyView;
+  static empty<T>(anchor: OFFSET_ANCHOR): View<T> {
+    return anchor === OFFSET_ANCHOR.LEFT ? emptyLeftView : emptyRightView;
   }
 
   static none<T>(): View<T> {
@@ -37,7 +38,11 @@ export class View<T> {
   }
 
   isNone(): boolean {
-    return this === voidView;
+    return this.id === 0;
+  }
+
+  isDefaultEmpty(): boolean {
+    return this === emptyLeftView || this === emptyRightView;
   }
 
   isRoot(): boolean {
@@ -60,82 +65,20 @@ export class View<T> {
     return new View<T>(group, this.offset, this.anchor, this.slotIndex, this.sizeDelta, this.slotsDelta, this.parent, this.slot);
   }
 
+  flipAnchor(listSize: number): void {
+    this.anchor = this.anchor === OFFSET_ANCHOR.RIGHT ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT;
+    if(!this.isRoot()) {
+      this.offset = invertOffset(this.offset, this.slot.size, listSize);
+    }
+log(`offset for view ${this.id} flipped ${this.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} to ${this.offset}`);
+  }
+
   setCommitted(parent?: View<T>): void {
     this.sizeDelta = 0;
     this.slotsDelta = 0;
     if(isDefined(parent)) {
       this.parent = parent;
     }
-  }
-
-  ascend(setUncommitted: boolean): View<T> {
-    var parentView: View<T>, parentSlot: Slot<T>;
-    var isRoot = this.isRoot();
-
-    if(isRoot) {
-      // ROOT? GROW THE TREE
-      parentView = new View<T>(this.group, this.offset, this.anchor, this.slot.sum, 0, 0, voidView,
-        parentSlot = new Slot<T>(this.group, this.slot.size, 0, this.slot.recompute === -1 ? -1 : 1, this.slot.slots.length, [this.slot]));
-      this.parent = parentView;
-    }
-    else {
-      // NOT ROOT- JUST GET THE PARENT
-      parentView = this.parent;
-      parentSlot = parentView.slot;
-    }
-
-    var wasParentRelaxed = parentSlot.isRelaxed();
-
-    if(this.uncommitted) {
-      // MAKE THE PARENT EDITABLE BECAUSE OF THE ASSUMPTION THAT THE CHILD WILL BE RESTORED TO ITS PLACEHOLDER
-      if(parentView.group !== this.group) {
-        parentView = parentView.cloneToGroup(this.group);
-        this.parent = parentView;
-      }
-
-      // PROPAGATE THE CHILD SIZE DELTA IF WE CAN STILL ASCEND HIGHER
-      if(!isRoot) {
-        parentView.sizeDelta += this.sizeDelta;
-      }
-
-      // BECAUSE WE'RE RESTORING THE CHILD TO ITS PLACEHOLDER, THE PARENT SLOT MUST BE EDITABLE
-      if(parentSlot.group !== this.group) {
-        parentView.slot = parentSlot = parentSlot.cloneToGroup(this.group);
-        parentView.uncommitted = true;
-      }
-
-      // APPLY OTHER DELTA VALUES TO THE PARENT SLOT AND REMOVE THEM FROM THE CHILD SLOT
-      parentSlot.subcount += this.slotsDelta;
-      this.slotsDelta = 0;
-      parentSlot.size += this.sizeDelta;
-
-      // THE PARENT SLOT'S RECOMPUTE VALUE SHOULD PROBABLY BE UPDATED TOO
-      if(parentSlot.isRelaxed() || this.slot.isRelaxed()) {
-        parentSlot.recompute = wasParentRelaxed
-          ? max(parentSlot.recompute, parentSlot.slots.length - this.slotIndex)
-          : parentSlot.slots.length;
-      }
-      else {
-        parentSlot.recompute = -1;
-      }
-
-      // CLEAR PENDING CHANGES FROM THE CHILD
-      this.uncommitted = setUncommitted;
-      this.sizeDelta = 0;
-
-      // RESTORE THE SLOT TO THE PLACEHOLDER, AND THEN CHECK IT OUT AGAIN IF NECESSARY
-      parentSlot.slots[this.slotIndex] = this.slot; // ensure the new slot metadata is stored
-      if(setUncommitted) {
-        parentSlot.reserveChildAtIndex(this.slotIndex, setUncommitted); // even if the child slot was already a dummy slot, the metadata values will now be updated
-      }
-    }
-    else if(this.group !== parentView.group) {
-      // THERE WAS NOTHING TO DO, SO JUST MAKE SURE THE PARENT IS EDITABLE AND UPDATE THE CHILD-PARENT POINTER
-      parentView = parentView.cloneToGroup(this.group);
-      this.parent = parentView;
-    }
-
-    return parentView;
   }
 
   replaceSlot(slot: Slot<T>): void {
@@ -153,5 +96,9 @@ export class View<T> {
  * A universal view terminator reference, indicating "no" view at any point at which it is referenced.
  * @export
  * */
-export var voidView = new View<any>(nextId(), 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, <any>void 0, emptySlot);
-export var emptyView = new View<any>(nextId(), 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, voidView, emptySlot);
+var voidView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, <any>void 0, emptySlot);
+voidView.id = 0;
+var emptyLeftView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, voidView, emptySlot);
+emptyLeftView.id = 0;
+var emptyRightView = new View<any>(0, 0, OFFSET_ANCHOR.RIGHT, 0, 0, 0, voidView, emptySlot);
+emptyRightView.id = 0;

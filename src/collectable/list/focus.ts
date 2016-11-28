@@ -1,21 +1,8 @@
-import {CONST, isDefined, min, max, normalizeIndex, shiftDownRoundUp} from './common';
+import {CONST, isDefined, isUndefined, invertOffset, min, max, normalizeIndex, shiftDownRoundUp, log, publish} from './common';
 
-import {OFFSET_ANCHOR, View, voidView} from './view';
-import {SLOT_STATUS, Slot} from './slot';
+import {OFFSET_ANCHOR, View} from './view';
+import {SLOT_STATUS, Slot, ExpansionState} from './slot';
 import {ListState} from './state';
-
-/**
- * Flips an inward-facing offset value so that it is equal to the distance from the other end of the list to the
- * opposite bound of a given slot
- * 
- * @param {number} offset The original internal offset value, relative to one end of the list
- * @param {number} slotSize The size of the slot that the offset is relative to
- * @param {number} listSize The size of the list
- * @returns {number} The inverted offset value
- */
-function invertOffset(offset: number, slotSize: number, listSize: number): number {
-  return listSize - offset - slotSize;
-}
 
 /**
  * Checks whether a list ordinal position lies within the absolute range of a slot within the list
@@ -54,8 +41,10 @@ function isViewInRange<T>(view: View<T>, ordinal: number, listSize: number): boo
  * @returns {boolean} true if upperView is an ancestor of lowerView, otherwise false
  */
 function isAncestor<T>(upperView: View<T>, lowerView: View<T>, listSize: number): boolean {
+log(`[isAncestor] list size: ${listSize}, lower view ${lowerView.id} offset: ${lowerView.offset}, anchor: ${lowerView.anchor}, size: ${lowerView.slot.size}; upper view ${upperView.id} offset: ${upperView.offset}, anchor: ${upperView.anchor}, size: ${upperView.slot.size}`);
   var upperOffset = lowerView.anchor === upperView.anchor ? upperView.offset
                   : invertOffset(upperView.offset, upperView.slot.size, listSize);
+log(`upperOffset (${upperOffset}) <= lowerView.offset (${lowerView.offset}) && upperOffset (${upperOffset}) + upperView.slot.size (${upperView.slot.size}) >= lowerView.offset (${lowerView.offset}) + lowerView.slot.size (${lowerView.slot.size})`);
   return upperOffset <= lowerView.offset && upperOffset + upperView.slot.size >= lowerView.offset + lowerView.slot.size;
 }
 
@@ -78,94 +67,123 @@ function isAncestor<T>(upperView: View<T>, lowerView: View<T>, listSize: number)
  *     before being returned.
  * @returns {View<T>} The parent view, with any size-related changes applied from the child to the parent view and/or slot.
  */
-export function ascend<T>(group: number, childView: View<T>, status: SLOT_STATUS, expand?: {size: number, shift: number, prepend: boolean, added: number}): View<T> {
+export function ascend<T>(group: number, childView: View<T>, status: SLOT_STATUS, expand?: ExpansionState): View<T> {
   var childSlot = childView.slot;
 
+log(`[ASCEND] from view (${childView.id}), is root: ${childView.isRoot()}` + (!expand ? '' : `, shift: ${expand.shift}, has changed: ${childView.hasUncommittedChanges()}`));
   // Ascending from the root slot effectively means growing the tree by one level.
   if(childView.isRoot()) {
     // Non-zero delta values for the child view can be disregarded, as we're absorbing the child view's final computed
     // values in advance.
-    return new View<T>(group, childView.offset, childView.anchor, childSlot.sum, 0, 0, voidView, parentSlot = childSlot.createParent(group, status));
+    var parentSlot: Slot<T>;
+    if(isDefined(expand)) {
+      expand.next(1);
+    }
+    return new View<T>(group, childView.offset, childView.anchor, childSlot.sum, 0, 0, View.none<T>(),
+      parentSlot = childSlot.createParent(group, status, expand));
   }
 
   var parentView = childView.parent;
   var parentSlot = parentView.slot;
+log(`parent view has offset ${parentView.offset}`)
 
   // If the child wasn't already reserved with a placeholder slot, and no reservation has been requested, then there is
   // nothing further that we need to do.
-  var isChildReserved = childSlot.isReserved();
-  if(!isChildReserved && status !== SLOT_STATUS.RESERVE) {
+  if(isUndefined(expand) && !childSlot.isReserved() && status !== SLOT_STATUS.RESERVE) {
     return parentView;
   }
 
+  var slotIndex = childView.slotIndex;
   var hasChanges = childView.hasUncommittedChanges();
-  if(hasChanges || status === SLOT_STATUS.RELEASE) {
-
+  if(hasChanges || status === SLOT_STATUS.RESERVE || isDefined(expand)) {
     // Optional expansion parameters can add slots to the start or end of the parent slot.
     var prepend = 0, append = 0, extraSize = 0;
     if(isDefined(expand)) {
-      append = parentSlot.calculateSlotsToAdd(shiftDownRoundUp(expand.size, expand.size));
-      extraSize = min(expand.size, append << expand.shift);
-      // Update/set out parameters for use at the call site.
-      expand.size -= extraSize; // Successive calls will reuse the same object until size reaches zero.
-      expand.added = append; // The call site will want to know how many slots were added.
+      expand.next(parentSlot.slots.length);
+      extraSize = expand.addedSize;
       if(expand.prepend) {
-        prepend = append;
-        append = 0;
+        prepend = expand.addedSlots;
+        slotIndex += prepend;
+      }
+      else {
+        append = expand.addedSlots;
       }
     }
 
     // Prepare the parent view and slot for modifications, and optionally append or prepend additional slots as needed.
     if(!parentSlot.isEditable(group)) {
+log(`parent slot will be cloned from group ${parentSlot.group} to group ${group}`);
       // Note that it is impossible for a slot to be a member of the current group if the view referencing it is not.
       if(!parentView.isEditable(group)) {
         parentView = parentView.cloneToGroup(group);
       }
-      parentSlot = prepend > 0 || append > 0
+      parentSlot = extraSize > 0
         ? parentSlot.cloneWithAdjustedRange(group, prepend, append, false)
         : parentSlot.cloneToGroup(group);
       parentView.slot = parentSlot;
     }
-    else if(prepend > 0 || append > 0) {
+    else if(extraSize > 0) {
       parentSlot.adjustRange(prepend, append, false);
     }
-    parentSlot.size += extraSize;
+log(`parent view has offset ${parentView.offset}`)
+
+    // If the direction of expansion is the same as the current offset anchor, the offset anchor must be flipped so that
+    // the relative offset is not invalidated by the expanded size of the slot.
+    if(isDefined(expand)) {
+      if((expand.prepend && parentView.anchor === OFFSET_ANCHOR.LEFT) || (!expand.prepend && parentView.anchor === OFFSET_ANCHOR.RIGHT)) {
+log(`view ${parentView.id} anchor will be flipped to prevent offset invalidation resulting from slot expansion`);
+        parentView.flipAnchor((<ExpansionState>expand).totalSize - childView.sizeDelta);
+      }
+      parentSlot.size += extraSize;
+      parentView.sizeDelta += expand.addedSize;
+log(`due to expansion, parent slot size increased to ${parentSlot.size}, size delta changed to ${parentView.sizeDelta}`);
+    }
+log(`parent view has offset ${parentView.offset}`)
 
     // Pending changes to the list size and parent slot subcount need to be propagated upwards. Before any further
     // operations are performed, the calling function should also commit changes from the other (left/right) view if
     // they descend from this branch, or the returned slot/view may not reflect the true state of the list.
     if(hasChanges) {
-      parentView.sizeDelta += childView.sizeDelta;
+      if(!parentView.isRoot()) {
+        parentView.sizeDelta += childView.sizeDelta;
+      }
       parentSlot.subcount += childView.slotsDelta;
       parentSlot.size += childView.sizeDelta;
+log(`due to uncommitted changes from child view ${childView.id}, parent slot size increased to ${parentSlot.size}, size delta is now ${parentView.sizeDelta}`);
 
       // If the child or parent is a relaxed slot, set the recompute count to ensure that accumulated sums are updated
       // before any further descent from the parent slot takes place.
       if(parentSlot.isRelaxed() || childSlot.isRelaxed()) {
         parentSlot.recompute = parentSlot.isRelaxed()
-          ? max(parentSlot.recompute, parentSlot.slots.length - childView.slotIndex)
+          ? max(parentSlot.recompute, parentSlot.slots.length - slotIndex)
           : parentSlot.slots.length;
       }
       else {
         parentSlot.recompute = -1;
       }
-
       // Avoid dragging around extraneous references to old state that will be invalidated by any subsequent writes to
       // descendant nodes.
-      if(status === SLOT_STATUS.RESERVE) {
-        var oldChildSlot = <Slot<T>>parentSlot.slots[childView.slotIndex];
+      if(status === SLOT_STATUS.RESERVE || (hasChanges && childSlot.isReserved())) {
+        var oldChildSlot = <Slot<T>>parentSlot.slots[slotIndex];
         if(oldChildSlot.isReservedFor(group)) {
           oldChildSlot.updatePlaceholder(childSlot);
         }
         else {
-          parentSlot.slots[childView.slotIndex] = childSlot.cloneAsPlaceholder(group);
+          parentSlot.slots[slotIndex] = childSlot.cloneAsPlaceholder(group);
         }
       }
     }
-
     // Kill off any obsolete placeholder slots that are no longer needed.
     if(status === SLOT_STATUS.RELEASE) {
-      parentSlot.slots[childView.slotIndex] = childSlot;
+      if(childSlot.isReserved()) {
+        if(childSlot.isReservedFor(group)) {
+          childSlot.group = group;
+        }
+        else {
+          childSlot = childSlot.shallowCloneToGroup(group);
+        }
+      }
+      parentSlot.slots[slotIndex] = childSlot;
     }
   }
 
@@ -187,26 +205,43 @@ export function ascend<T>(group: number, childView: View<T>, status: SLOT_STATUS
  * @returns {boolean} true if the other view's changes were applied, otherwise false
  */
 export function tryCommitOtherView<T>(state: ListState<T>, otherView: View<T>, expectedParent: View<T>, replacementParent: View<T>, slotIndexOffset: number): boolean {
-  if(!isAncestor(expectedParent, otherView, state.size)) {
+log(`try commit other view (state group: ${state.group}, state size: ${state.size}, other view group: ${otherView.group}, expected parent: ${expectedParent.id}, replacement parent: ${replacementParent.id}), slot index offset: ${slotIndexOffset}`)
+log(`expected parent:`, expectedParent);
+log(`replacement parent:`, replacementParent);
+  if(!isAncestor(replacementParent, otherView, state.size)) {
+log(`not an ancestor. commit will be skipped.`);
     return false;
   }
+log(`----- BEGIN COMMIT OTHER VIEW -----`);
+log(`other view (${otherView.id}) is a descendant of upper view ${expectedParent.id}`);
 
   if(!otherView.isEditable(state.group)) {
     otherView = otherView.cloneToGroup(state.group);
     state.setView(otherView);
+log(`other view updated to group ${state.group}`);
   }
 
+  var xx = 0;
   while(otherView.parent !== expectedParent) {
+    if(++xx === 10) {
+      throw new Error('Infinite loop (try commit other)');
+    }
     var otherParent = ascend(state.group, otherView, SLOT_STATUS.NO_CHANGE);
+    if(!otherParent.isEditable(state.group)) {
+      otherParent = otherParent.cloneToGroup(state.group);
+    }
     otherView.setCommitted(otherParent);
     otherView = otherParent;
+log(`other view ascending to find common parent`);
   }
 
+log(`updating other view to point at replacement parent ${replacementParent.id} instead of ${expectedParent.id}`);
   otherView.parent = replacementParent;
   otherView.slotIndex += slotIndexOffset;
   ascend(state.group, otherView, SLOT_STATUS.NO_CHANGE);
   otherView.setCommitted();
 
+log(`----- END COMMIT OTHER VIEW -----`);
   return true;
 }
 
@@ -221,30 +256,60 @@ export function tryCommitOtherView<T>(state: ListState<T>, otherView: View<T>, e
  * @param {boolean} asWriteTarget Ensures that the refocused view path is in a writable state
  * @returns {View<T>} A view referencing a leaf node that owns the specified ordinal position
  */
-function refocusView<T>(state: ListState<T>, view: View<T>, ordinal: number, asWriteTarget: boolean): View<T> {
+export function refocusView<T>(state: ListState<T>, view: View<T>, ordinal: number, asWriteTarget: boolean): View<T> {
+  ordinal = normalizeIndex(state.size, ordinal);
+log(`[refocusView] refocusing view ${view.id} to ordinal ${ordinal} (as write target: ${asWriteTarget})`);
   var shift = 0;
   var anchor = view.anchor;
-  var otherView = anchor === OFFSET_ANCHOR.LEFT ? state.right : state.left;
-  var isOtherViewUncommitted = true;
+  var otherView = state.getOtherView(anchor);
+  var hasOtherView = !otherView.isNone(), isOtherViewUncommitted = true;
   var status = SLOT_STATUS.RELEASE;
   var branchFound = false, ascentComplete = false;
+log(`has other view: ${hasOtherView}`);
 
   // To avoid unnecessarily allocating new views during descent, and to avoid allocating an object or array to keep
   // track of reusable view instances, we will temporarily repurpose the parent property of any reusable views in order
   // build a makeshift stack.
-  var nextReusableView = voidView;
+  var nextReusableView = View.none<T>();
   var childView = view;
 
+  var xx = 0;
   // Ascend to the closest ancestral node for which the specified ordinal index is a descendant.
   do {
+    if(++xx === 10) {
+      throw new Error('Infinite loop (refocus view)');
+    }
     // Changes to the child node will be applied to the parent node, including setting a placeholder slot for the child
     // node if refocusing the view as a write target.
     var parentView = ascend(state.group, childView, status);
+log(`[LOOP START | REFOCUS:ASCEND] child view: ${childView.id}, parentView: ${parentView.id}`);
+log(`parent view has id ${parentView.id}`);
+    if(asWriteTarget && !parentView.isEditable(state.group)) {
+      parentView = parentView.cloneToGroup(state.group);
+    }
+log(`parent view now has id ${parentView.id}`);
+
+    var childIsEditable = childView.isEditable(state.group);
+    var canReuseChildView = (!hasOtherView || (hasOtherView && isOtherViewUncommitted)) && childIsEditable;
+log(`child view ${childView.id} is ${canReuseChildView ? 'ELIGIBLE' : 'INVALID'} for reuse.`);
+
+//     var branchFoundThisIteration = false;
+//     if(!branchFound) {
+// log('branch found');
+//       if(isViewInRange(parentView, ordinal, state.size)) {
+//         branchFound = true;
+//         branchFoundThisIteration = true;
+//         if(asWriteTarget && !parentView.isEditable(state.group)) {
+//           parentView
+//         }
+//       }
+//     }
 
     // If the parent view is an ancestor of the other (left/right) view, and that view has uncommitted changes, they
     // should also be propagated to the parent view to ensure that updated sizes and slot counts are correct before
     // further operations targeting that node take place.
-    if(isOtherViewUncommitted && tryCommitOtherView(state, otherView, childView.parent, parentView, 0)) {
+    if(hasOtherView && isOtherViewUncommitted && tryCommitOtherView(state, otherView, childView.parent, parentView, 0)) {
+log(`other view is now committed`);
       isOtherViewUncommitted = false;
       if(!asWriteTarget) {
         // If we're still ascending, we don't want to affect the reservation status of the path from the shared branch
@@ -264,29 +329,44 @@ function refocusView<T>(state: ListState<T>, view: View<T>, ordinal: number, asW
           status = SLOT_STATUS.RESERVE; // ... because we will continue to ascend if this slot is not reserved yet
         }
       }
-      else if(childView.isEditable(state.group)) {
+      if(canReuseChildView) {
+log(`child view ${childView.id} will be added to the reusable stack`, hasOtherView, isOtherViewUncommitted);
         // The child view was created as part of the current batch of operations, so instead of discarding it, add it to
         // the reusable view stack to avoid redundant allocations of new views during the descent.
         childView.parent = nextReusableView;
         nextReusableView = childView;
       }
+      // else if()
       shift += CONST.BRANCH_INDEX_BITCOUNT;
+    }
+
+    if(!canReuseChildView && childIsEditable) {
+      childView.parent = parentView;
+log(`child ${childView.id} now assigned to parent ${parentView.id}`);
     }
 
     // If the common upper branch node has been found but we want a write target, then we will continue the ascent until
     // it is guaranteed that the current path has been reserved with placeholder slots all the way back to the root.
-    ascentComplete = branchFound && (!asWriteTarget || childView.isRoot() || childView.slot.isReserved());
+    ascentComplete = branchFound && (!asWriteTarget || parentView.isRoot() || parentView.slot.isReserved());
     childView = parentView;
 
   } while(!ascentComplete);
+publish(state, false, `[refocus] begin descent with initial offset ${view.offset}`);
 
   var slot = view.slot;
-  var out = {slot, index: 0, offset: 0};
+  if(asWriteTarget && !view.slot.isEditable(state.group)) {
+    view.slot = slot = slot.cloneAsReservedNode(state.group);
+  }
+  var out = {slot, index: 0, offset: 0}; // TODO: reuse a preallocated object
   var offset = view.offset;
-
   // Descend from the common ancestral branch node to the final node that owns the the destination ordinal position.
   do {
-    slot.resolveChild(ordinal, shift, out);
+log(`[LOOP START | REFOCUS:DESCEND] view: ${view.id}, parentView: ${parentView.id}, slot: ${slot.id}`, slot);
+    if(!slot.resolveChild(ordinal, shift, out)) {
+log(`slot ${slot.id}`, slot);
+      throw new Error(`No child found at ordinal ${ordinal}`);
+    }
+log(`RESOLVED CHILD: slot id: ${out.slot.id}`);
     if(asWriteTarget) {
       // Now that we have the child slot, set the parent slot as a placeholder so that cheap changes can be made to
       // descendant nodes in the future without having to rewrite the entire ancestral slot path, which would normally
@@ -296,32 +376,55 @@ function refocusView<T>(state: ListState<T>, view: View<T>, ordinal: number, asW
 
     // Each descendant view needs to record the absolute offset of the referenced slot in order to quickly judge whether
     // or not that view's slot owns the subtree of a given ordinal that may be queried during future operations.
-    offset += view.anchor === OFFSET_ANCHOR.LEFT ? out.offset : invertOffset(out.offset, out.slot.size, slot.size);
+log(`aggregated offset value was ${offset}, view.anchor: ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}, out.offset: ${out.offset}, out.slot.size: ${out.slot.size}, slot.size: ${slot.size}`);
+    offset += out.offset;
+    // offset += view.anchor === OFFSET_ANCHOR.LEFT ? out.offset : invertOffset(out.offset, out.slot.size, slot.size);
+log(`aggregated offset value updated to ${offset}`);
     slot = out.slot;
+publish(state, false, '[refocus] mid descent')
+    if(!slot.isReservedFor(state.group)) {
+log(`slot ${slot.id} has wrong group ${slot.group} and will be cloned as a reserved node`);
+      slot = slot.cloneAsReservedNode(state.group);
+log(`slot id is now ${slot.id} with group ${slot.group}`);
+    }
 
     // Reuse old views if possible during the descent, otherwise create new ones.
-    if(nextReusableView === voidView) {
-      view = new View<T>(view.group, offset, anchor, out.index, 0, 0, view, out.slot);
+    if(nextReusableView.isNone()) {
+      view = new View<T>(state.group, 0, anchor, out.index, 0, 0, view, slot);
+log(`make new view ${view.id} with parent ${view.parent.id} and slot ${slot.id}, anchored ${nextReusableView.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} at offset ${offset}`);
     }
     else {
+log(`reuse view ${nextReusableView.id} with parent ${parentView.id} and slot ${slot.id}, anchored ${nextReusableView.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} at offset ${offset}`);
       parentView = view;
       view = nextReusableView;
       nextReusableView = view.parent;
       view.parent = parentView;
-      view.offset = offset;
       view.anchor = anchor;
       view.slotIndex = out.index;
       view.sizeDelta = 0;
       view.slotsDelta = 0;
       view.slot = slot;
     }
+    view.offset = view.anchor === OFFSET_ANCHOR.LEFT ? offset : invertOffset(offset, slot.size, state.size);
+
+    if(shift > 0) {
+      if(slot.recompute === -1) {
+        ordinal -= view.slotIndex << shift;
+      }
+      else {
+        ordinal -= slot.sum - slot.size;
+      }
+log(`ordinal reduced to ${ordinal} to cater for descent to slot index ${view.slotIndex}`);
+    }
 
     shift -= CONST.BRANCH_INDEX_BITCOUNT;
 
   } while(shift > 0);
 
+log(`set refocused view ${view.id} with anchor ${view.anchor}`)
   state.setView(view);
 
+log(`descent complete`)
   return view;
 }
 
@@ -330,19 +433,26 @@ export function focusOrdinal<T>(state: ListState<T>, ordinal: number, asWriteTar
   if(ordinal === -1) {
     return void 0;
   }
-  var view = state.selectView(ordinal);
+  var view = state.selectView(ordinal, asWriteTarget);
   return isViewInRange(view, ordinal, state.size) ? view
     : refocusView(state, view, ordinal, asWriteTarget);
 }
 
+function focusEdge<T>(state: ListState<T>, isWriteTarget: boolean, edge: OFFSET_ANCHOR): View<T> {
+  var view = state.getView(edge, isWriteTarget);
+log(`view offset: ${view.offset}, write target: ${isWriteTarget}, slot reserved: ${view.slot.isReserved()}, root: ${view.isRoot()}`);
+if(isWriteTarget) publish(state, false, `edge focused as write target`)
+  return view.offset > 0 || (isWriteTarget && !view.slot.isReserved() && !view.isRoot())
+    ? refocusView(state, view, edge === OFFSET_ANCHOR.LEFT ? 0 : state.size - 1, isWriteTarget)
+    : view;
+}
+
 export function focusHead<T>(state: ListState<T>, isWriteTarget: boolean): View<T> {
-  var view = state.left;
-  return view.offset ? view : refocusView(state, view, 0, isWriteTarget);
+  return focusEdge(state, isWriteTarget, OFFSET_ANCHOR.LEFT);
 }
 
 export function focusTail<T>(state: ListState<T>, isWriteTarget: boolean): View<T> {
-  var view = state.left;
-  return view.offset ? view : refocusView(state, view, state.size - 1, isWriteTarget);
+  return focusEdge(state, isWriteTarget, OFFSET_ANCHOR.RIGHT);
 }
 
 export function getAtOrdinal<T>(state: ListState<T>, ordinal: number): T|undefined {

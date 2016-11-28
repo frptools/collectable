@@ -1,18 +1,11 @@
-import {CONST} from './common';
-import {increaseCapacity} from './capacity';
-import {getAtOrdinal} from './focus';
+import {log} from './common';
+import {append, prepend} from './capacity';
+import {focusOrdinal} from './focus';
+import {ListState} from './state';
 
-import {View, emptyView} from './view';
-import {MutableList, ListState} from './state';
-
-export type ListMutationCallback<T> = (list: MutableList<T>) => void;
+export type ListMutationCallback<T> = (list: List<T>) => void;
 
 export class List<T> {
-  constructor(
-    public size: number,
-    public _state: ListState<T>
-  ) {}
-
   static empty<T>(): List<T> {
     return _emptyList;
   }
@@ -21,47 +14,75 @@ export class List<T> {
     if(!Array.isArray(values)) {
       throw new Error('First argument must be an array of values');
     }
-
-    var state = ListState.empty<T>();
-    var nodes = increaseCapacity(state, values.length, false);
-
-    for(var i = 0, nodeIndex = 0, slotIndex = 0, node = nodes[0];
-        i < values.length;
-        i++, slotIndex >= CONST.BRANCH_INDEX_MASK ? (slotIndex = 0, node = nodes[++nodeIndex]) : (++slotIndex)) {
-      node[slotIndex] = values[i];
-    }
-
-    return state.toList();
+    var state = ListState.empty<T>(false);
+    append(state, values);
+    return new List<T>(state);
   }
 
-  mutable(callback: ListMutationCallback<T>): List<T> {
-    var list = MutableList.from<T>(this);
+  constructor(public _state: ListState<T>) {}
+
+  private _exec(fn: (state: ListState<T>) => void): List<T> {
+    var state = this._state;
+    var immutable = !state.mutable;
+    if(immutable) {
+      state = state.toMutable();
+    }
+    fn(state);
+    return immutable ? new List<T>(state.toImmutable(true)) : this;
+  }
+
+  get size(): number {
+    return this._state.size;
+  }
+
+  batch(callback: ListMutationCallback<T>): List<T> {
+    var state = this._state.toMutable();
+    var list = new List<T>(state);
     callback(list);
-    return list.immutable();
+    state.toImmutable(true);
+    return list;
+  }
+
+  asMutable(): List<T> {
+    if(this._state.mutable) return this;
+    return new List<T>(this._state.toMutable());
+  }
+
+  asImmutable(finished: boolean): List<T> {
+    if(!this._state.mutable) return this;
+    if(finished) {
+      this._state.toImmutable(true);
+      return this;
+    }
+    return new List<T>(this._state.toImmutable(false));
   }
 
   get(index: number): T|undefined {
-    return getAtOrdinal(this._views, index);
+    var view = focusOrdinal(this._state, index, false);
+    if(view === void 0) return void 0;
+    return <T>view.slot.slots[index - view.offset];
   }
 
   append(...values: T[]): List<T>
   append(): List<T> {
-    if(arguments.length === 0) {
-      return this;
-    }
-    var list = MutableList.transient<T>(this);
-    list.append.apply(list, arguments);
-    return list.immutable();
+    return arguments.length === 0 ? this
+      : this._exec(state => append(state, Array.from(arguments)));
+  }
+
+  appendArray(values: T[]): List<T> {
+    return arguments.length === 0 ? this
+      : this._exec(state => append(state, values));
   }
 
   prepend(...values: T[]): List<T>
   prepend(): List<T> {
-    if(arguments.length === 0) {
-      return this;
-    }
-    var list = MutableList.transient<T>(this);
-    list.prepend.apply(list, arguments);
-    return list.immutable();
+    return arguments.length === 0 ? this
+      : this._exec(state => prepend(state, Array.from(arguments)));
+  }
+
+  prependArray(values: T[]): List<T> {
+    return arguments.length === 0 ? this
+      : this._exec(state => prepend(state, values));
   }
 
   pop(): T|undefined {
@@ -74,9 +95,7 @@ export class List<T> {
 
   concat(...lists: List<T>[]): List<T>
   concat(): List<T> {
-    if(arguments.length === 0) {
-      return this;
-    }
+    if(arguments.length === 0) return this;
     var list = MutableList.transient<T>(this);
     list.concat.apply(list, arguments);
     return list.immutable();
@@ -87,4 +106,4 @@ export function isDefaultEmptyList(list: List<any>): boolean {
   return list === _emptyList;
 }
 
-export var _emptyList = new List<any>(0, [emptyView]);
+export var _emptyList = new List<any>(ListState.empty<any>(false));
