@@ -1,4 +1,4 @@
-import {CONST, nextId, isDefined, abs, min, copyArray, normalizeArrayIndex, shiftDownRoundUp, log} from './common';
+import {CONST, nextId, isDefined, abs, min, max, copyArray, normalizeArrayIndex, shiftDownRoundUp, log} from './common';
 
 export const enum SLOT_STATUS {
   NO_CHANGE = 0,
@@ -59,7 +59,7 @@ log(`slot ${this.id} cloned as placeholder with id ${slot.id} and group ${slot.g
   cloneWithAdjustedRange(group: number, padLeft: number, padRight: number, isLeaf: boolean): Slot<T> {
     var src = this.slots;
     var slots = new Array<T|Slot<T>>(src.length + padLeft + padRight);
-    var dest = new Slot<T>(group, 0, 0, isLeaf ? -1 : 0, 0, slots);
+    var dest = new Slot<T>(group, this.size, 0, this.recompute, 0, slots);
     adjustSlotBounds(this, dest, padLeft, padRight, isLeaf);
     return dest;
   }
@@ -239,41 +239,83 @@ log(`OUT SLOT ASSIGNED (E)`);
 function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRight: number, isLeaf: boolean): void {
   var srcSlots = src.slots;
   var destSlots = dest.slots;
-  var i: number, j: number, amount: number;
+  var srcIndex: number, destIndex: number, amount: number;
+
+  // if(padLeft === 0) {
+  //   if(srcSlots === destSlots) {
+  //     destSlots.length += padRight;
+  //   }
+  //   if(isLeaf) {
+  //     dest.size += padRight;
+  //   }
+  //   else if(dest.recompute !== -1) {
+  //     dest.recompute = max(0, dest.recompute + padRight);
+  //     if(padRight < 0) {
+  //       size = dest.size;
+  //       subcount = dest.subcount;
+  //       for(var srcIndex = src.slots.length + padRight; srcIndex < src.slots.length; srcIndex++) {
+  //         size -=
+  //       }
+  //     }
+  //   }
+  // }
+
   if(padLeft < 0) {
-    i = -padLeft;
-    j = 0;
     amount = srcSlots.length + padLeft;
+    srcIndex = -padLeft;
+    destIndex = 0;
   }
   else {
-    i = 0;
-    j = padLeft;
     amount = srcSlots.length;
+    srcIndex = 0;
+    destIndex = padLeft;
   }
+
   if(padRight < 0) {
     amount += padRight;
   }
+
   if(srcSlots === destSlots) {
     destSlots.length += padLeft + padRight;
   }
+
+  var copySlots = padLeft !== 0 || srcSlots !== destSlots;
+  if(copySlots || padRight < 0) {
+    srcIndex += amount - 1;
+    destIndex += amount - 1;
+  }
+
+var devMode = srcSlots === destSlots;
+
 log(`[adjustSlotBounds] amount: ${amount}, original size: ${src.size}`);
   if(isLeaf) {
-    for(var c = 0; c < amount; i++, j++, c++) {
-      destSlots[j] = srcSlots[i];
+    if(copySlots) {
+      for(var c = 0; c < amount; srcIndex--, destIndex--, c++) {
+        destSlots[destIndex] = srcSlots[srcIndex];
+if(devMode) srcSlots[srcIndex] = <any>void 0;
+      }
     }
     dest.size = amount + padLeft + padRight;
   }
   else {
-    var subcount = 0, size = 0;
-    for(var c = 0; c < amount; i++, j++, c++) {
-      var slot = <Slot<T>>srcSlots[i];
-      subcount += slot.slots.length;
-      size += slot.size;
-      destSlots[j] = slot;
+    if(copySlots || padRight < 0) {
+      var subcount = 0, size = 0;
+      for(var c = 0; c < amount; srcIndex--, destIndex--, c++) {
+        var slot = <Slot<T>>srcSlots[srcIndex];
+        subcount += slot.slots.length;
+        size += slot.size;
+        if(copySlots) {
+          destSlots[destIndex] = slot;
+  if(devMode) srcSlots[srcIndex] = <any>void 0;
+        }
+      }
+      dest.size = size;
+      dest.subcount = subcount;
+      dest.recompute = padLeft === 0 ? src.recompute + padRight : destSlots.length;
     }
-    dest.size = size;
-    dest.subcount = subcount;
-    dest.recompute = padLeft === 0 ? src.recompute + padRight : destSlots.length;
+    else if(dest.recompute !== -1) {
+      dest.recompute += padRight;
+    }
   }
 log(`[adjustSlotBounds] size updated to: ${dest.size}`);
 }
@@ -287,16 +329,16 @@ log(`[adjustSlotBounds] size updated to: ${dest.size}`);
  * @class ExpansionState
  */
 export class ExpansionState {
+  private static _default = new ExpansionState();
+
   addedSize = 0;
   addedSlots = 0;
-  constructor(
-    public totalSize: number,
-    public remainingSize: number,
-    public shift: number,
-    public readonly prepend: boolean
-  ) {
-log(`[EXPANSION STATE] CONSTRUCT: remainingSize: ${remainingSize}, shift: ${shift}`);
-  }
+  totalSize = 0;
+  remainingSize = 0;
+  shift = 0;
+  prepend = false;
+
+  private constructor() {}
 
   next(originalSlotCount: number): void {
 log(`[EXPANSION STATE] WAS: totalSize: ${this.totalSize}, remainingSize: ${this.remainingSize}, shift: ${this.shift}, addedSize: ${this.addedSize}, addedSlots: ${this.addedSlots}`);
@@ -304,6 +346,18 @@ log(`[EXPANSION STATE] WAS: totalSize: ${this.totalSize}, remainingSize: ${this.
     this.addedSize = min(this.remainingSize, this.addedSlots << this.shift);
     this.remainingSize -= this.addedSize;
 log(`[EXPANSION STATE] IS NOW: totalSize: ${this.totalSize}, remainingSize: ${this.remainingSize}, shift: ${this.shift}, addedSize: ${this.addedSize}, addedSlots: ${this.addedSlots}`);
+  }
+
+  static reset(totalSize: number, remainingSize: number, shift: number, prepend: boolean): ExpansionState {
+log(`[EXPANSION STATE] RESET: remainingSize: ${remainingSize}, shift: ${shift}`);
+    var state = ExpansionState._default;
+    state.addedSize = 0;
+    state.addedSlots = 0;
+    state.totalSize = totalSize;
+    state.remainingSize = remainingSize;
+    state.shift = shift;
+    state.prepend = prepend;
+    return state;
   }
 }
 

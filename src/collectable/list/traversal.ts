@@ -70,7 +70,7 @@ log(`upperOffset (${upperOffset}) <= lowerView.offset (${lowerView.offset}) && u
 export function ascend<T>(group: number, childView: View<T>, status: SLOT_STATUS, expand?: ExpansionState): View<T> {
   var childSlot = childView.slot;
 
-log(`[ASCEND] from view (${childView.id}), is root: ${childView.isRoot()}` + (!expand ? '' : `, shift: ${expand.shift}, has changed: ${childView.hasUncommittedChanges()}`));
+log(`[ASCEND] from view (${childView.id}), is root: ${childView.isRoot()}, has changed: ${childView.hasUncommittedChanges()}, slot index: ${childView.slotIndex}` + (!expand ? '' : `, shift: ${expand.shift}`));
   // Ascending from the root slot effectively means growing the tree by one level.
   if(childView.isRoot()) {
     // Non-zero delta values for the child view can be disregarded, as we're absorbing the child view's final computed
@@ -83,18 +83,19 @@ log(`[ASCEND] from view (${childView.id}), is root: ${childView.isRoot()}` + (!e
       parentSlot = childSlot.createParent(group, status, expand));
   }
 
+  var hasChanges = childView.hasUncommittedChanges();
   var parentView = childView.parent;
   var parentSlot = parentView.slot;
-log(`parent view has offset ${parentView.offset}`)
+log(`parent view has offset ${parentView.offset}, slots: ${parentSlot.slots.length}`, hasChanges, childView.sizeDelta)
 
   // If the child wasn't already reserved with a placeholder slot, and no reservation has been requested, then there is
   // nothing further that we need to do.
-  if(isUndefined(expand) && !childSlot.isReserved() && status !== SLOT_STATUS.RESERVE) {
+  if(!hasChanges && isUndefined(expand) && status !== SLOT_STATUS.RESERVE && !childSlot.isReserved()) {
+log(`clean parent retrieval with no modifications to the child`);
     return parentView;
   }
 
   var slotIndex = childView.slotIndex;
-  var hasChanges = childView.hasUncommittedChanges();
   if(hasChanges || status === SLOT_STATUS.RESERVE || isDefined(expand)) {
     // Optional expansion parameters can add slots to the start or end of the parent slot.
     var prepend = 0, append = 0, extraSize = 0;
@@ -104,6 +105,7 @@ log(`parent view has offset ${parentView.offset}`)
       if(expand.prepend) {
         prepend = expand.addedSlots;
         slotIndex += prepend;
+log(`slot index increased by ${prepend} to ${slotIndex}`);
       }
       else {
         append = expand.addedSlots;
@@ -120,12 +122,15 @@ log(`parent slot will be cloned from group ${parentSlot.group} to group ${group}
       parentSlot = extraSize > 0
         ? parentSlot.cloneWithAdjustedRange(group, prepend, append, false)
         : parentSlot.cloneToGroup(group);
+      if(status === SLOT_STATUS.RESERVE || (status === SLOT_STATUS.NO_CHANGE && childSlot.isReserved())) {
+        parentSlot.group = -group;
+      }
       parentView.slot = parentSlot;
     }
     else if(extraSize > 0) {
       parentSlot.adjustRange(prepend, append, false);
     }
-log(`parent view has offset ${parentView.offset}`)
+log(`parent view has offset ${parentView.offset}`, hasChanges)
 
     // If the direction of expansion is the same as the current offset anchor, the offset anchor must be flipped so that
     // the relative offset is not invalidated by the expanded size of the slot.
@@ -135,10 +140,12 @@ log(`view ${parentView.id} anchor will be flipped to prevent offset invalidation
         parentView.flipAnchor((<ExpansionState>expand).totalSize - childView.sizeDelta);
       }
       parentSlot.size += extraSize;
-      parentView.sizeDelta += expand.addedSize;
+      if(!parentView.isRoot()) {
+        parentView.sizeDelta += expand.addedSize;
+      }
 log(`due to expansion, parent slot size increased to ${parentSlot.size}, size delta changed to ${parentView.sizeDelta}`);
     }
-log(`parent view has offset ${parentView.offset}`)
+log(`parent view has offset ${parentView.offset}`, hasChanges)
 
     // Pending changes to the list size and parent slot subcount need to be propagated upwards. Before any further
     // operations are performed, the calling function should also commit changes from the other (left/right) view if
@@ -149,7 +156,7 @@ log(`parent view has offset ${parentView.offset}`)
       }
       parentSlot.subcount += childView.slotsDelta;
       parentSlot.size += childView.sizeDelta;
-log(`due to uncommitted changes from child view ${childView.id}, parent slot size increased to ${parentSlot.size}, size delta is now ${parentView.sizeDelta}`);
+log(`due to uncommitted changes from child view ${childView.id}, parent slot size increased by ${childView.sizeDelta} to ${parentSlot.size}, size delta is now ${parentView.sizeDelta}`);
 
       // If the child or parent is a relaxed slot, set the recompute count to ensure that accumulated sums are updated
       // before any further descent from the parent slot takes place.
@@ -163,6 +170,7 @@ log(`due to uncommitted changes from child view ${childView.id}, parent slot siz
       }
       // Avoid dragging around extraneous references to old state that will be invalidated by any subsequent writes to
       // descendant nodes.
+log(`status: ${status}, has changes: ${hasChanges}, child slot reserved: ${childSlot.isReserved()}`, childSlot);
       if(status === SLOT_STATUS.RESERVE || (hasChanges && childSlot.isReserved())) {
         var oldChildSlot = <Slot<T>>parentSlot.slots[slotIndex];
         if(oldChildSlot.isReservedFor(group)) {

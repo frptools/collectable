@@ -1,5 +1,5 @@
 import {CONST, nextId, concatToNewArray, concatSlotsToNewArray, last} from './common';
-import {CREATE_VIEW, focusHead, focusTail} from './focus';
+import {CREATE_VIEW, focusHead, focusTail} from './traversal';
 import {compact} from './compact';
 import {COMMIT_DIRECTION, commitAdjacent} from './commit';
 

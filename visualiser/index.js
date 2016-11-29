@@ -661,7 +661,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 148;//175;
+        var startIndex = 1100;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -688,17 +688,24 @@ publish(list, true, 'EMPTY LIST');
     // var list = listOf(95);
     // list = listOf(1).concat(listOf(32, 1), listOf(1, 33)).append(...makeValues(70, 34));
     var BRANCH_FACTOR = 8;
-      list = list.append('X');
+    // var iterations = 70;
+    // for(var i = 0, c = 1, d = 0, prepend = true; i < iterations; i++, d += c, c = ((d>>>2)%2 === 1 ? i : iterations - i), prepend = !prepend) {
+    //   list = prepend ? list.prependArray(makeValues(c, d)) : list.appendArray(makeValues(c, d))
+    // }
+      list = List.of(makeValues(2508));
+      list = list.prepend('X');
+      list = list.append('Y', 'Z');
 // publish(left, true, 'FINAL STATE #1');
-      list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
-      list = list.prepend(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
-      list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
-      list = list.append(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
-      list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
-      list = list.append(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
-      list = list.append(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
-      list = list.prepend(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
-      list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+      // list = list.append(...makeValues(BRANCH_FACTOR*145 + BRANCH_FACTOR/2 + 1));
+      // list = list.prepend(...makeValues(BRANCH_FACTOR*145 + BRANCH_FACTOR/2 + 1));
+      // list = list.prepend(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
+      // list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+      // list = list.append(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
+      // list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+      // list = list.append(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
+      // list = list.append(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
+      // list = list.prepend(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
+      // list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
 // publish(left, true, 'FINAL STATE #2');
       // left = left.prepend(...makeValues(BRANCH_FACTOR*BRANCH_FACTOR*BRANCH_FACTOR+1, 99));
 // publish([left], true, 'left');

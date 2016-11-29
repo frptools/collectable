@@ -1,7 +1,7 @@
 import {CONST, copyArray, last, nextId, log, publish} from './common';
 import {concat} from './concat';
 import {increaseCapacity} from './capacity';
-import {focusOrdinal, refocusView} from './focus';
+import {focusOrdinal, refocusView} from './traversal';
 
 import {List, isDefaultEmptyList} from './list';
 import {OFFSET_ANCHOR, View} from './view';

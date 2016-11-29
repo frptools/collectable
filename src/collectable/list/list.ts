@@ -1,6 +1,6 @@
 import {log} from './common';
 import {append, prepend} from './capacity';
-import {focusOrdinal} from './focus';
+import {focusOrdinal} from './traversal';
 import {ListState} from './state';
 
 export type ListMutationCallback<T> = (list: List<T>) => void;
