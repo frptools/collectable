@@ -83,7 +83,6 @@ log(`offset for view ${this.id} flipped ${this.anchor === OFFSET_ANCHOR.LEFT ? '
 
   replaceSlot(slot: Slot<T>): void {
     this.slot = slot;
-    this.uncommitted = true;
   }
 
   slotCount(): number {

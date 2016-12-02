@@ -27,7 +27,7 @@ export function nextId() {
  * @returns {number} The inverted offset value
  */
 export function invertOffset(offset: number, slotSize: number, listSize: number): number {
-log(`[invertOffset] offset: ${offset}, slotSize: ${slotSize}, listSize: ${listSize}, result: ${listSize - offset - slotSize}`);
+// log(`[invertOffset] offset: ${offset}, slotSize: ${slotSize}, listSize: ${listSize}, result: ${listSize - offset - slotSize}`);
   return listSize - offset - slotSize;
 }
 

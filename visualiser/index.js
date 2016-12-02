@@ -345,7 +345,8 @@ function drawLines() {
     document.querySelector('.version.active').scrollIntoViewIfNeeded(false);
     var el = document.querySelector('.list-container')
     if(listsEl.children.length > 1) {
-      el.scrollLeft = listsEl.children[1].offsetLeft - (el.offsetWidth/2)
+      // el.scrollLeft = listsEl.children[1].offsetLeft - (el.offsetWidth/2)
+      el.scrollLeft = el.scrollWidth;
     }
     else {
       // el.scrollLeft = el.scrollWidth/2 - el.offsetWidth/2;
@@ -414,7 +415,7 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isPlaceholder, views,
       nodeViews.push(renderView(listIndex, view, i));
     });
   }
-  return div('.node-view-container', {class: {'has-view': !!views, changed: views && views[0] && views[0].view.uncommitted}}, nodeViews);
+  return div('.node-view-container', {class: {'has-view': !!views, changed: views && views[0] && (views[0].view.sizeDelta || views[0].view.slotsDelta)}}, nodeViews);
 }
 
 function matchViewsToSlot(listIndex, level, slot, parent, parentSlotIndex, parentBranchId, parentViewId, views, unusedViews) {
@@ -661,7 +662,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 1100;
+        var startIndex = 38;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -692,9 +693,15 @@ publish(list, true, 'EMPTY LIST');
     // for(var i = 0, c = 1, d = 0, prepend = true; i < iterations; i++, d += c, c = ((d>>>2)%2 === 1 ? i : iterations - i), prepend = !prepend) {
     //   list = prepend ? list.prependArray(makeValues(c, d)) : list.appendArray(makeValues(c, d))
     // }
-      list = List.of(makeValues(2508));
-      list = list.prepend('X');
-      list = list.append('Y', 'Z');
+
+    var n0 = Math.pow(BRANCH_FACTOR, 2) + 1;
+    var n1 = BRANCH_FACTOR + 1;
+
+    list = List.of(makeValues(n0));
+publish(list, true, 'PRE CONCAT');
+    list = list.concat(List.of(makeValues(n1, n0)));
+      // list = list.prepend('X');
+      // list = list.append('Y', 'Z');
 // publish(left, true, 'FINAL STATE #1');
       // list = list.append(...makeValues(BRANCH_FACTOR*145 + BRANCH_FACTOR/2 + 1));
       // list = list.prepend(...makeValues(BRANCH_FACTOR*145 + BRANCH_FACTOR/2 + 1));

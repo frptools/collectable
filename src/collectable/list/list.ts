@@ -1,6 +1,7 @@
-import {log} from './common';
+import {isDefined, log} from './common';
 import {append, prepend} from './capacity';
 import {focusOrdinal} from './traversal';
+import {concat} from './concat';
 import {ListState} from './state';
 
 export type ListMutationCallback<T> = (list: List<T>) => void;
@@ -21,13 +22,21 @@ export class List<T> {
 
   constructor(public _state: ListState<T>) {}
 
-  private _exec(fn: (state: ListState<T>) => void): List<T> {
+  private _exec(fn: (state: ListState<T>) => ListState<T>|void): List<T> {
     var state = this._state;
     var immutable = !state.mutable;
     if(immutable) {
       state = state.toMutable();
     }
-    fn(state);
+    var nextState = fn(state);
+    if(isDefined(nextState)) {
+      if(immutable) {
+        state = nextState;
+      }
+      else {
+        this._state = nextState;
+      }
+    }
     return immutable ? new List<T>(state.toImmutable(true)) : this;
   }
 
@@ -95,10 +104,13 @@ export class List<T> {
 
   concat(...lists: List<T>[]): List<T>
   concat(): List<T> {
-    if(arguments.length === 0) return this;
-    var list = MutableList.transient<T>(this);
-    list.concat.apply(list, arguments);
-    return list.immutable();
+    return arguments.length === 0 ? this
+      : this._exec(state => {
+        for(var i = 0; i < arguments.length; i++) {
+          state = concat(state, arguments[i]._state);
+        }
+        return state;
+      });
   }
 }
 

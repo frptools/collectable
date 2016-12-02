@@ -1,143 +1,214 @@
-import {CONST, nextId, concatToNewArray, concatSlotsToNewArray, last} from './common';
-import {CREATE_VIEW, focusHead, focusTail} from './traversal';
+import {CONST, nextId, isDefined, concatToNewArray, concatSlotsToNewArray, log, publish} from './common';
+import {ascend, tryCommitOtherView, focusHead, focusTail} from './traversal';
 import {compact} from './compact';
-import {COMMIT_DIRECTION, commitAdjacent} from './commit';
+import {OFFSET_ANCHOR} from './view';
 
-import {Slot} from './slot';
+import {SLOT_STATUS, Slot} from './slot';
 import {View} from './view';
 import {ListState} from './state';
 
-export function concat<T>(leftList: ListState<T>, rightList: ListState<T>): void {
-  if((leftList === rightList && (leftList.group = nextId())) || rightList.group !== leftList.group) {
-    rightList = rightList.clone(leftList.group);
+export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): ListState<T> {
+  if(leftState.size === 0) {
+    return rightState;
   }
 
-  var rightEdgeView = focusTail(rightList, true),
-      edgeChildView = View.empty<T>(),
-      isRightConverged = rightEdgeView.isRoot(),
-      rightSeamView = isRightConverged ? rightEdgeView : focusHead(rightList, CREATE_VIEW.PERSIST_UNCOMMITTED),
-      leftSeamView = focusTail(leftList, true /*false*/),
-      isLeftRoot = leftSeamView.isRoot(),
-      isJoined = false,
-      level = 0,
-      shift = 0;
-
-  if(leftSeamView.group !== leftList.group) {
-    leftList.views[leftList.views.length - 1] = leftSeamView = leftSeamView.cloneToGroup(leftList.group);
-  }
-  if(leftSeamView.slot.group !== leftList.group) {
-    leftSeamView.slot = leftSeamView.slot.cloneToGroup(leftList.group);
+  if(rightState.size === 0) {
+    return leftState;
   }
 
+  // Ensure that the right list has the same group as the left list and that if they are references to the same list,
+  // that the right list is first cloned to avoid ghosted changes between different nodes, and that both lists are
+  // working within the same group context.
+  if((leftState === rightState && (leftState.group = nextId())) || rightState.group !== leftState.group) {
+    rightState = rightState.clone(leftState.group, true);
+  }
+
+  // The inner views will be "zipped" together and the outer views will be retained as the new left/right views.
+  var group = leftState.group,
+      leftInnerView = focusTail(leftState, true),
+      leftOuterView = leftState.getOtherView(leftInnerView.anchor),
+      rightInnerView = focusHead(rightState, true),
+      rightOuterView = rightState.getOtherView(rightInnerView.anchor),
+      leftIsRoot = leftInnerView.isRoot(),
+      rightIsRoot = rightInnerView.isRoot(),
+      hasLeftOuterView = !leftIsRoot && !leftOuterView.isNone(),
+      hasRightOuterView = !rightIsRoot && !rightOuterView.isNone(),
+      leftIsCommitted = !hasLeftOuterView,
+      rightIsCommitted = !hasRightOuterView,
+      shift = 0,
+      isJoined = false;
+publish([leftState, rightState], false, `concatenation initialization start; has left outer view: ${hasLeftOuterView}, has right outer view: ${hasRightOuterView}`);
+
+  if(leftInnerView.group !== group) {
+    leftState.setView(leftInnerView = leftInnerView.cloneToGroup(group));
+  }
+  if(!leftInnerView.slot.isReservedFor(group)) {
+    leftInnerView.slot = leftInnerView.slot.cloneToGroup(group, true);
+  }
+  if(rightInnerView.group !== group) {
+    rightState.setView(rightInnerView = rightInnerView.cloneToGroup(group));
+  }
+  if(!rightInnerView.slot.isReservedFor(group)) {
+    rightInnerView.slot = rightInnerView.slot.cloneToGroup(group, true);
+  }
+publish([leftState, rightState], false, `concatenation initialized; has left outer view: ${hasLeftOuterView}, has right outer view: ${hasRightOuterView}`);
+
+  if(!hasLeftOuterView) {
+    leftOuterView = leftInnerView;
+  }
+  if(!hasRightOuterView) {
+    rightOuterView = rightInnerView;
+  }
+
+  var nodes: [Slot<T>, Slot<T>] = [leftInnerView.slot, rightInnerView.slot];
+  var view = View.none<T>();
+  var rightCommittedChild: View<T>|undefined = void 0;
+
+  var xx = 0;
   do {
-    if(!isJoined) {
-      if(level > 0) {
-        if(!isLeftRoot) {
-          commitAdjacent(leftList, leftSeamView, level, 0, false, COMMIT_DIRECTION.LEFT);
-        }
-        if(!isRightConverged) {
-          commitAdjacent(rightList, rightSeamView, level, 0, false, COMMIT_DIRECTION.RIGHT);
-          commitAdjacent(rightList, rightEdgeView, level, 0, false, COMMIT_DIRECTION.LEFT);
-        }
-      }
+publish([leftState, rightState], false, `[LOOP START | CONCAT | iteration #${xx}] left is root: ${leftIsRoot}, right is root: ${rightIsRoot}`);
 
-      var nodes: [Slot<T>, Slot<T>] = [leftSeamView.slot, rightSeamView.slot];
-      var rightSlotCount = rightSeamView.slotCount();
-
-      if(join(nodes, shift, isLeftRoot || isRightConverged)) {
-        if(nodes[1].size === 0) {
-          rightSeamView.start = leftSeamView.start;
-          rightSeamView.replaceSlot(nodes[0]);
-          if(isLeftRoot || isRightConverged) {
-            isJoined = true;
-            leftList.views = [last(rightList.views)];
-            if(!isLeftRoot) {
-              rightSeamView.parent = leftSeamView.parent;
-              rightSeamView.slotIndex += leftSeamView.slotIndex;
-              rightSeamView.slotsDelta = rightSlotCount;
-            }
-          }
-        }
-        else {
-          var slotCountDelta = nodes[1].slots.length - rightSlotCount;
-          leftSeamView.uncommitted = true;
-          leftSeamView.slotsDelta -= slotCountDelta;
-          leftSeamView.replaceSlot(nodes[0]);
-          rightSeamView.replaceSlot(nodes[1]);
-          rightSeamView.slotsDelta += slotCountDelta;
-        }
-        rightSeamView.uncommitted = true;
-        if(level > 0) {
-          edgeChildView.slotIndex = rightSeamView.slotCount() - 1;
-        }
-      }
-
-      if(!isJoined) {
-        leftSeamView = leftSeamView.ascend(false);
-        isLeftRoot = leftSeamView.isRoot();
-      }
+    if(++xx === 10) {
+      throw new Error('Infinite loop (concat)');
     }
 
-    var childView: View<T>;
-    if(isRightConverged) {
-      childView = rightSeamView;
-      rightSeamView.end = leftList.size + rightList.size;
-      if(!isJoined || !isLeftRoot) {
-        edgeChildView = rightSeamView;
-        if(!isJoined) {
-          rightSeamView.start = rightSeamView.end - rightSeamView.slot.size;
+    if(leftInnerView.anchor === OFFSET_ANCHOR.RIGHT) {
+      leftInnerView.flipAnchor(leftState.size);
+    }
+    if(rightInnerView.anchor === OFFSET_ANCHOR.RIGHT) {
+      rightInnerView.flipAnchor(rightState.size);
+    }
+
+    var rightSlotCount = rightInnerView.slotCount();
+    var rightSize = rightInnerView.slot.size;
+
+    // If join() returns true, it means that, at the very least, some slots were shuffled from right to left. If the
+    // right slot in the nodes array has size zero after the operation, then the right slot has been fully merged into
+    // the left slot and can be eliminated.
+    if(join(nodes, shift, leftIsRoot || rightIsRoot)) {
+publish([leftState, rightState], false, `joined left and right: ${nodes[1].size === 0 ? 'TOTAL' : 'PARTIAL'}`);
+      var slotCountDelta = rightSlotCount - nodes[1].slots.length;
+      var slotSizeDelta = rightSize - nodes[1].size;
+
+      leftInnerView.replaceSlot(nodes[0]);
+      leftInnerView.slotsDelta += slotCountDelta;
+      leftInnerView.sizeDelta += slotSizeDelta;
+
+      isJoined = leftIsRoot || rightIsRoot;
+
+      if(isJoined) {
+        if(!rightIsRoot) {
+          leftInnerView.parent = rightInnerView.parent;
         }
-        else {
-          rightSeamView.slot.size = rightSeamView.end - rightSeamView.start;
+        if(isDefined(rightCommittedChild)) {
+log(`joined with right committed child; slotCountDelta: ${slotCountDelta}, leftInnerView.slotCount: ${leftInnerView.slotCount()}`);
+          rightCommittedChild.slotIndex += leftInnerView.slotCount() - slotCountDelta;
+          rightCommittedChild.parent = leftInnerView;
         }
         if(shift > 0) {
-          rightSeamView.slot.reserveChildAtIndex(-1);
+          view.slotIndex += slotCountDelta;
+          view.parent = leftInnerView;
         }
-        rightSeamView = rightSeamView.ascend(false);
-        if(isJoined) {
-          isLeftRoot = rightSeamView.isRoot();
-        }
-      }
-    }
-    else {
-      childView = rightEdgeView;
-      rightEdgeView.end = leftList.size + rightList.size;
-      rightEdgeView.start = rightEdgeView.end - rightEdgeView.slot.size;
-      edgeChildView = rightEdgeView;
-      if(shift > 0) {
-        rightEdgeView.slot.reserveChildAtIndex(-1);
-      }
-      if(rightEdgeView.parent === rightSeamView.parent) {
-        rightEdgeView = rightEdgeView.ascend(false);
-        rightEdgeView.slot.slots[0] = rightSeamView.slot;
-        rightSeamView.parent = rightEdgeView;
-        rightSeamView = rightEdgeView;
-        isRightConverged = true;
       }
       else {
-        rightEdgeView = rightEdgeView.ascend(false);
-        rightSeamView = rightSeamView.ascend(false);
+        rightInnerView.replaceSlot(nodes[1]);
+        rightInnerView.sizeDelta -= slotSizeDelta;
+        rightInnerView.slotsDelta -= slotCountDelta;
       }
+log(slotCountDelta, shift, view, nodes);
     }
-    childView.uncommitted = true;
 
-    level++;
-    shift += CONST.BRANCH_INDEX_BITCOUNT;
+    if(!isJoined) {
+publish([leftState, rightState], false, `ready to ascend to the next level`);
+      var parent: View<T>;
+      if(leftIsRoot || !hasLeftOuterView) {
+        view = ascend(group, leftInnerView, SLOT_STATUS.RESERVE);
+        if(!leftInnerView.slot.isReserved()) {
+          if(leftInnerView.slot.group === group) {
+            leftInnerView.slot.group = -group;
+          }
+          else {
+            leftInnerView.slot = leftInnerView.slot.cloneAsReservedNode(group);
+          }
+        }
+      }
+      else {
+        parent = leftInnerView.parent;
+        view = ascend(group, leftInnerView, SLOT_STATUS.RELEASE);
+        if(tryCommitOtherView(leftState, leftOuterView, parent, view, 0)) {
+          leftIsCommitted = true;
+        }
+      }
+      leftInnerView.parent = view;
+      if(shift === 0) {
+        leftInnerView.flipAnchor(leftState.size + rightState.size);
+      }
+      leftInnerView = view;
+      if(!leftIsRoot) {
+        leftIsRoot = leftInnerView.isRoot();
+      }
 
-  } while(!(isJoined && isLeftRoot && isRightConverged));
+      parent = rightInnerView.parent;
+      rightCommittedChild = void 0;
+      view = ascend(group, rightInnerView, hasRightOuterView && rightIsCommitted ? SLOT_STATUS.NO_CHANGE : SLOT_STATUS.RELEASE);
+      if(!rightIsCommitted) {
+        rightCommittedChild = tryCommitOtherView(rightState, rightOuterView, parent, view, 0);
+        if(isDefined(rightCommittedChild)) {
+          rightIsCommitted = true;
+        }
+      }
+      parent = view;
+      rightInnerView.parent = parent;
+      view = rightInnerView;
+log(rightInnerView);
+      rightInnerView = parent;
+      if(!rightIsRoot) {
+        rightIsRoot = rightInnerView.isRoot();
+      }
 
-  leftList.size += rightList.size;
-  rightSeamView.end = leftList.size;
-  rightSeamView.slot.size = rightSeamView.end - rightSeamView.start;
-  rightSeamView.uncommitted = false;
-  if(level > 1) {
-    rightSeamView.slot.reserveChildAtIndex(-1);
+      nodes[0] = leftInnerView.slot;
+      nodes[1] = rightInnerView.slot;
+
+      shift += CONST.BRANCH_INDEX_BITCOUNT;
+    }
+
+  } while(!isJoined);
+
+publish([leftState, rightState], false, `[LOOP DONE | CONCAT] left converged: ${leftIsRoot}, right converged: ${rightIsRoot}`);
+
+  leftState.size += rightState.size;
+
+  if(hasRightOuterView) {
+    // if(rightIsRoot) {
+    //   rightInnerView.parent =
+    // }
+    if(!hasLeftOuterView) {
+      if(leftOuterView.anchor !== OFFSET_ANCHOR.LEFT) {
+        leftOuterView.flipAnchor(leftState.size);
+      }
+      leftState.setView(leftOuterView);
+    }
+log('RIGHT OUTER VIEW', rightOuterView)
+    leftState.setView(rightOuterView);
+  }
+  // else {
+  //   leftInnerView.flipAnchor(leftState.size);
+  // }
+
+  if(leftIsRoot && rightIsRoot) {
+    leftInnerView.sizeDelta = 0;
+    leftInnerView.slotsDelta = 0;
+    if(leftInnerView.slot.isReserved()) {
+      leftInnerView.slot.group = -leftInnerView.slot.group;
+    }
   }
 
-  leftList.leftViewIndex = -1;
-  leftList.rightViewIndex = -1;
-  leftList.leftItemEnd = -1;
-  leftList.rightItemStart = -1;
+log('LEFT STATE', leftState);
+  publish(leftState, true, `concat done`);
+  focusHead(leftState, true);
+  publish(leftState, true, `head refocused`);
+
+  return leftState;
 }
 
 export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoin: boolean): boolean {
@@ -147,6 +218,7 @@ export function join<T>(nodes: [Slot<T>, Slot<T>], shift: number, canFinalizeJoi
   if(canFinalizeJoin && count <= CONST.BRANCH_FACTOR) {
     var relaxed = left.isRelaxed() || right.isRelaxed() || !left.isSubtreeFull(shift);
 
+    // TODO: don't allocate new arrays if the slots already have the correct group
     left.slots = shift === 0
       ? concatToNewArray(left.slots, right.slots, 0)
       : concatSlotsToNewArray<T>(<Slot<T>[]>left.slots, <Slot<T>[]>right.slots);

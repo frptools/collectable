@@ -41,19 +41,19 @@ suite('[List: public]', () => {
     // tailSize70k = (<LNode<string>>list70k._tail).size;
   });
 
-  suite.only('.empty()', () => {
+  suite('.empty()', () => {
     test('should have size 0', () => {
       const list = List.empty<string>();
       assert.strictEqual(list.size, 0);
     });
   });
 
-  suite.only('#append()', () => {
+  suite('#append()', () => {
     test('should not mutate the original List', () => {
       const empty = List.empty<string>();
       const pushed = empty.append('foo');
       assert.strictEqual(empty.size, 0);
-      assert.strictEqual(empty._views[0].slot.slots.length, 0);
+      assert.strictEqual(empty._state.left.slot.slots.length, 0);
       assert.notStrictEqual(empty, pushed);
       assert.notDeepEqual(empty, pushed);
     });
@@ -85,13 +85,12 @@ suite('[List: public]', () => {
     });
   });
 
-
   suite('#prepend()', () => {
     test('should not mutate the original List', () => {
       const empty = List.empty<string>();
       const pushed = empty.prepend('foo');
       assert.strictEqual(empty.size, 0);
-      assert.strictEqual(empty._views[0].slot.slots.length, 0);
+      assert.strictEqual(empty._state.left.slot.slots.length, 0);
       assert.notStrictEqual(empty, pushed);
       assert.notDeepEqual(empty, pushed);
     });
@@ -117,7 +116,7 @@ suite('[List: public]', () => {
 
     test('should push multiple arguments so that they appear in the order they were specified', () => {
       const list = List.of<string>(['test']).prepend('foo', 'bar', 'baz');
-      assert.strictEqual(list.size, 3);
+      assert.strictEqual(list.size, 4);
       assert.deepEqual(gatherLeafValues(list), ['foo', 'bar', 'baz', 'test']);
     });
   });

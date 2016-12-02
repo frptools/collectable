@@ -1,7 +1,8 @@
 declare function require(moduleName: string): any;
 
 import {assert} from 'chai';
-import {MutableList} from '../collectable/list/state';
+import {append} from '../collectable/list/capacity';
+import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
 import {concat, join} from '../collectable/list/concat';
 import {compact} from '../collectable/list/compact';
@@ -32,7 +33,7 @@ function makeJoinablePair(height: number, subtractLeftSize = 0, subtractRightSiz
   return [left, right];
 }
 
-suite('[List: concatenation]', () => {
+suite.only('[List: concatenation]', () => {
   suite('compact()', () => {
     test('child slots are moved from right to left until the slot distribution is balanced', () => {
       function makeRelaxedPair(): [Slot<string>, Slot<string>] {
@@ -273,10 +274,10 @@ suite('[List: concatenation]', () => {
 
   suite('concat()', () => {
     test('joins two minimal single-node lists', () => {
-      var left = MutableList.empty<any>().append(...makeValues(1));
-      var right = MutableList.empty<any>().append(...makeValues(2, 1));
+      var left = append(ListState.empty<any>(true), makeValues(1));
+      var right = append(ListState.empty<any>(true), makeValues(2, 1));
 
-      concat(left._state, right._state);
+      concat(left, right);
 
       var root = rootSlot(left);
       assert.isFalse(root.isRelaxed());
@@ -287,10 +288,10 @@ suite('[List: concatenation]', () => {
     test('joins two single-level lists into a two-level result if capacity is exceeded', () => {
       var n0 = BRANCH_FACTOR/2 + 1;
       var n1 = n0 + 1;
-      var left = MutableList.empty<any>().append(...makeValues(n0));
-      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+      var left = append(ListState.empty<any>(true), makeValues(n0));
+      var right = append(ListState.empty<any>(true), makeValues(n1, n0));
 
-      concat(left._state, right._state);
+      concat(left, right);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -304,10 +305,10 @@ suite('[List: concatenation]', () => {
       var m = BRANCH_FACTOR/2;
       var n0 = BRANCH_FACTOR*m + 1;
       var n1 = BRANCH_FACTOR*m + 3;
-      var left = MutableList.empty<any>().append(...makeValues(n0));
-      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+      var left = append(ListState.empty<any>(true), makeValues(n0));
+      var right = append(ListState.empty<any>(true), makeValues(n1, n0));
 
-      concat(left._state, right._state);
+      concat(left, right);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -320,10 +321,10 @@ suite('[List: concatenation]', () => {
     test('joins a deeper left list to a shallower right list', () => {
       var n0 = Math.pow(BRANCH_FACTOR, 2) + 1;
       var n1 = BRANCH_FACTOR + 1;
-      var left = MutableList.empty<any>().append(...makeValues(n0));
-      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+      var left = append(ListState.empty<any>(true), makeValues(n0));
+      var right = append(ListState.empty<any>(true), makeValues(n1, n0));
 
-      concat(left._state, right._state);
+      concat(left, right);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -336,10 +337,10 @@ suite('[List: concatenation]', () => {
     test('joins a shallower left list to a deeper right list', () => {
       var n0 = BRANCH_FACTOR + 1;
       var n1 = Math.pow(BRANCH_FACTOR, 2) + 1;
-      var left = MutableList.empty<any>().append(...makeValues(n0));
-      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
+      var left = append(ListState.empty<any>(true), makeValues(n0));
+      var right = append(ListState.empty<any>(true), makeValues(n1, n0));
 
-      concat(left._state, right._state);
+      concat(left, right);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -347,44 +348,6 @@ suite('[List: concatenation]', () => {
 
       commitToRoot(left);
       assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
-    });
-
-    test('leaves only a tail view in the resulting list', () => {
-      var n0 = BRANCH_FACTOR + 1;
-      var n1 = Math.pow(BRANCH_FACTOR, 2) + 1;
-      var left = MutableList.empty<any>().append(...makeValues(n0));
-      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
-
-      concat(left._state, right._state);
-
-      assert.strictEqual(left._state.views.length, 1);
-      assert.strictEqual(left._state.views[0].start, left._state.size - 1);
-      assert.strictEqual(left._state.views[0].end, left._state.size);
-    });
-
-    test('ensures that the tail view path is uncommitted', () => {
-      var n0 = BRANCH_FACTOR + 1;
-      var n1 = Math.pow(BRANCH_FACTOR, 2) + 1;
-      var left = MutableList.empty<any>().append(...makeValues(n0));
-      var right = MutableList.empty<any>().append(...makeValues(n1, n0));
-
-      concat(left._state, right._state);
-
-      var v0 = left._state.views[0];
-      var v1 = v0.parent;
-      var v2 = v1.parent;
-
-      assert.strictEqual((<Slot<any>>v1.slot.slots[v0.slotIndex]).group, 0);
-      assert.strictEqual((<Slot<any>>v2.slot.slots[v1.slotIndex]).group, 0);
-    });
-
-    test('front view not used as head if start > 0', () => {
-      var left = MutableList.empty<any>().append(...makeValues(BRANCH_FACTOR));
-      var right = MutableList.empty<any>().append(...makeValues(BRANCH_FACTOR*3, BRANCH_FACTOR));
-      right.get(BRANCH_FACTOR);
-      left.concat(right);
-      commitToRoot(left);
-      assert.deepEqual(gatherLeafValues(rootSlot(left), true), makeValues(BRANCH_FACTOR*4));
     });
   });
 });

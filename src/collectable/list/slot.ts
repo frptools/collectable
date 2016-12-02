@@ -42,7 +42,10 @@ log(`slot ${this.id} shallow-cloned with id ${slot.id} and group ${slot.group}`)
     return new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, this.slots);
   }
 
-  cloneToGroup(group: number): Slot<T> {
+  cloneToGroup(group: number, preserveStatus: boolean = false): Slot<T> {
+    if(preserveStatus && this.group < 0) {
+      group = -abs(group);
+    }
     return new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, copyArray(this.slots));
   }
 
@@ -195,7 +198,7 @@ log(`OUT SLOT ASSIGNED (C)`);
     this.recompute = 0;
 
     for(i = invalidFromIndex; i <= lastIndex; i++) {
-      if(i === lastIndex && sum === maxSum) {
+      if(i === lastIndex && sum === maxSum && !(<Slot<T>>this.slots[i]).isRelaxed()) {
 log(`recomputation determined that this is no longer a relaxed node`, sum, maxSum);
         this.recompute = -1;
         if(!found) {
@@ -285,14 +288,14 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
     destIndex += amount - 1;
   }
 
-var devMode = srcSlots === destSlots;
+// var devMode = srcSlots === destSlots;
 
 log(`[adjustSlotBounds] amount: ${amount}, original size: ${src.size}`);
   if(isLeaf) {
     if(copySlots) {
       for(var c = 0; c < amount; srcIndex--, destIndex--, c++) {
         destSlots[destIndex] = srcSlots[srcIndex];
-if(devMode) srcSlots[srcIndex] = <any>void 0;
+// if(devMode) srcSlots[srcIndex] = <any>void 0;
       }
     }
     dest.size = amount + padLeft + padRight;
@@ -306,7 +309,7 @@ if(devMode) srcSlots[srcIndex] = <any>void 0;
         size += slot.size;
         if(copySlots) {
           destSlots[destIndex] = slot;
-  if(devMode) srcSlots[srcIndex] = <any>void 0;
+  // if(devMode) srcSlots[srcIndex] = <any>void 0;
         }
       }
       dest.size = size;

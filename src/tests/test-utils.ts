@@ -19,13 +19,18 @@ export function rootSlot<T>(arg: ListOrView<T>): Slot<any> {
 }
 
 export function rootView<T>(arg: ListOrView<T>): View<T> {
-  var view = arg instanceof View ? arg : getViews(arg)[0];
+  var view = arg instanceof View ? arg : firstActiveView(arg);
   while(view && view.parent && view.parent.parent) view = view.parent;
   return view;
 }
 
 export function firstView<T>(arg: ListOrView<T>): View<T> {
-  return arg instanceof View ? arg : getViews(arg)[0];
+  return arg instanceof View ? arg : firstActiveView(arg);
+}
+
+export function firstActiveView<T>(arg: ListType<T>): View<T> {
+  var state = getState(arg);
+  return state.left.isNone() ? state.right : state.left;
 }
 
 export function headSlot<T>(arg: ListOrView<T>): Slot<T> {
@@ -64,10 +69,8 @@ export function slotValues<T>(arg: ViewOrSlot<T>): (T|Slot<T>)[] {
   return (arg instanceof View ? arg.slot : arg).slots;
 }
 
-function getViews<T>(arg: ListType<T>): View<T>[] {
-  if(arg instanceof List) return arg._views;
-  if(arg instanceof MutableList) return arg._state.views;
-  return arg.views;
+function getState<T>(arg: ListType<T>): ListState<T> {
+  return arg instanceof List ? arg._state : arg;
 }
 
 export function listOf(size: number, offset = 0): List<string> {
@@ -115,11 +118,23 @@ export function makeRelaxedSlot(slots: Slot<any>[]): Slot<any> {
   return slot;
 }
 
+export function assertArrayElementsAreEqual(arr1: any[], arr2: any[], message?: string): void {
+  if(arr1.length !== arr2.length) throw new Error(`Arrays are not the same length; (${arr1.length} vs ${arr2.length})`);
+  for(var i = 0; i < arr1.length; i++) {
+    assert.strictEqual(arr1[i], arr2[i], `Arrays differ at element ${i}: ${arr1[i]} vs ${arr2[i]}${message ? `; ${message}` : ''}`);
+  }
+}
+
 export function gatherLeafValues(arg: AnyListType<any>, flatten = true): any[] {
+  var x = glf.apply(null, arguments);
+  return x;
+}
+
+function glf(arg: AnyListType<any>, flatten = true): any[] {
   var slot = arg instanceof Slot ? arg : rootSlot(arg);
   return flatten
-    ? slot.slots.reduce((vals: any[], slot: Slot<any>) => vals.concat(slot instanceof Slot ? gatherLeafValues(slot, true) : [slot]), [])
-    : slot.slots.map(slot => slot instanceof Slot ? gatherLeafValues(slot, false) : slot);
+    ? slot.slots.reduce((vals: any[], slot: Slot<any>) => vals.concat(slot instanceof Slot ? glf(slot, true) : [slot]), [])
+    : slot.slots.map(slot => slot instanceof Slot ? glf(slot, false) : slot);
 }
 
 export function makeValues(count: number, valueOffset = 0): string[] {
@@ -130,26 +145,19 @@ export function makeValues(count: number, valueOffset = 0): string[] {
   return values;
 }
 
-export function populateValues(targets: any[], values: any[], offset = 0, i = 0): number {
-  if(Array.isArray(targets[0])) {
-    for(var j = 0; j < targets.length; j++) {
-      i = populateValues(targets[j], values, j === 0 ? offset : 0, i);
-    }
+export function commitToRoot<T>(arg: ListOrView<T>) {
+  if(arg instanceof ListState) {
+    commitToRoot(arg.left);
+    commitToRoot(arg.right);
   }
   else {
-    for(var j = offset; j < targets.length; j++, i++) {
-      targets[j] = values[i];
+    var view = firstView(arg);
+    while(!view.parent.isNone()) {
+      var slot = view.slot;
+      slot.group = Math.abs(slot.group);
+      var index = view.slotIndex;
+      view = view.parent;
+      view.slot.slots[index] = slot;
     }
-  }
-  return i;
-}
-
-export function commitToRoot<T>(arg: ListOrView<T>) {
-  var view = firstView(arg);
-  while(!view.parent.isNone()) {
-    var slot = view.slot;
-    var index = view.slotIndex;
-    view = view.parent;
-    view.slot.slots[index] = slot;
   }
 }

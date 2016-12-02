@@ -85,20 +85,20 @@ log(`requested view is default empty`);
       var otherView = anchor === OFFSET_ANCHOR.RIGHT ? this.left : this.right;
       if(!otherView.isNone()) {
 log(`other view is active`);
-        if(otherView.parent.isNone()) {
-log(`other view has no parent, so it will become this view`);
+        if(otherView.parent.isNone() || otherView.slot.size + otherView.offset === this.size) {
+log(`other view has no parent or is already aligned to its opposite edge, so it will become this view`);
           this.setView(View.empty<T>(otherView.anchor));
           otherView = otherView.cloneToGroup(this.group);
-          otherView.anchor = view.anchor;
+          otherView.flipAnchor(this.size);
           this.setView(view = otherView);
         }
         else {
 log(`other view has a parent, so it's time to activate a second view`);
           otherView.setCommitted();
           otherView = otherView.cloneToGroup(this.group);
-          otherView.anchor = view.anchor;
+          otherView.flipAnchor(this.size);
 log(`cloned view ${otherView.id} is about to be refocused`);
-          view = refocusView(this, otherView, anchor === OFFSET_ANCHOR.LEFT ? 0 : -1, asWriteTarget);
+          view = refocusView(this, otherView, anchor === OFFSET_ANCHOR.LEFT ? 0 : -1, asWriteTarget, true);
           view.offset = 0;
 log(`view has been refocused`);
           this.setView(view);

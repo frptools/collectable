@@ -4,7 +4,7 @@ import {SLOT_STATUS, Slot, ExpansionState} from './slot';
 import {OFFSET_ANCHOR, View} from './view';
 import {ListState} from './state';
 
-export function append<T>(state: ListState<T>, values: T[]): void {
+export function append<T>(state: ListState<T>, values: T[]): ListState<T> {
 publish(state, false, `[BEGIN APPEND] total values: ${values.length}, initial size: ${state.size}, group: ${state.group}`);
   var tail = focusTail(state, true);
   var innerIndex = tail.slot.size % CONST.BRANCH_FACTOR;
@@ -15,12 +15,13 @@ publish(state, false, `ready to expand nodes to increase capacity`);
   //   inner[innerIndex] = values[i];
   // }
 publish(state, true, `append completed`);
-  // log('elements:', elements);
-  log('tail:', tail);
-  log('state:', state);
+// log('elements:', elements);
+// log('tail:', tail);
+// log('state:', state);
+  return state;
 }
 
-export function prepend<T>(state: ListState<T>, values: T[]): void {
+export function prepend<T>(state: ListState<T>, values: T[]): ListState<T> {
 publish(state, false, `[BEGIN PREPEND] total values: ${values.length}, initial size: ${state.size}, group: ${state.group}`);
   focusHead(state, true);
   // var elements = increaseCapacity(state, values.length, true);
@@ -31,6 +32,7 @@ publish(state, false, `[BEGIN PREPEND] total values: ${values.length}, initial s
   //   inner[innerIndex] = values[i];
   // }
 publish(state, true, `prepend completed`);
+  return state;
 }
 
 export class Collector<T> {
@@ -107,6 +109,11 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
 
   state.size += numberOfAddedSlots;
 
+  if(!childView.isEditable(group)) {
+    childView = childView.cloneToGroup(group);
+    state.setView(childView);
+  }
+
   // If the leaf node was already full, it does not need to be modified.
   if(numberOfAddedSlots > 0) {
     if(slot.isEditable(group)) {
@@ -114,7 +121,7 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
     }
     else {
 log(`adjusting range of child (group: ${group})`);
-      childView.slot = slot = slot.cloneWithAdjustedRange(-group, prepend ? numberOfAddedSlots : 0, prepend ? 0 : numberOfAddedSlots, true);
+      childView.slot = slot = slot.cloneWithAdjustedRange(slot.isReserved() ? -group : group, prepend ? numberOfAddedSlots : 0, prepend ? 0 : numberOfAddedSlots, true);
     }
 
     // The changes to the size of the leaf node need to be propagated to its parent the next time the tree is ascended.
@@ -125,7 +132,7 @@ log(`adjusting range of child (group: ${group})`);
 
     // If the leaf node had sufficient room for the additional requested capacity, then we're done.
     if(numberOfAddedSlots === increaseBy) {
-publish(state, false, 'Slot capacity increased at edge/leaf node. No secondary expansion was required.');
+log('Slot capacity increased at edge/leaf node. No secondary expansion was required.');
       return Collector.one<T>(<T[]>slot.slots);
     }
   }
@@ -156,7 +163,7 @@ publish(state, false, 'Slot capacity increased at edge/leaf node. No secondary e
   // updated with output values by the ascend function to allow the calling function to keep track of what was changed.
 log(`number of added slots: ${numberOfAddedSlots} (total capacity to add: ${increaseBy}, for a total list size of: ${state.size})`);
 log(`(${state.size} - ${increaseBy} === ${state.size - increaseBy}) %>> ${CONST.BRANCH_INDEX_BITCOUNT} << ${CONST.BRANCH_INDEX_BITCOUNT} === ${state.size - (shiftDownRoundUp((state.size - increaseBy), CONST.BRANCH_INDEX_BITCOUNT) << CONST.BRANCH_INDEX_BITCOUNT)}`)
-publish(state, false, `Leaf capacity increased. Upper branches will be expanded next.`);
+log(`Leaf capacity increased. Upper branches will be expanded next.`);
   var expand = ExpansionState.reset(state.size, increaseBy - numberOfAddedSlots, 0, prepend);
   var viewPath = [childView]; // An array of the views along the edge of the tree, used during subtree population.
   var shift = 0, level = 0;
@@ -170,7 +177,8 @@ publish(state, false, `Leaf capacity increased. Upper branches will be expanded 
   // of list element values by the calling function. If the root is reached and additional capacity is still required,
   // additional nodes are added above the root, increasing the depth of the tree.
   do {
-publish(state, true, `[INCREASE CAPACITY | LOOP START] expand.totalSize: ${expand.totalSize}`);
+log(`[INCREASE CAPACITY | LOOP START] expand.totalSize: ${expand.totalSize}`);
+publish(state, false, `[INCREASE CAPACITY | LOOP START] expand.totalSize: ${expand.totalSize}`);
 
     shift += CONST.BRANCH_INDEX_BITCOUNT;
     expand.shift = shift;
@@ -193,10 +201,9 @@ log(`Committed other view`);
       collector.index -= shiftDownRoundUp(expand.addedSize, CONST.BRANCH_INDEX_BITCOUNT);
 log(`collector index changed to ${collector.index} due to size expansion by ${expand.addedSize} @ shift ${shift}`);
       collector.mark();
-// log(`collector: the element index should be shifted back by ${shiftDownRoundUp(expand.addedSize, CONST.BRANCH_INDEX_BITCOUNT)}`);
     }
 
-publish(state, false, `Ascended to level ${level + 1}. Added slots: ${expand.addedSlots}. Remaining: ${expand.remainingSize}`);
+log(`Ascended to level ${level + 1}. Added slots: ${expand.addedSlots}. Remaining: ${expand.remainingSize}`);
 
     // If the other view exists and has now been committed, we can't modify the upper views in the shared path of both
     // leaf views, which is what would normally happen during subtree population in order to keep a set of views focused
@@ -309,7 +316,7 @@ log(`ASCENDING. view:`, view)
       if(levelIndex === 1) {
         // if(levelIndex < level) {
           // view.slot.size += delta;
-// log(`size of level 1 slot ${view.slot.id} increased to ${view.slot.size}`);
+log(`size of level 1 slot ${view.slot.id} increased to ${view.slot.size}`);
         // }
         slot.subcount += subcount;
         // if(levelIndex === level) {
@@ -326,7 +333,7 @@ log(`reserve child; slot.reserveChildAtIndex(prepend ? 0 : -1) ==> slot.reserveC
       }
 
 //       if((!prepend && remaining === 0)) {
-// log(`group set to -1 [A]`)
+log(`group set to -1 [A]`)
 //         slot.group = -group;
 //       }
 
@@ -341,7 +348,7 @@ log(`reserve child; slot.reserveChildAtIndex(prepend ? 0 : -1) ==> slot.reserveC
 log(`now pointing at slot ${slot.id}`);
         // if(levelIndex < level) {
           // view.slot.size += delta;
-// log(`size of slot ${view.slot.id} increased to ${view.slot.size}`);
+log(`size of slot ${view.slot.id} increased to ${view.slot.size}`);
           // delta += view.sizeDelta;
           // view.sizeDelta = delta;
         // }
@@ -378,7 +385,7 @@ log(`upper max: ${slotCount << shift + CONST.BRANCH_INDEX_BITCOUNT} cap: ${modul
 log(`empty set of nodes stored at index ${collector.index} (nodes.length: ${collector.elements.length})`);
         collector.set(leafSlots);
         // elements[elementsIndex++] = leafSlots;
-publish(state, false, `will update slot at index ${slotIndex}`);
+log(`will update slot at index ${slotIndex}`);
         slots[slotIndex] = new Slot<T>(group, elementCount, 0, -1, 0, leafSlots);
         if(!prepend || isLeftEdge) {
 log(`update leaf view (${leafView.id}) slot index to ${slotIndex}`);
@@ -387,7 +394,7 @@ log(`update leaf view (${leafView.id}) slot index to ${slotIndex}`);
         }
         remaining -= elementCount;
 
-publish(state, false, `updated slot at index ${slotIndex}`);
+log(`updated slot at index ${slotIndex}`);
         delta += elementCount;
         subcount += elementCount;
         slotIndex++;
@@ -410,7 +417,7 @@ log(`DESCENDING`)
         slotCount = shiftDownRoundUp(size, shift);
 log(`size of the child slot is: ${size}, slots: ${slotCount}, remaining, ${remaining}, capacity: ${capacity}`);
         // slotCount = min(CONST.BRANCH_FACTOR, shiftDownRoundUp(/*prepend ? (capacity - remaining || CONST.BRANCH_FACTOR) :*/ remaining, shift));
-// log(prepend && capacity === remaining ? modulo(remaining, shift) : remaining, shiftDownRoundUp(modulo(remaining, shift), shift))
+log(prepend && capacity === remaining ? modulo(remaining, shift) : remaining, shiftDownRoundUp(modulo(remaining, shift), shift))
 log(`slot ${slot.id} count changed to: ${slotCount} (prepend: ${prepend}, capacity: ${capacity}, remaining: ${remaining}, shift: ${shift})`);
         // slotCount = remaining >>> shift;
         // var remainder = 0;
