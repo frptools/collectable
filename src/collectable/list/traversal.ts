@@ -82,7 +82,7 @@ log(`[ASCEND] from view (${childView.id}), is root: ${childView.isRoot()}, has c
     if(isDefined(expand)) {
       expand.next(1);
     }
-    return new View<T>(group, childView.offset, childView.anchor, childSlot.sum, 0, 0, View.none<T>(), childSlot.createParent(group, status, expand));
+    return new View<T>(group, childView.offset, childView.anchor, 0, 0, 0, View.none<T>(), childSlot.createParent(group, status, expand));
   }
 
   var hasChanges = childView.hasUncommittedChanges();
@@ -133,7 +133,6 @@ log(`parent slot will be cloned from group ${parentSlot.group} to group ${group}
       parentSlot.adjustRange(prepend, append, false);
     }
 log(`parent view has offset ${parentView.offset}, has changes:`, hasChanges)
-
     // If the direction of expansion is the same as the current offset anchor, the offset anchor must be flipped so that
     // the relative offset is not invalidated by the expanded size of the slot.
     if(isDefined(expand)) {
@@ -148,7 +147,6 @@ log(`view ${parentView.id} anchor will be flipped to prevent offset invalidation
 log(`due to expansion, parent slot size increased to ${parentSlot.size}, size delta changed to ${parentView.sizeDelta}`);
     }
 log(`parent view has offset ${parentView.offset}`, hasChanges)
-
     // Pending changes to the list size and parent slot subcount need to be propagated upwards. Before any further
     // operations are performed, the calling function should also commit changes from the other (left/right) view if
     // they descend from this branch, or the returned slot/view may not reflect the true state of the list.
@@ -183,7 +181,6 @@ log(`status: ${status}, has changes: ${hasChanges}, child slot reserved: ${child
         }
       }
     }
-
     // Kill off any obsolete placeholder slots that are no longer needed.
     if(status === SLOT_STATUS.RELEASE) {
       if(childSlot.isReserved()) {
@@ -198,7 +195,6 @@ log(`status: ${status}, has changes: ${hasChanges}, child slot reserved: ${child
       parentSlot.slots[slotIndex] = childSlot;
     }
   }
-
 
   return parentView;
 }

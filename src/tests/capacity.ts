@@ -127,8 +127,7 @@ suite('[List: capacity]', () => {
         const root = rootSlot(list0);
         assert.strictEqual(root.subcount, BRANCH_FACTOR + 1);
         assert.strictEqual(root.size, n0 + n1 + 1);
-        assert.strictEqual((<Slot<any>>root.slots[0]).sum, n0 + n1);
-        assert.strictEqual(root.recompute, 1);
+        assert.strictEqual(root.recompute, 2);
       });
     });
   });

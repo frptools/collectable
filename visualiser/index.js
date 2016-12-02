@@ -694,12 +694,13 @@ publish(list, true, 'EMPTY LIST');
     //   list = prepend ? list.prependArray(makeValues(c, d)) : list.appendArray(makeValues(c, d))
     // }
 
-    var n0 = Math.pow(BRANCH_FACTOR, 2) + 1;
-    var n1 = BRANCH_FACTOR + 1;
+    const n0 = BRANCH_FACTOR - 1;
+    const n1 = Math.pow(BRANCH_FACTOR, 2) - n0 - 1;
 
     list = List.of(makeValues(n0));
 publish(list, true, 'PRE CONCAT');
     list = list.concat(List.of(makeValues(n1, n0)));
+    list = list.append('X');
       // list = list.prepend('X');
       // list = list.append('Y', 'Z');
 // publish(left, true, 'FINAL STATE #1');

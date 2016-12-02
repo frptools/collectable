@@ -22,7 +22,7 @@ export class Slot<T> {
     public subcount: number, // the total number of slots belonging to immediate child slots
     public slots: (Slot<T>|T)[]
   ) {
-log(`construct new slot ${this.id}`);
+log(`construct new slot ${this.id} with size ${size}, sum ${sum}, recompute: ${recompute}, subcount: ${subcount}`);
   }
 
   static empty<T>(): Slot<T> {
