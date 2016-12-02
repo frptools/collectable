@@ -10,6 +10,7 @@ publish(state, false, `[BEGIN APPEND] total values: ${values.length}, initial si
   var innerIndex = tail.slot.size % CONST.BRANCH_FACTOR;
 publish(state, false, `ready to expand nodes to increase capacity`);
   increaseCapacity(state, values.length, false).populate(values, innerIndex);
+  state.lastWrite = state.size - 1;
   // for(var i = 0, outerIndex = 0, inner = elements[0]; i < values.length;
   //     i++, innerIndex >= inner.length - 1 ? (innerIndex = 0, inner = elements[++outerIndex]) : (++innerIndex)) {
   //   inner[innerIndex] = values[i];
@@ -26,6 +27,7 @@ publish(state, false, `[BEGIN PREPEND] total values: ${values.length}, initial s
   focusHead(state, true);
   // var elements = increaseCapacity(state, values.length, true);
   increaseCapacity(state, values.length, true).populate(values, 0);
+  state.lastWrite = 0;
 // log('elements:', elements);
   // for(var i = 0, innerIndex = 0, outerIndex = 0, inner = elements[0]; i < values.length;
   //     i++, innerIndex >= inner.length - 1 ? (innerIndex = 0, inner = elements[++outerIndex]) : (++innerIndex)) {
@@ -108,6 +110,7 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
   var numberOfAddedSlots = slot.calculateSlotsToAdd(increaseBy);
 
   state.size += numberOfAddedSlots;
+log(`number of added slots: ${numberOfAddedSlots} (total capacity to add: ${increaseBy}, for a total list size of: ${state.size})`);
 
   if(!childView.isEditable(group)) {
     childView = childView.cloneToGroup(group);
@@ -161,7 +164,6 @@ log('Slot capacity increased at edge/leaf node. No secondary expansion was requi
 
   // The ascend function is capable of expanding the parent slot during ascension. An expansion argument is provided and
   // updated with output values by the ascend function to allow the calling function to keep track of what was changed.
-log(`number of added slots: ${numberOfAddedSlots} (total capacity to add: ${increaseBy}, for a total list size of: ${state.size})`);
 log(`(${state.size} - ${increaseBy} === ${state.size - increaseBy}) %>> ${CONST.BRANCH_INDEX_BITCOUNT} << ${CONST.BRANCH_INDEX_BITCOUNT} === ${state.size - (shiftDownRoundUp((state.size - increaseBy), CONST.BRANCH_INDEX_BITCOUNT) << CONST.BRANCH_INDEX_BITCOUNT)}`)
 log(`Leaf capacity increased. Upper branches will be expanded next.`);
   var expand = ExpansionState.reset(state.size, increaseBy - numberOfAddedSlots, 0, prepend);

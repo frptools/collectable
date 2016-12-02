@@ -128,7 +128,7 @@ publish([leftState, rightState], false, `ready to ascend to the next level`);
             leftInnerView.slot.group = -group;
           }
           else {
-            leftInnerView.slot = leftInnerView.slot.cloneAsReservedNode(group);
+            leftInnerView.slot = leftInnerView.slot.toReservedNode(group);
           }
         }
       }
@@ -203,10 +203,10 @@ log('RIGHT OUTER VIEW', rightOuterView)
     }
   }
 
-log('LEFT STATE', leftState);
+  rightOuterView = leftState.right;
+  leftState.lastWrite = rightOuterView.slot.isReserved() ? leftState.size - rightOuterView.slot.size : -1;
+
   publish(leftState, true, `concat done`);
-  focusHead(leftState, true);
-  publish(leftState, true, `head refocused`);
 
   return leftState;
 }

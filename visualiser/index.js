@@ -582,7 +582,7 @@ function renderList(model) {
       var state = list._state || list;
       return div('.list', [
         div('.props', [
-          div('.size', withProps ? ['list size: ', ('size' in state ? state.size : state.slot.size).toString()] : '!')
+          div('.size', withProps ? ['list size: ', (console.log(state), 'size' in state ? state.size : state.slot.size).toString()] : '!')
         ]),
         div('.container', [
           nodeContainer,
@@ -662,7 +662,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 38;
+        var startIndex = 44;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -684,23 +684,42 @@ function main({DOM, events}) {
   });
 
   setTimeout(() => {
-    var list = List.empty();
-publish(list, true, 'EMPTY LIST');
+//     var list = List.empty();
+// publish(list, true, 'EMPTY LIST');
     // var list = listOf(95);
     // list = listOf(1).concat(listOf(32, 1), listOf(1, 33)).append(...makeValues(70, 34));
     var BRANCH_FACTOR = 8;
+    // var list = List.of(makeValues(BRANCH_FACTOR));
+    // list = list.concat(List.of(makeValues(1, BRANCH_FACTOR)));
+    // list = list.appendArray(makeValues(BRANCH_FACTOR*2, BRANCH_FACTOR + 1));
+    var list = listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
+                        .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2))
+                        .prepend('X');
+
+    var index = BRANCH_FACTOR + (BRANCH_FACTOR >>> 1);
+publish(list, true, `pre-get index ${index}`);
+    log(`item at index ${index}: ${list.get(index)}`);
+publish(list, true, `pre-get index ${index+1}`);
+    log(`item at index ${index+1}: ${list.get(index+1)}`);
+publish(list, true, `pre-get index ${index-1}`);
+    log(`item at index ${index-1}: ${list.get(index-1)}`);
+publish(list, true, `post-get index ${index-1}`);
+    list = list.append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2));
+    log(`item at index ${index}: ${list.get(index)}`);
+publish(list, true, `got index ${index}`);
+
     // var iterations = 70;
     // for(var i = 0, c = 1, d = 0, prepend = true; i < iterations; i++, d += c, c = ((d>>>2)%2 === 1 ? i : iterations - i), prepend = !prepend) {
     //   list = prepend ? list.prependArray(makeValues(c, d)) : list.appendArray(makeValues(c, d))
     // }
 
-    const n0 = BRANCH_FACTOR - 1;
-    const n1 = Math.pow(BRANCH_FACTOR, 2) - n0 - 1;
+    var n0 = Math.pow(BRANCH_FACTOR, 2) + 1;
+    var n1 = BRANCH_FACTOR + 1;
 
     list = List.of(makeValues(n0));
 publish(list, true, 'PRE CONCAT');
     list = list.concat(List.of(makeValues(n1, n0)));
-    list = list.append('X');
+//     list = list.append('X');
       // list = list.prepend('X');
       // list = list.append('Y', 'Z');
 // publish(left, true, 'FINAL STATE #1');

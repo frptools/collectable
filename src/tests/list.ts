@@ -220,22 +220,20 @@ suite('[List: public]', () => {
     test('should perform recomputation of accumulated slot sizes during traversal', () => {
       var list = listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
                           .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2));
-      assert.strictEqual(list.get(40), text(40));
+      var index = BRANCH_FACTOR + (BRANCH_FACTOR >>> 1);
+      assert.strictEqual(list.get(index), text(index));
     });
 
-    test('should not cause a slot to become uncommitted when creating a new view', () => {
+    test('should release a reserved slot when refocusing a view for reading', () => {
       var list = listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
-                          .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2));
-      var view = list._views[0];
-      assert.strictEqual(view.end, list.size);
-      list.get(40);
-      assert.strictEqual(list._views.length, 2);
-      view = list._views[1];
-      assert.strictEqual(view.end, list.size);
-      assert.strictEqual(view.start, list.size - view.slot.size);
-      view = list._views[0];
-      assert.isAbove(view.start, 0);
-      assert.strictEqual(view.slot, view.parent.slot.slots[view.slotIndex]);
+                          .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2))
+                          .prepend('X');
+      assert.isTrue(list._state.right.slot.isReserved());
+      assert.isTrue(list._state.left.slot.isReserved());
+      list.get(BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
+      assert.isFalse(list._state.right.slot.isReserved());
+      assert.isTrue(list._state.left.slot.isReserved());
+      assert.strictEqual(list._state.right.slot, list._state.right.parent.slot.slots[list._state.right.slotIndex]);
     });
   });
 

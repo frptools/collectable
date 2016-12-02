@@ -327,8 +327,9 @@ suite('[List: concatenation]', () => {
       concat(left, right);
 
       var root = rootSlot(left);
-      assert.isTrue(root.isRelaxed());
-      assert.strictEqual(root.size, n0 + n1);
+      assert.isTrue(left.right.parent.hasUncommittedChanges());
+      assert.isTrue(left.right.parent.slot.isRelaxed());
+      assert.strictEqual(left.size, n0 + n1);
 
       commitToRoot(left);
       assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));

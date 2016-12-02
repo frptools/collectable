@@ -49,8 +49,13 @@ log(`slot ${this.id} shallow-cloned with id ${slot.id} and group ${slot.group}`)
     return new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, copyArray(this.slots));
   }
 
-  cloneAsReservedNode(group: number): Slot<T> {
-    return this.cloneToGroup(-abs(group));
+  toReservedNode(group: number): Slot<T> {
+    if(group < 0) group = -group;
+    if(this.group === group) {
+      this.group = -group;
+      return this;
+    }
+    return this.cloneToGroup(-group);
   }
 
   cloneAsPlaceholder(group: number): Slot<T> {
@@ -218,7 +223,7 @@ log(`OUT SLOT ASSIGNED (D)`);
         maxSum += slotCap;
 
         if(slot.sum !== sum) {
-          if(slot.group !== this.group) {
+          if(slot.group !== this.group && slot.group !== -this.group) {
             this.slots[i] = slot = slot.shallowCloneWithStatus(SLOT_STATUS.NO_CHANGE);
           }
           slot.sum = sum;

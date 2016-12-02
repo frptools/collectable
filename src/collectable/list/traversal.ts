@@ -18,7 +18,7 @@ function isInRange(ordinal: number, leftOffset: number, slotSize: number): boole
 
 /**
  * Checks whether a list ordinal position lies within the specified view's absolute range within the list
- * 
+ *
  * @template T The type of elements in the list
  * @param {View<T>} view A view to perform a range check against
  * @param {number} ordinal An ordinal position whose existence should be checked with respect to the specified view
@@ -33,7 +33,7 @@ function isViewInRange<T>(view: View<T>, ordinal: number, listSize: number): boo
 
 /**
  * Checks an upper view's offset and size to see if it is an ancestor of the lower view
- * 
+ *
  * @template T The type of elements in the list
  * @param {View<T>} upperView An ancestral view
  * @param {View<T>} lowerView A descendant view
@@ -43,9 +43,50 @@ function isViewInRange<T>(view: View<T>, ordinal: number, listSize: number): boo
 function isAncestor<T>(upperView: View<T>, lowerView: View<T>, listSize: number): boolean {
 log(`[isAncestor] list size: ${listSize}, lower view ${lowerView.id} offset: ${lowerView.offset}, anchor: ${lowerView.anchor}, size: ${lowerView.slot.size}; upper view ${upperView.id} offset: ${upperView.offset}, anchor: ${upperView.anchor}, size: ${upperView.slot.size}`);
   var upperOffset = lowerView.anchor === upperView.anchor ? upperView.offset
-                  : invertOffset(upperView.offset, upperView.slot.size, listSize);
-log(`upperOffset (${upperOffset}) <= lowerView.offset (${lowerView.offset}) && upperOffset (${upperOffset}) + upperView.slot.size (${upperView.slot.size}) >= lowerView.offset (${lowerView.offset}) + lowerView.slot.size (${lowerView.slot.size})`);
-  return upperOffset <= lowerView.offset && upperOffset + upperView.slot.size >= lowerView.offset + lowerView.slot.size;
+                  : invertOffset(upperView.offset, upperView.slot.size + lowerView.sizeDelta, listSize);
+log(`upperOffset (${upperOffset}) <= lowerView.offset (${lowerView.offset}) && upperOffset (${upperOffset}) + upperView.slot.size (${upperView.slot.size + lowerView.sizeDelta}) >= lowerView.offset (${lowerView.offset}) + lowerView.slot.size (${lowerView.slot.size})`);
+  return upperOffset <= lowerView.offset && upperOffset + upperView.slot.size + lowerView.sizeDelta >= lowerView.offset + lowerView.slot.size;
+}
+
+/**
+ * Selects and returns either the left or the right view for further operations at the specified ordinal position. The
+ * view is selected with a preference for preserving the position of the last view that was written to, so that the
+ * reading and writing of views will implicitly optimise itself according to the way the list is being used.
+ *
+ * @param {ListState<T>} state The list state to be queried
+ * @param {number} ordinal A hint to indicate the next ordinal position to be queried
+ * @returns {View<T>} One of either the left or the right view
+ *
+ * @memberOf ListState
+ */
+function selectView<T>(state: ListState<T>, ordinal: number, asWriteTarget: boolean): View<T> {
+  var left = state.left, right = state.right, resolve = asWriteTarget;
+  var anchor: OFFSET_ANCHOR;
+  if(left.isNone()) {
+log(`left is none, right is root: ${right.isRoot()}`);
+    anchor = right.isRoot() || isInRange(ordinal, invertOffset(right.offset, right.slot.size, state.size), right.slot.size)
+      ? OFFSET_ANCHOR.RIGHT : OFFSET_ANCHOR.LEFT;
+    if(anchor === OFFSET_ANCHOR.LEFT) resolve = true;
+  }
+  else if(right.isNone()) {
+log(`right is none, left is root: ${right.isRoot()}`);
+    anchor = left.isRoot() || isInRange(ordinal, invertOffset(left.offset, left.slot.size, state.size), left.slot.size)
+      ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT;
+    if(anchor === OFFSET_ANCHOR.RIGHT) resolve = true;
+  }
+  else {
+log(`left and right exist; selecting...`);
+    var leftEnd = left.bound();
+    var rightStart = state.size - right.bound();
+    var lastWriteWasLeft = state.lastWrite < leftEnd;
+    anchor = rightStart <= ordinal ? OFFSET_ANCHOR.RIGHT
+      : leftEnd > ordinal ? OFFSET_ANCHOR.LEFT
+      : lastWriteWasLeft ? OFFSET_ANCHOR.RIGHT : OFFSET_ANCHOR.LEFT;
+  }
+log(`selecting ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view for ${asWriteTarget ? 'WRITING' : 'READING'}`);
+  return resolve
+    ? state.getView(anchor, asWriteTarget)
+    : anchor === OFFSET_ANCHOR.LEFT ? left : right;
 }
 
 /**
@@ -291,7 +332,7 @@ log(`has other view: ${hasOtherView}`);
     // Changes to the child node will be applied to the parent node, including setting a placeholder slot for the child
     // node if refocusing the view as a write target.
     var parentView = ascend(state.group, childView, status);
-log(`[LOOP START | REFOCUS:ASCEND] child view: ${childView.id}, parentView: ${parentView.id}`);
+publish(state, false, `[LOOP START | REFOCUS:ASCEND] child view: ${childView.id}, parentView: ${parentView.id}`);
 log(`parent view has id ${parentView.id}`);
     if(asWriteTarget && !parentView.isEditable(state.group)) {
       parentView = parentView.cloneToGroup(state.group);
@@ -364,7 +405,7 @@ publish(state, false, `[refocus] begin descent with initial offset ${view.offset
 
   var slot = view.slot;
   if(asWriteTarget && !view.slot.isEditable(state.group)) {
-    view.slot = slot = slot.cloneAsReservedNode(state.group);
+    view.slot = slot = slot.toReservedNode(state.group);
   }
   var out = {slot, index: 0, offset: 0}; // TODO: reuse a preallocated object
   var offset = view.offset;
@@ -391,9 +432,9 @@ log(`aggregated offset value was ${offset}, view.anchor: ${view.anchor === OFFSE
 log(`aggregated offset value updated to ${offset}`);
     slot = out.slot;
 publish(state, false, '[refocus] mid descent')
-    if(!slot.isReservedFor(state.group)) {
-log(`slot ${slot.id} has wrong group ${slot.group} and will be cloned as a reserved node`);
-      slot = slot.cloneAsReservedNode(state.group);
+    if(asWriteTarget && !slot.isReservedFor(state.group)) {
+log(`slot ${slot.id} has wrong group ${slot.group} (should be ${state.group}) and will be cloned as a reserved node`);
+      slot = slot.toReservedNode(state.group);
 log(`slot id is now ${slot.id} with group ${slot.group}`);
     }
 
@@ -408,6 +449,7 @@ log(`reuse view ${nextReusableView.id} with parent ${parentView.id} and slot ${s
       view = nextReusableView;
       nextReusableView = view.parent;
       view.parent = parentView;
+log(`view ${view.id} anchor set ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`);
       view.anchor = anchor;
       view.slotIndex = out.index;
       view.sizeDelta = 0;
@@ -430,7 +472,7 @@ log(`ordinal reduced to ${ordinal} to cater for descent to slot index ${view.slo
 
   } while(shift > 0);
 
-log(`set refocused view ${view.id} with anchor ${view.anchor}`)
+log(`set refocused view ${view.id} with anchor ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`)
   state.setView(view);
 
 log(`descent complete`)
@@ -438,11 +480,13 @@ log(`descent complete`)
 }
 
 export function focusOrdinal<T>(state: ListState<T>, ordinal: number, asWriteTarget: boolean): View<T>|undefined {
+log(`[focusOrdinal: ${ordinal}] state.size: ${state.size}`);
   ordinal = normalizeIndex(state.size, ordinal);
   if(ordinal === -1) {
     return void 0;
   }
-  var view = state.selectView(ordinal, asWriteTarget);
+  var view = selectView(state, ordinal, asWriteTarget);
+log(`view:`, view);
   return isViewInRange(view, ordinal, state.size) ? view
     : refocusView(state, view, ordinal, asWriteTarget);
 }
@@ -465,8 +509,8 @@ export function focusTail<T>(state: ListState<T>, isWriteTarget: boolean): View<
 }
 
 export function getAtOrdinal<T>(state: ListState<T>, ordinal: number): T|undefined {
-  // TODO: move into List<T>, seeing as MutableList<T> will be removed
   var view = focusOrdinal(state, ordinal, false);
   if(view === void 0) return void 0;
-  return <T>view.slot.slots[ordinal - view.offset];
+  var slot = view.slot;
+  return <T>slot.slots[ordinal - (view.anchor === OFFSET_ANCHOR.LEFT ? view.offset : invertOffset(view.offset, slot.size, state.size))];
 }

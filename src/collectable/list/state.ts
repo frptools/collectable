@@ -8,7 +8,7 @@ import {OFFSET_ANCHOR, View} from './view';
 
 export class ListState<T> {
   static empty<T>(mutable: boolean): ListState<T> {
-    return new ListState<T>(nextId(), 0, OFFSET_ANCHOR.RIGHT, mutable, View.empty<T>(OFFSET_ANCHOR.LEFT), View.empty<T>(OFFSET_ANCHOR.RIGHT));
+    return new ListState<T>(nextId(), 0, -1, mutable, View.empty<T>(OFFSET_ANCHOR.LEFT), View.empty<T>(OFFSET_ANCHOR.RIGHT));
   }
 
   /**
@@ -28,7 +28,7 @@ export class ListState<T> {
     public lastWrite: number,
     public mutable: boolean,
     public left: View<T>,
-    public right: View<T>,
+    public right: View<T>
   ) {}
 
   clone(group: number, mutable: boolean): ListState<T> {
@@ -42,40 +42,12 @@ export class ListState<T> {
   toImmutable(done: boolean): ListState<T> {
     if(done) {
       this.mutable = false;
+      this.group = nextId(); // Ensure that subsequent read operations don't cause mutations to existing nodes
       return this;
     }
     var state = this.clone(this.group, true);
     this.group = nextId();
     return state;
-  }
-
-  /**
-   * Selects and returns either the left or the right view for further operations at the specified ordinal position. The
-   * view is selected with a preference for preserving the position of the last view that was written to, so that the
-   * reading and writing of views will implicitly optimise itself according to the way the list is being used.
-   *
-   * @param {number} ordinal A hint to indicate the next ordinal position to be queried
-   * @returns {View<T>} One of either the left or the right view
-   *
-   * @memberOf ListState
-   */
-  selectView(ordinal: number, asWriteTarget: boolean): View<T> {
-    var view: View<T>;
-    if(this.left === View.none()) {
-      view = this.right;
-    }
-    else {
-      var leftEnd = this.left.bound();
-      var rightStart = this.size - this.right.bound();
-      var lastWriteWasLeft = this.lastWrite < leftEnd;
-      view = rightStart <= ordinal ? this.right
-          : leftEnd > ordinal ? this.left
-          : lastWriteWasLeft ? this.right : this.left;
-    }
-    if(asWriteTarget && !view.isEditable(this.group)) {
-      this.setView(view = view.cloneToGroup(this.group));
-    }
-    return view;
   }
 
   getView(anchor: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {

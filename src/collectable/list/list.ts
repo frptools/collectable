@@ -1,6 +1,6 @@
 import {isDefined, log} from './common';
 import {append, prepend} from './capacity';
-import {focusOrdinal} from './traversal';
+import {getAtOrdinal} from './traversal';
 import {concat} from './concat';
 import {ListState} from './state';
 
@@ -22,7 +22,7 @@ export class List<T> {
 
   constructor(public _state: ListState<T>) {}
 
-  private _exec(fn: (state: ListState<T>) => ListState<T>|void): List<T> {
+  private _exec(fn: (state: ListState<T>) => ListState<T>|undefined): List<T> {
     var state = this._state;
     var immutable = !state.mutable;
     if(immutable) {
@@ -67,9 +67,7 @@ export class List<T> {
   }
 
   get(index: number): T|undefined {
-    var view = focusOrdinal(this._state, index, false);
-    if(view === void 0) return void 0;
-    return <T>view.slot.slots[index - view.offset];
+    return getAtOrdinal(this._state, index);
   }
 
   append(...values: T[]): List<T>
