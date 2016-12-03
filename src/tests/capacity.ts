@@ -25,7 +25,11 @@ import {
 // mN = minus N
 // BF = number of nodes equivalent to the branch factor (generally 32)
 // NxM = the value of N multipled by M
+const values_BF = makeValues(BRANCH_FACTOR);
 const values_BFx2_p1 = makeValues(BRANCH_FACTOR*2 + 1);
+const values_BFxBF = makeValues(Math.pow(BRANCH_FACTOR, 2));
+const values_BFxBFxBF = makeValues(Math.pow(BRANCH_FACTOR, 3));
+const values_BFxBFxBFxBF = makeValues(Math.pow(BRANCH_FACTOR, 4));
 const values_h2_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
 const values_h3_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1);
 const values_h4_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1);
@@ -102,6 +106,40 @@ suite('[List: capacity]', () => {
         assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_h4_pBF_p1.slice(1).concat(values_h4_pBF_p1.slice(0, 1)), 'listH5 values are not correct');
       });
     });
+
+    suite(`grows correctly when the number of appended elements is perfectly divisible by the branch factor`, () => {
+      test('when appending', function() {
+        this.timeout(30000); // tslint:disable-line
+        const listH2 = makeList(values_BF, 0, false);
+        const listH3 = makeList(values_BFxBF, 0, false);
+        const listH4 = makeList(values_BFxBFxBF, 0, false);
+        const listH5 = makeList(values_BFxBFxBFxBF, 0, false);
+        assert.strictEqual(listH2.size, values_BF.length);
+        assert.strictEqual(listH3.size, values_BFxBF.length);
+        assert.strictEqual(listH4.size, values_BFxBFxBF.length);
+        assert.strictEqual(listH5.size, values_BFxBFxBFxBF.length);
+        assertArrayElementsAreEqual(gatherLeafValues(listH2, true), values_BF, 'listH2 values are not correct');
+        assertArrayElementsAreEqual(gatherLeafValues(listH3, true), values_BFxBF, 'listH3 values are not correct');
+        assertArrayElementsAreEqual(gatherLeafValues(listH4, true), values_BFxBFxBF, 'listH4 values are not correct');
+        assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_BFxBFxBFxBF, 'listH5 values are not correct');
+      });
+
+      test('when prepending', function() {
+        this.timeout(30000); // tslint:disable-line
+        const listH2 = makeList(values_BF, 0, true);
+        const listH3 = makeList(values_BFxBF, 0, true);
+        const listH4 = makeList(values_BFxBFxBF, 0, true);
+        const listH5 = makeList(values_BFxBFxBFxBF, 0, true);
+        assert.strictEqual(listH2.size, values_BF.length);
+        assert.strictEqual(listH3.size, values_BFxBF.length);
+        assert.strictEqual(listH4.size, values_BFxBFxBF.length);
+        assert.strictEqual(listH5.size, values_BFxBFxBFxBF.length);
+        assertArrayElementsAreEqual(gatherLeafValues(listH2, true), values_BF, 'listH2 values are not correct');
+        assertArrayElementsAreEqual(gatherLeafValues(listH3, true), values_BFxBF, 'listH3 values are not correct');
+        assertArrayElementsAreEqual(gatherLeafValues(listH4, true), values_BFxBFxBF, 'listH4 values are not correct');
+        assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_BFxBFxBFxBF, 'listH5 values are not correct');
+      });
+    })
 
     suite('maintains the recompute property of relaxed nodes', () => {
       test('when appending', () => {

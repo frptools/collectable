@@ -37,7 +37,7 @@ export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): Li
       rightIsCommitted = !hasRightOuterView,
       shift = 0,
       isJoined = false;
-publish([leftState, rightState], false, `concatenation initialization start; has left outer view: ${hasLeftOuterView}, has right outer view: ${hasRightOuterView}`);
+// publish([leftState, rightState], false, `concatenation initialization start; has left outer view: ${hasLeftOuterView}, has right outer view: ${hasRightOuterView}`);
 
   if(leftInnerView.group !== group) {
     leftState.setView(leftInnerView = leftInnerView.cloneToGroup(group));
@@ -51,7 +51,7 @@ publish([leftState, rightState], false, `concatenation initialization start; has
   if(!rightInnerView.slot.isReservedFor(group)) {
     rightInnerView.slot = rightInnerView.slot.cloneToGroup(group, true);
   }
-publish([leftState, rightState], false, `concatenation initialized; has left outer view: ${hasLeftOuterView}, has right outer view: ${hasRightOuterView}`);
+// publish([leftState, rightState], false, `concatenation initialized; has left outer view: ${hasLeftOuterView}, has right outer view: ${hasRightOuterView}`);
 
   if(!hasLeftOuterView) {
     leftOuterView = leftInnerView;
@@ -66,7 +66,7 @@ publish([leftState, rightState], false, `concatenation initialized; has left out
 
   var xx = 0;
   do {
-publish([leftState, rightState], false, `[LOOP START | CONCAT | iteration #${xx}] left is root: ${leftIsRoot}, right is root: ${rightIsRoot}`);
+// publish([leftState, rightState], false, `[LOOP START | CONCAT | iteration #${xx}] left is root: ${leftIsRoot}, right is root: ${rightIsRoot}`);
 
     if(++xx === 10) {
       throw new Error('Infinite loop (concat)');
@@ -86,7 +86,7 @@ publish([leftState, rightState], false, `[LOOP START | CONCAT | iteration #${xx}
     // right slot in the nodes array has size zero after the operation, then the right slot has been fully merged into
     // the left slot and can be eliminated.
     if(join(nodes, shift, leftIsRoot || rightIsRoot)) {
-publish([leftState, rightState], false, `joined left and right: ${nodes[1].size === 0 ? 'TOTAL' : 'PARTIAL'}`);
+// publish([leftState, rightState], false, `joined left and right: ${nodes[1].size === 0 ? 'TOTAL' : 'PARTIAL'}`);
       var slotCountDelta = rightSlotCount - nodes[1].slots.length;
       var slotSizeDelta = rightSize - nodes[1].size;
 
@@ -101,7 +101,7 @@ publish([leftState, rightState], false, `joined left and right: ${nodes[1].size 
           leftInnerView.parent = rightInnerView.parent;
         }
         if(isDefined(rightCommittedChild)) {
-log(`joined with right committed child; slotCountDelta: ${slotCountDelta}, leftInnerView.slotCount: ${leftInnerView.slotCount()}`);
+// log(`joined with right committed child; slotCountDelta: ${slotCountDelta}, leftInnerView.slotCount: ${leftInnerView.slotCount()}`);
           rightCommittedChild.slotIndex += leftInnerView.slotCount() - slotCountDelta;
           rightCommittedChild.parent = leftInnerView;
         }
@@ -115,11 +115,11 @@ log(`joined with right committed child; slotCountDelta: ${slotCountDelta}, leftI
         rightInnerView.sizeDelta -= slotSizeDelta;
         rightInnerView.slotsDelta -= slotCountDelta;
       }
-log(slotCountDelta, shift, view, nodes);
+// log(slotCountDelta, shift, view, nodes);
     }
 
     if(!isJoined) {
-publish([leftState, rightState], false, `ready to ascend to the next level`);
+// publish([leftState, rightState], false, `ready to ascend to the next level`);
       var parent: View<T>;
       if(leftIsRoot || !hasLeftOuterView) {
         view = ascend(group, leftInnerView, SLOT_STATUS.RESERVE);
@@ -160,7 +160,7 @@ publish([leftState, rightState], false, `ready to ascend to the next level`);
       parent = view;
       rightInnerView.parent = parent;
       view = rightInnerView;
-log(rightInnerView);
+// log(rightInnerView);
       rightInnerView = parent;
       if(!rightIsRoot) {
         rightIsRoot = rightInnerView.isRoot();
@@ -174,7 +174,7 @@ log(rightInnerView);
 
   } while(!isJoined);
 
-publish([leftState, rightState], false, `[LOOP DONE | CONCAT] left converged: ${leftIsRoot}, right converged: ${rightIsRoot}`);
+// publish([leftState, rightState], false, `[LOOP DONE | CONCAT] left converged: ${leftIsRoot}, right converged: ${rightIsRoot}`);
 
   leftState.size += rightState.size;
 
@@ -188,7 +188,7 @@ publish([leftState, rightState], false, `[LOOP DONE | CONCAT] left converged: ${
       }
       leftState.setView(leftOuterView);
     }
-log('RIGHT OUTER VIEW', rightOuterView)
+// log('RIGHT OUTER VIEW', rightOuterView)
     leftState.setView(rightOuterView);
   }
   // else {
@@ -206,7 +206,7 @@ log('RIGHT OUTER VIEW', rightOuterView)
   rightOuterView = leftState.right;
   leftState.lastWrite = rightOuterView.slot.isReserved() ? leftState.size - rightOuterView.slot.size : -1;
 
-  publish(leftState, true, `concat done`);
+// publish(leftState, true, `concat done`);
 
   return leftState;
 }

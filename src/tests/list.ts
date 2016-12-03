@@ -217,6 +217,14 @@ suite('[List: public]', () => {
         .get(BRANCH_FACTOR), text(BRANCH_FACTOR));
     });
 
+    test('should return the correct element in a very large list', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+      var index = values.length >>> 1;
+      var value = text(index);
+      var list = List.of(values);
+      assert.strictEqual(list.get(index), value);
+    });
+
     test('should perform recomputation of accumulated slot sizes during traversal', () => {
       var list = listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
                           .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2));
@@ -235,12 +243,6 @@ suite('[List: public]', () => {
       assert.isTrue(list._state.left.slot.isReserved());
       assert.strictEqual(list._state.right.slot, list._state.right.parent.slot.slots[list._state.right.slotIndex]);
     });
-  });
-
-  suite('#concat', () => {
-    test('should work'/*, () => {
-      var list = listOf(5).concat(listOf(3));
-    }*/);
   });
 
   // suite('#slice()', () => {
@@ -612,3 +614,28 @@ suite('[List: public]', () => {
   // });
 });
 
+
+// suite.only('PERF', () => {
+//   var values = makeValues(Math.pow(BRANCH_FACTOR, 4));
+//   test(`speed`, function() {
+//     this.timeout(30000);
+//     var list = List.of(values);
+//   });
+//   test(`speed`, function() {
+//     this.timeout(30000);
+//     var list = List.empty<any>().appendArray(values);
+//   });
+//   test(`speed`, function() {
+//     this.timeout(30000);
+//     var list = List.empty<any>().prependArray(values);
+//     console.log(list.size, list.get(500000));
+//   });
+//   test(`speed`, function() {
+//     this.timeout(30000);
+//     var list = List.empty<any>().asMutable();
+//     for(var i = 0; i < 1000000; i++) {
+//       list.append(values[i]);
+//     }
+//     console.log(list.size, list.get(500000));
+//   });
+// })

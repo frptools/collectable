@@ -138,9 +138,9 @@ function glf(arg: AnyListType<any>, flatten = true): any[] {
 }
 
 export function makeValues(count: number, valueOffset = 0): string[] {
-  var values: string[] = [];
+  var values: string[] = new Array<string>(count);
   for(var i = 0; i < count; i++) {
-    values.push(text(i + valueOffset));
+    values[i] = text(i + valueOffset);
   }
   return values;
 }

@@ -53,26 +53,26 @@ export class ListState<T> {
   getView(anchor: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
     var view = anchor === OFFSET_ANCHOR.LEFT ? this.left : this.right;
     if(view.isNone()) {
-log(`requested view is default empty`);
+// log(`requested view is default empty`);
       var otherView = anchor === OFFSET_ANCHOR.RIGHT ? this.left : this.right;
       if(!otherView.isNone()) {
-log(`other view is active`);
+// log(`other view is active`);
         if(otherView.parent.isNone() || otherView.slot.size + otherView.offset === this.size) {
-log(`other view has no parent or is already aligned to its opposite edge, so it will become this view`);
+// log(`other view has no parent or is already aligned to its opposite edge, so it will become this view`);
           this.setView(View.empty<T>(otherView.anchor));
           otherView = otherView.cloneToGroup(this.group);
           otherView.flipAnchor(this.size);
           this.setView(view = otherView);
         }
         else {
-log(`other view has a parent, so it's time to activate a second view`);
+// log(`other view has a parent, so it's time to activate a second view`);
           otherView.setCommitted();
           otherView = otherView.cloneToGroup(this.group);
           otherView.flipAnchor(this.size);
-log(`cloned view ${otherView.id} is about to be refocused`);
+// log(`cloned view ${otherView.id} is about to be refocused`);
           view = refocusView(this, otherView, anchor === OFFSET_ANCHOR.LEFT ? 0 : -1, asWriteTarget, true);
           view.offset = 0;
-log(`view has been refocused`);
+// log(`view has been refocused`);
           this.setView(view);
         }
       }
@@ -80,7 +80,7 @@ log(`view has been refocused`);
     if(asWriteTarget && !view.isEditable(this.group)) {
       this.setView(view = view.cloneToGroup(this.group));
     }
-log(`view retrieved and ready for use`);
+// log(`view retrieved and ready for use`);
     return view;
   }
 
@@ -91,11 +91,11 @@ log(`view retrieved and ready for use`);
   setView(view: View<T>): void {
     if(view.anchor === OFFSET_ANCHOR.LEFT) {
       this.left = view;
-log(`assign left view`, view);
+// log(`assign left view`, view);
     }
     else {
       this.right = view;
-log(`assign right view`, view);
+// log(`assign right view`, view);
     }
   }
 

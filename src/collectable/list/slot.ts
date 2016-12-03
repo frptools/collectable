@@ -22,7 +22,7 @@ export class Slot<T> {
     public subcount: number, // the total number of slots belonging to immediate child slots
     public slots: (Slot<T>|T)[]
   ) {
-log(`construct new slot ${this.id} with size ${size}, sum ${sum}, recompute: ${recompute}, subcount: ${subcount}`);
+// log(`construct new slot ${this.id} with size ${size}, sum ${sum}, recompute: ${recompute}, subcount: ${subcount}`);
   }
 
   static empty<T>(): Slot<T> {
@@ -34,7 +34,7 @@ log(`construct new slot ${this.id} with size ${size}, sum ${sum}, recompute: ${r
               : status === SLOT_STATUS.RELEASE ? abs(this.group)
               : this.group < 0 ? this.group : -this.group;
     var slot = new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, this.slots);
-log(`slot ${this.id} shallow-cloned with id ${slot.id} and group ${slot.group}`);
+// log(`slot ${this.id} shallow-cloned with id ${slot.id} and group ${slot.group}`);
     return slot;
   }
 
@@ -60,7 +60,7 @@ log(`slot ${this.id} shallow-cloned with id ${slot.id} and group ${slot.group}`)
 
   cloneAsPlaceholder(group: number): Slot<T> {
     var slot = new Slot<T>(-abs(group), this.size, this.sum, this.recompute, this.subcount, new Array<T>(this.slots.length));
-log(`slot ${this.id} cloned as placeholder with id ${slot.id} and group ${slot.group}`);
+// log(`slot ${this.id} cloned as placeholder with id ${slot.id} and group ${slot.group}`);
     return slot;
   }
 
@@ -101,7 +101,7 @@ log(`slot ${this.id} cloned as placeholder with id ${slot.id} and group ${slot.g
         slotIndex = slotCount - 1;
       }
     }
-log(`slot count for new parent is: ${slotCount}`);
+// log(`slot count for new parent is: ${slotCount}`);
 
     var slots = new Array<Slot<T>>(slotCount);
     slots[slotIndex] = childSlot;
@@ -162,7 +162,7 @@ log(`slot count for new parent is: ${slotCount}`);
   resolveChild(ordinal: number, shift: number, out: ChildSlotOutParams<T>): boolean {
     if(shift === 0) {
       if(ordinal >= this.slots.length) return false;
-log(`OUT SLOT ASSIGNED (A)`);
+// log(`OUT SLOT ASSIGNED (A)`);
       out.slot = this.slots[ordinal];
       out.index = ordinal;
       out.offset = 0;
@@ -173,7 +173,7 @@ log(`OUT SLOT ASSIGNED (A)`);
     if(slotIndex >= this.slots.length) return false;
 
     if(this.recompute === -1) {
-log(`OUT SLOT ASSIGNED (B)`);
+// log(`OUT SLOT ASSIGNED (B)`);
       out.slot = <Slot<T>>this.slots[slotIndex];
       out.index = slotIndex;
       out.offset = slotIndex << shift;
@@ -187,7 +187,7 @@ log(`OUT SLOT ASSIGNED (B)`);
         slot = <Slot<T>>this.slots[slotIndex];
       } while(ordinal >= slot.sum && slotIndex < invalidFromIndex && ++slotIndex);
       if(slotIndex < invalidFromIndex) {
-log(`OUT SLOT ASSIGNED (C)`);
+// log(`OUT SLOT ASSIGNED (C)`);
         out.slot = slot;
         out.index = slotIndex;
         out.offset = slotIndex === 0 ? 0 : (<Slot<T>>this.slots[slotIndex - 1]).sum;
@@ -204,12 +204,12 @@ log(`OUT SLOT ASSIGNED (C)`);
 
     for(i = invalidFromIndex; i <= lastIndex; i++) {
       if(i === lastIndex && sum === maxSum && !(<Slot<T>>this.slots[i]).isRelaxed()) {
-log(`recomputation determined that this is no longer a relaxed node`, sum, maxSum);
+// log(`recomputation determined that this is no longer a relaxed node`, sum, maxSum);
         this.recompute = -1;
         if(!found) {
           slot = <Slot<T>>this.slots[i];
           if(sum + slot.size > ordinal) {
-log(`OUT SLOT ASSIGNED (D)`);
+// log(`OUT SLOT ASSIGNED (D)`);
             out.slot = slot;
             out.index = i;
             out.offset = sum - slot.size;
@@ -227,11 +227,11 @@ log(`OUT SLOT ASSIGNED (D)`);
             this.slots[i] = slot = slot.shallowCloneWithStatus(SLOT_STATUS.NO_CHANGE);
           }
           slot.sum = sum;
-log(`recomputed slot #${i} with sum ${sum}`);
+// log(`recomputed slot #${i} with sum ${sum}`);
         }
 
         if(!found && sum > ordinal) {
-log(`OUT SLOT ASSIGNED (E)`);
+// log(`OUT SLOT ASSIGNED (E)`);
           out.slot = slot;
           out.index = i;
           out.offset = sum - slot.size;
@@ -295,7 +295,7 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
 
 // var devMode = srcSlots === destSlots;
 
-log(`[adjustSlotBounds] amount: ${amount}, original size: ${src.size}`);
+// log(`[adjustSlotBounds] amount: ${amount}, original size: ${src.size}`);
   if(isLeaf) {
     if(copySlots) {
       for(var c = 0; c < amount; srcIndex--, destIndex--, c++) {
@@ -325,7 +325,7 @@ log(`[adjustSlotBounds] amount: ${amount}, original size: ${src.size}`);
       dest.recompute += padRight;
     }
   }
-log(`[adjustSlotBounds] size updated to: ${dest.size}`);
+// log(`[adjustSlotBounds] size updated to: ${dest.size}`);
 }
 
 
@@ -349,15 +349,15 @@ export class ExpansionState {
   private constructor() {}
 
   next(originalSlotCount: number): void {
-log(`[EXPANSION STATE] WAS: totalSize: ${this.totalSize}, remainingSize: ${this.remainingSize}, shift: ${this.shift}, addedSize: ${this.addedSize}, addedSlots: ${this.addedSlots}`);
+// log(`[EXPANSION STATE] WAS: totalSize: ${this.totalSize}, remainingSize: ${this.remainingSize}, shift: ${this.shift}, addedSize: ${this.addedSize}, addedSlots: ${this.addedSlots}`);
     this.addedSlots = calculateSlotsToAdd(originalSlotCount, shiftDownRoundUp(this.remainingSize, this.shift));
     this.addedSize = min(this.remainingSize, this.addedSlots << this.shift);
     this.remainingSize -= this.addedSize;
-log(`[EXPANSION STATE] IS NOW: totalSize: ${this.totalSize}, remainingSize: ${this.remainingSize}, shift: ${this.shift}, addedSize: ${this.addedSize}, addedSlots: ${this.addedSlots}`);
+// log(`[EXPANSION STATE] IS NOW: totalSize: ${this.totalSize}, remainingSize: ${this.remainingSize}, shift: ${this.shift}, addedSize: ${this.addedSize}, addedSlots: ${this.addedSlots}`);
   }
 
   static reset(totalSize: number, remainingSize: number, shift: number, prepend: boolean): ExpansionState {
-log(`[EXPANSION STATE] RESET: remainingSize: ${remainingSize}, shift: ${shift}`);
+// log(`[EXPANSION STATE] RESET: remainingSize: ${remainingSize}, shift: ${shift}`);
     var state = ExpansionState._default;
     state.addedSize = 0;
     state.addedSlots = 0;

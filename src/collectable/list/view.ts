@@ -26,7 +26,7 @@ export class View<T> {
     public parent: View<T>,
     public slot: Slot<T>,
   ) {
-log(`construct new view ${this.id} for slot ${slot.id}`);
+// log(`construct new view ${this.id} for slot ${slot.id}`);
   }
 
   static empty<T>(anchor: OFFSET_ANCHOR): View<T> {
@@ -70,7 +70,7 @@ log(`construct new view ${this.id} for slot ${slot.id}`);
     if(!this.isRoot()) {
       this.offset = invertOffset(this.offset, this.slot.size, listSize);
     }
-log(`offset for view ${this.id} flipped ${this.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} to ${this.offset}`);
+// log(`offset for view ${this.id} flipped ${this.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} to ${this.offset}`);
   }
 
   setCommitted(parent?: View<T>): void {
