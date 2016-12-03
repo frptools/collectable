@@ -351,7 +351,7 @@ function drawLines() {
     }
     else {
       // el.scrollLeft = el.scrollWidth/2 - el.offsetWidth/2;
-      // el.scrollLeft = el.scrollWidth;
+      el.scrollLeft = el.scrollWidth;
     }
     el.scrollTop = el.scrollHeight;
   }, 100);
@@ -663,7 +663,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 44;
+        var startIndex = 346;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -714,7 +714,6 @@ function main({DOM, events}) {
           view.parent = parent;
           view.slot = parent.slot.slots[view.slotIndex];
           view = parent;
-  publish(state, false, `ascended`)
         }
       }
       if(!state.left.isNone()) commit(state.left, false);
@@ -722,14 +721,22 @@ function main({DOM, events}) {
     }
 
     var BRANCH_FACTOR = 8;
-    var m = BRANCH_FACTOR/2;
-    var n0 = BRANCH_FACTOR*m + 1;
-    var n1 = BRANCH_FACTOR*m + 3;
-    var left = List.of(makeValues(n0));
-    var right = List.of(makeValues(n1, n0));
-    var list = left.concat(right);
-publish(list, true, `pre-commit`);
-    commitToRoot(list);
+    // var m = BRANCH_FACTOR/2;
+    // var n0 = BRANCH_FACTOR*m + 1;
+    // var n1 = BRANCH_FACTOR*m + 3;
+    // var left = List.of(makeValues(n0));
+    // var right = List.of(makeValues(n1, n0));
+    // var list = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2));
+    var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
+    var list = List.empty().asMutable();
+    for(var i = 0; i < values.length; i++) {
+      list.append(values[i]);
+    }
+publish(list, true, 'all values added');
+    log(`reset left view to position 0: ${list.get(0)}`);
+    log(`${list.get(values.length - BRANCH_FACTOR - 1)}`);
+// publish(list, true, `pre-commit`);
+//     commitToRoot(list);
     // var list = List.of(makeValues(BRANCH_FACTOR));
     // list = list.concat(List.of(makeValues(1, BRANCH_FACTOR)));
     // list = list.appendArray(makeValues(BRANCH_FACTOR*2, BRANCH_FACTOR + 1));

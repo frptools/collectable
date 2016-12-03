@@ -90,6 +90,7 @@ export class Slot<T> {
 
   createParent(group: number, status: SLOT_STATUS, expand?: ExpansionState): Slot<T> {
     var childSlot: Slot<T> = this;
+log(`create parent of slot ${this.id}, group: ${group}, status: ${status}`);
     if(status === SLOT_STATUS.RELEASE) {
       childSlot = childSlot.prepareForRelease(group);
     }

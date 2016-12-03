@@ -38,7 +38,7 @@ export class View<T> {
   }
 
   isNone(): boolean {
-    return this.id === 0;
+    return this.group === 0;
   }
 
   isDefaultEmpty(): boolean {
@@ -50,7 +50,7 @@ export class View<T> {
   }
 
   isEditable(group: number): boolean {
-    return this.group === group;
+    return abs(this.group) === group;
   }
 
   hasUncommittedChanges(): boolean {

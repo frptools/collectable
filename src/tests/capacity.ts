@@ -4,6 +4,7 @@ import {assert} from 'chai';
 import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
 import {append, prepend} from '../collectable/list/capacity';
+import {getAtOrdinal} from '../collectable/list/traversal';
 import {concat} from '../collectable/list/concat';
 
 import {
@@ -80,6 +81,7 @@ suite('[List: capacity]', () => {
         const listH3 = makeList(values_h2_pBF_p1, 1, false);
         const listH4 = makeList(values_h3_pBF_p1, 1, false);
         const listH5 = makeList(values_h4_pBF_p1, 1, false);
+
         assert.strictEqual(listH2.size, values_BFx2_p1.length);
         assert.strictEqual(listH3.size, values_h2_pBF_p1.length);
         assert.strictEqual(listH4.size, values_h3_pBF_p1.length);
@@ -88,6 +90,15 @@ suite('[List: capacity]', () => {
         assertArrayElementsAreEqual(gatherLeafValues(listH3, true), values_h2_pBF_p1, 'listH3 values are not correct');
         assertArrayElementsAreEqual(gatherLeafValues(listH4, true), values_h3_pBF_p1, 'listH4 values are not correct');
         assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_h4_pBF_p1, 'listH5 values are not correct');
+
+        commitToRoot(listH2);
+        commitToRoot(listH3);
+        commitToRoot(listH4);
+        commitToRoot(listH5);
+        assert.isAbove(rootSlot(listH2).group, 0, `root slot of listH2 should not be reserved`);
+        assert.isAbove(rootSlot(listH3).group, 0, `root slot of listH2 should not be reserved`);
+        assert.isAbove(rootSlot(listH4).group, 0, `root slot of listH2 should not be reserved`);
+        assert.isAbove(rootSlot(listH5).group, 0, `root slot of listH2 should not be reserved`);
       });
 
       test('when prepending', function() {
@@ -96,6 +107,7 @@ suite('[List: capacity]', () => {
         const listH3 = makeList(values_h2_pBF_p1, 1, true);
         const listH4 = makeList(values_h3_pBF_p1, 1, true);
         const listH5 = makeList(values_h4_pBF_p1, 1, true);
+
         assert.strictEqual(listH2.size, values_BFx2_p1.length);
         assert.strictEqual(listH3.size, values_h2_pBF_p1.length);
         assert.strictEqual(listH4.size, values_h3_pBF_p1.length);
@@ -104,6 +116,15 @@ suite('[List: capacity]', () => {
         assertArrayElementsAreEqual(gatherLeafValues(listH3, true), values_h2_pBF_p1.slice(1).concat(values_h2_pBF_p1.slice(0, 1)), 'listH3 values are not correct');
         assertArrayElementsAreEqual(gatherLeafValues(listH4, true), values_h3_pBF_p1.slice(1).concat(values_h3_pBF_p1.slice(0, 1)), 'listH4 values are not correct');
         assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_h4_pBF_p1.slice(1).concat(values_h4_pBF_p1.slice(0, 1)), 'listH5 values are not correct');
+
+        commitToRoot(listH2);
+        commitToRoot(listH3);
+        commitToRoot(listH4);
+        commitToRoot(listH5);
+        assert.isAbove(rootSlot(listH2).group, 0, `root slot of listH2 should not be reserved`);
+        assert.isAbove(rootSlot(listH3).group, 0, `root slot of listH2 should not be reserved`);
+        assert.isAbove(rootSlot(listH4).group, 0, `root slot of listH2 should not be reserved`);
+        assert.isAbove(rootSlot(listH5).group, 0, `root slot of listH2 should not be reserved`);
       });
     });
 
@@ -167,6 +188,90 @@ suite('[List: capacity]', () => {
         assert.strictEqual(root.size, n0 + n1 + 1);
         assert.strictEqual(root.recompute, 2);
       });
+    });
+  });
+
+  suite('append()', () => {
+    test('a single value appended to an empty list is present in the list', () => {
+      var list = ListState.empty<any>(true);
+      append(list, ['X']);
+      assert.strictEqual(getAtOrdinal(list, 0), 'X');
+    });
+
+    test('one order of magnitude of values appended to an empty list are all present in the list', () => {
+      var list = ListState.empty<any>(true);
+      var values = makeValues(BRANCH_FACTOR);
+      append(list, values);
+      assert.deepEqual(gatherLeafValues(list), values);
+    });
+
+    test('two orders of magnitude of values appended to an empty list are all present in the list', () => {
+      var list = ListState.empty<any>(true);
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      append(list, values);
+      commitToRoot(list);
+      assertArrayElementsAreEqual(gatherLeafValues(list), values);
+    });
+
+    test('three orders of magnitude of values appended to an empty list are all present in the list', () => {
+      var list = ListState.empty<any>(true);
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+      append(list, values);
+      commitToRoot(list);
+      assertArrayElementsAreEqual(gatherLeafValues(list), values);
+    });
+
+    test('values added to a list one-by-one are all present in the list', () => {
+      var list = ListState.empty<any>(true);
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+      for(var i = 0; i < values.length; i++) {
+        append(list, [values[i]]);
+      }
+      for(var i = 0; i < values.length; i++) {
+        assert.strictEqual(getAtOrdinal(list, i), values[i], `incorrect value at index ${i}`);
+      }
+    });
+  });
+
+  suite('prepend()', () => {
+    test('a single value prepended to an empty list is present in the list', () => {
+      var list = ListState.empty<any>(true);
+      prepend(list, ['X']);
+      assert.strictEqual(getAtOrdinal(list, 0), 'X');
+    });
+
+    test('one order of magnitude of values prepended to an empty list are all present in the list', () => {
+      var list = ListState.empty<any>(true);
+      var values = makeValues(BRANCH_FACTOR);
+      prepend(list, values);
+      assert.deepEqual(gatherLeafValues(list), values);
+    });
+
+    test('two orders of magnitude of values prepended to an empty list are all present in the list', () => {
+      var list = ListState.empty<any>(true);
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      prepend(list, values);
+      commitToRoot(list);
+      assertArrayElementsAreEqual(gatherLeafValues(list), values);
+    });
+
+    test('three orders of magnitude of values prepended to an empty list are all present in the list', () => {
+      var list = ListState.empty<any>(true);
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+      prepend(list, values);
+      commitToRoot(list);
+      assertArrayElementsAreEqual(gatherLeafValues(list), values);
+    });
+
+    test('values added to a list one-by-one are all present in the list', () => {
+      var list = ListState.empty<any>(true);
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+      for(var i = 0; i < values.length; i++) {
+        prepend(list, [values[i]]);
+      }
+      for(var i = 0; i < values.length; i++) {
+        assert.strictEqual(getAtOrdinal(list, i), values[i], `incorrect value at index ${i}`);
+      }
     });
   });
 });

@@ -633,9 +633,9 @@ suite('[List: public]', () => {
 //   test(`speed`, function() {
 //     this.timeout(30000);
 //     var list = List.empty<any>().asMutable();
-//     for(var i = 0; i < 1000000; i++) {
+//     for(var i = 0; i < 1000; i++) {
 //       list.append(values[i]);
 //     }
-//     console.log(list.size, list.get(500000));
+//     console.log(list.size, list.get(500));
 //   });
 // })
