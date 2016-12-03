@@ -1,5 +1,3 @@
-declare function require(moduleName: string): any;
-
 import {assert} from 'chai';
 import {append} from '../collectable/list/capacity';
 import {ListState} from '../collectable/list/state';

@@ -64,7 +64,10 @@ export class Slot<T> {
     return slot;
   }
 
-  cloneWithAdjustedRange(group: number, padLeft: number, padRight: number, isLeaf: boolean): Slot<T> {
+  cloneWithAdjustedRange(group: number, padLeft: number, padRight: number, isLeaf: boolean, preserveStatus: boolean = false): Slot<T> {
+    if(preserveStatus && this.group < 0) {
+      group = -abs(group);
+    }
     var src = this.slots;
     var slots = new Array<T|Slot<T>>(src.length + padLeft + padRight);
     var dest = new Slot<T>(group, this.size, 0, this.recompute, 0, slots);

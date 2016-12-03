@@ -3,8 +3,9 @@ import {assert} from 'chai';
 import {CONST, last} from '../collectable/list/common';
 import {List} from '../collectable/list';
 import {ListState} from '../collectable/list/state';
-import {Slot} from '../collectable/list/slot';
+import {SLOT_STATUS, Slot} from '../collectable/list/slot';
 import {View} from '../collectable/list/view';
+import {ascend, tryCommitOtherView} from '../collectable/list/traversal';
 
 export const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
 export const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
@@ -145,19 +146,22 @@ export function makeValues(count: number, valueOffset = 0): string[] {
   return values;
 }
 
-export function commitToRoot<T>(arg: ListOrView<T>) {
-  if(arg instanceof ListState) {
-    commitToRoot(arg.left);
-    commitToRoot(arg.right);
-  }
-  else {
-    var view = firstView(arg);
+export function commitToRoot<T>(arg: ListType<T>) {
+  var state = getState(arg);
+  function commit(view: View<T>, isOther: boolean) {
+    var otherView = state.getOtherView(view.anchor);
+    var isUncommitted = !isOther && !otherView.isNone();
     while(!view.parent.isNone()) {
-      var slot = view.slot;
-      slot.group = Math.abs(slot.group);
-      var index = view.slotIndex;
-      view = view.parent;
-      view.slot.slots[index] = slot;
+      var oldParent = view.parent;
+      var parent = ascend(state.group, view, SLOT_STATUS.RELEASE);
+      if(isUncommitted && tryCommitOtherView(state, otherView, oldParent, parent, 0)) {
+        isUncommitted = false;
+      }
+      view.parent = parent;
+      view.slot = <Slot<T>>parent.slot.slots[view.slotIndex];
+      view = parent;
     }
   }
+  if(!state.left.isNone()) commit(state.left, false);
+  if(!state.right.isNone()) commit(state.right, true);
 }

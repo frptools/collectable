@@ -163,9 +163,9 @@ export function ascend<T>(group: number, childView: View<T>, status: SLOT_STATUS
         parentView = parentView.cloneToGroup(group);
       }
       parentSlot = extraSize > 0
-        ? parentSlot.cloneWithAdjustedRange(group, prepend, append, false)
-        : parentSlot.cloneToGroup(group);
-      if(status === SLOT_STATUS.RESERVE || (status === SLOT_STATUS.NO_CHANGE && childSlot.isReserved())) {
+        ? parentSlot.cloneWithAdjustedRange(group, prepend, append, false, true)
+        : parentSlot.cloneToGroup(group, true);
+      if(status === SLOT_STATUS.RESERVE && !parentSlot.isReserved()) {
         parentSlot.group = -group;
       }
       parentView.slot = parentSlot;

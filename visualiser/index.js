@@ -5,6 +5,7 @@ import {a, h, div, span, thunk, makeDOMDriver} from '@motorcycle/dom';
 import {List, setCallback} from '../lib/collectable/list';
 // import {ListState} from '../lib/collectable/list/state';
 import {nextId as nextInternalId, log, publish} from '../lib/collectable/list/common';
+import {ascend, tryCommitOtherView} from '../lib/collectable/list/traversal';
 import {Slot} from '../lib/collectable/list/slot';
 import {View} from '../lib/collectable/list/view';
 import Immutable from 'immutable';
@@ -688,21 +689,61 @@ function main({DOM, events}) {
 // publish(list, true, 'EMPTY LIST');
     // var list = listOf(95);
     // list = listOf(1).concat(listOf(32, 1), listOf(1, 33)).append(...makeValues(70, 34));
-    var BRANCH_FACTOR = 32;
+    function getState(arg) {
+      return arg instanceof List ? arg._state : arg;
+    }
+    function firstView(arg) {
+      return arg instanceof View ? arg : firstActiveView(arg);
+    }
+    function firstActiveView(arg) {
+      var state = getState(arg);
+      return state.left.isNone() ? state.right : state.left;
+    }
+    function commitToRoot(arg) {
+      var state = getState(arg);
+      function commit(view, isOther) {
+        var otherView = state.getOtherView(view.anchor);
+        var isUncommitted = !isOther && !otherView.isNone();
+        var level = 0;
+        while(!view.parent.isNone()) {
+          var oldParent = view.parent;
+          var parent = ascend(state.group, view, 2);
+          if(isUncommitted && tryCommitOtherView(state, otherView, oldParent, parent, 0)) {
+            isUncommitted = false;
+          }
+          view.parent = parent;
+          view.slot = parent.slot.slots[view.slotIndex];
+          view = parent;
+  publish(state, false, `ascended`)
+        }
+      }
+      if(!state.left.isNone()) commit(state.left, false);
+      if(!state.right.isNone()) commit(state.right, true);
+    }
+
+    var BRANCH_FACTOR = 8;
+    var m = BRANCH_FACTOR/2;
+    var n0 = BRANCH_FACTOR*m + 1;
+    var n1 = BRANCH_FACTOR*m + 3;
+    var left = List.of(makeValues(n0));
+    var right = List.of(makeValues(n1, n0));
+    var list = left.concat(right);
+publish(list, true, `pre-commit`);
+    commitToRoot(list);
     // var list = List.of(makeValues(BRANCH_FACTOR));
     // list = list.concat(List.of(makeValues(1, BRANCH_FACTOR)));
     // list = list.appendArray(makeValues(BRANCH_FACTOR*2, BRANCH_FACTOR + 1));
-    var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
-    var index = values.length >>> 1;
-    var value = text(index);
-console.log(`${values.length} values; #${index} should equal "${value}"`);
-    var list = List.empty().prependArray(values);
+//     var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+//     var index = values.length >>> 1;
+//     var value = text(index);
+// console.log(`${values.length} values; #${index} should equal "${value}"`);
+//     var list = List.empty().prependArray(values);
     // var list = listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
     //                     .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2))
     //                     .prepend('X');
 
-publish(list, true, `pre-get index ${index}`);
-    log(`item at index ${index}: ${list.get(index)}`);
+// publish(list, true, `pre-get index ${index}`);
+    // log(`item at index ${index}: ${list.get(index)}`);
 // publish(list, true, `pre-get index ${index+1}`);
 //     log(`item at index ${index+1}: ${list.get(index+1)}`);
 // publish(list, true, `pre-get index ${index-1}`);
