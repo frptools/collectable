@@ -66,10 +66,8 @@ log(`other view ${otherView.id} has no parent or is already aligned to its oppos
         }
         else {
 log(`other view ${otherView.id} has a parent (${otherView.parent.id}), so it's time to activate a second view via cloning`);
-          otherView.setCommitted();
           otherView = otherView.cloneToGroup(this.group);
-          otherView.sizeDelta = 0;
-          otherView.slotsDelta = 0;
+          otherView.setCommitted();
           otherView.flipAnchor(this.size);
 this.setView(otherView);
 log(`cloned view ${otherView.id} is about to be refocused`);

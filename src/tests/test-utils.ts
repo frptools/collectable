@@ -147,6 +147,7 @@ export function makeValues(count: number, valueOffset = 0): string[] {
 }
 
 export function commitToRoot<T>(arg: ListType<T>) {
+
   var state = getState(arg);
   function commit(view: View<T>, isOther: boolean) {
     var otherView = state.getOtherView(view.anchor);

@@ -347,11 +347,11 @@ function drawLines() {
     var el = document.querySelector('.list-container')
     if(listsEl.children.length > 1) {
       // el.scrollLeft = listsEl.children[1].offsetLeft - (el.offsetWidth/2)
-      el.scrollLeft = el.scrollWidth;
+      // el.scrollLeft = el.scrollWidth;
     }
     else {
       // el.scrollLeft = el.scrollWidth/2 - el.offsetWidth/2;
-      el.scrollLeft = el.scrollWidth;
+      // el.scrollLeft = el.scrollWidth;
     }
     el.scrollTop = el.scrollHeight;
   }, 100);
@@ -663,7 +663,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 346;
+        var startIndex = 340;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -727,14 +727,19 @@ function main({DOM, events}) {
     // var left = List.of(makeValues(n0));
     // var right = List.of(makeValues(n1, n0));
     // var list = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2));
-    var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
+    // var list = List.of(makeValues(BRANCH_FACTOR*BRANCH_FACTOR + BRANCH_FACTOR + 1)).asMutable();
     var list = List.empty().asMutable();
+    var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+    // var values = makeValues(BRANCH_FACTOR*2, list.size);
     for(var i = 0; i < values.length; i++) {
-      list.append(values[i]);
+      list.prepend(values[i]);
     }
 publish(list, true, 'all values added');
-    log(`reset left view to position 0: ${list.get(0)}`);
-    log(`${list.get(values.length - BRANCH_FACTOR - 1)}`);
+publish(list, true, `value #${8}: ${list.get(8)}`);
+//     for(var i = 0; i < values.length; i++) {
+// publish(list, true, `value #${i}: ${list.get(i)}`);
+//     }
+    // log(`reset left view to position 0: ${list.get(0)}`);
 // publish(list, true, `pre-commit`);
 //     commitToRoot(list);
     // var list = List.of(makeValues(BRANCH_FACTOR));

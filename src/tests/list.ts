@@ -7,6 +7,7 @@ import {Slot} from '../collectable/list/slot';
 import {
   BRANCH_FACTOR,
   listOf,
+  commitToRoot,
   gatherLeafValues,
   slotValues,
   tailSize,
@@ -45,6 +46,33 @@ suite('[List: public]', () => {
     test('should have size 0', () => {
       const list = List.empty<string>();
       assert.strictEqual(list.size, 0);
+    });
+  });
+
+  suite('.of()', () => {
+    test('should return an empty list if passed an empty array', () => {
+      const list = List.of([]);
+      assert.strictEqual(list.size, 0);
+      assert.isTrue(list._state.left.isDefaultEmpty());
+      assert.isTrue(list._state.right.isDefaultEmpty());
+    });
+
+    test('should return a list containing all the values in the array', () => {
+      var values = makeValues(BRANCH_FACTOR >>> 1);
+      assert.deepEqual(gatherLeafValues(List.of(values)), values);
+
+      values = makeValues(BRANCH_FACTOR);
+      assert.deepEqual(gatherLeafValues(List.of(values)), values);
+
+      values = makeValues(BRANCH_FACTOR + 1);
+      var list = List.of(values);
+      commitToRoot(list);
+      assert.deepEqual(gatherLeafValues(list), values);
+
+      values = makeValues(BRANCH_FACTOR*BRANCH_FACTOR);
+      list = List.of(values);
+      commitToRoot(list);
+      assert.deepEqual(gatherLeafValues(list), values);
     });
   });
 
@@ -206,8 +234,7 @@ suite('[List: public]', () => {
     test('should return the correct element when pathing through regular nodes', () => {
       assert.strictEqual(listOf(BRANCH_FACTOR + 1).get(2), text(2));
       assert.strictEqual(listOf(BRANCH_FACTOR).get(BRANCH_FACTOR - 1), text(BRANCH_FACTOR - 1));
-      assert.strictEqual(listOf(1057).get(2), text(2));
-      assert.strictEqual(listOf(1057).get(2), text(2));
+      assert.strictEqual(listOf(BRANCH_FACTOR*BRANCH_FACTOR + BRANCH_FACTOR + 1).get(2), text(2));
     });
 
     test('should return the correct element when pathing through relaxed nodes', () => {

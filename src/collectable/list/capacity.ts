@@ -238,9 +238,9 @@ log(`add view ${view.id} to the subtree view path`);
       viewPath.push(view);
       if(expand.addedSlots > 0) {
         populateSubtrees(collector, viewPath, level, prepend ? -expand.addedSlots : view.slotCount() - expand.addedSlots, expand.addedSize + expand.remainingSize, state);
-        if(expand.remainingSize > 0) {
-          view.slot.group = -group;
-        }
+        // if(expand.remainingSize > 0) {
+        //   view.slot.group = -group;
+        // }
         if(prepend) {
           collector.restore();
         }

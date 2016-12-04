@@ -270,7 +270,7 @@ suite('[List: capacity]', () => {
         prepend(list, [values[i]]);
       }
       for(var i = 0; i < values.length; i++) {
-        assert.strictEqual(getAtOrdinal(list, i), values[i], `incorrect value at index ${i}`);
+        assert.strictEqual(getAtOrdinal(list, i), values[values.length - i - 1], `incorrect value at index ${i}`);
       }
     });
   });

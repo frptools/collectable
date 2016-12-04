@@ -16,7 +16,9 @@ export class List<T> {
       throw new Error('First argument must be an array of values');
     }
     var state = ListState.empty<T>(false);
-    append(state, values);
+    if(values.length > 0) {
+      append(state, values);
+    }
     return new List<T>(state);
   }
 

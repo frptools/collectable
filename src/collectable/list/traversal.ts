@@ -70,7 +70,7 @@ log(`left is none, right is root: ${right.isRoot()}`);
   }
   else if(right.isNone()) {
 log(`right is none, left is root: ${right.isRoot()}`);
-    anchor = left.isRoot() || isInRange(ordinal, invertOffset(left.offset, left.slot.size, state.size), left.slot.size)
+    anchor = left.isRoot() || isInRange(ordinal, left.offset, left.slot.size)
       ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT;
     if(anchor === OFFSET_ANCHOR.RIGHT) resolve = true;
   }
@@ -330,7 +330,7 @@ log(`has other view: ${hasOtherView}`);
   // Ascend to the closest ancestral node for which the specified ordinal index is a descendant.
   do {
     if(++xx === 10) {
-      throw new Error('Infinite loop (refocus view)');
+      throw new Error('Infinite loop (refocus view - ascend)');
     }
     // Changes to the child node will be applied to the parent node, including setting a placeholder slot for the child
     // node if refocusing the view as a write target.
@@ -414,15 +414,22 @@ publish(state, false, `[refocus] begin descent with initial offset ${view.offset
   }
   var out = {slot, index: 0, offset: 0}; // TODO: reuse a preallocated object
   var offset = view.offset;
+log(`offset of view ${view.id}: ${offset}`);
+  if(view.anchor !== OFFSET_ANCHOR.LEFT) {
+    offset = invertOffset(offset, slot.size, state.size);
+log(`captured offset inverted to: ${offset}`);
+  }
+
   // Descend from the common ancestral branch node to the final node that owns the the destination ordinal position.
+  xx = 0;
   do {
-log(`[LOOP START | REFOCUS:DESCEND] view: ${view.id}, parentView: ${parentView.id}, slot: ${slot.id}`, slot);
+log(`[LOOP START | REFOCUS:DESCEND | OFFSET: ${offset}] view: ${view.id}, parentView: ${parentView.id}, slot: ${slot.id}`, slot);
     if(!slot.resolveChild(ordinal, shift, out)) {
 log(`slot ${slot.id}`, slot);
       throw new Error(`No child found at ordinal ${ordinal}`);
     }
     if(out.slot.isReserved()) {
-log(`child slot is reserved and cannot be traversed`);
+publish(state, false, `child slot is reserved and cannot be traversed`);
       // The descendant path is currently reserved by the other view, so we'll need to climb that view to get the child
       // slot before we can continue from here.
       shift = 0;
@@ -432,6 +439,10 @@ log(`child slot is reserved and cannot be traversed`);
       childView = otherView;
 
       do {
+        if(++xx === 10) {
+          throw new Error('Infinite loop (refocus view - ascend other view)');
+        }
+
         view = ascend(state.group, childView, SLOT_STATUS.NO_CHANGE);
         if(asWriteTarget && !view.isEditable(state.group)) {
           view = view.cloneToGroup(state.group);
@@ -442,7 +453,7 @@ log(`child slot is reserved and cannot be traversed`);
         childView = view;
       } while(!isViewInRange(view, ordinal, state.size));
 
-      if(view.anchor !== anchor) {
+      if(view.anchor !== OFFSET_ANCHOR.LEFT) {
         offset = invertOffset(offset, view.slot.size, state.size);
       }
 
@@ -489,6 +500,7 @@ log(`view ${view.id} anchor set ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGH
         view.slotsDelta = 0;
         view.slot = slot;
       }
+log(view.anchor, offset);
       view.offset = view.anchor === OFFSET_ANCHOR.LEFT ? offset : invertOffset(offset, slot.size, state.size);
 
       if(shift > 0) {

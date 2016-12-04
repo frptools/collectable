@@ -22,7 +22,18 @@ import {text,
   makeValues
 } from './test-utils';
 
-suite.only('[List: traversal]', () => {
+suite('[List: traversal]', () => {
+  test('activating the left view for the first time', () => {
+    var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+    var list = List.empty<any>().asMutable();
+    for(var i = 0; i < values.length; i++) {
+      list.append(values[i]);
+    }
+    assert.strictEqual(list.get(0), text(0));
+    assert.strictEqual(list._state.left.slot.size, BRANCH_FACTOR);
+    assert.strictEqual(list._state.right.slot.size, 1);
+  });
+
   test('refocusing a view down a path reserved by the other view', () => {
     var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
     var list = List.empty<any>().asMutable();
