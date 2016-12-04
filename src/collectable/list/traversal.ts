@@ -1,7 +1,7 @@
 import {CONST, isDefined, isUndefined, invertOffset, min, max, normalizeIndex, shiftDownRoundUp, log, publish} from './common';
 
 import {OFFSET_ANCHOR, View} from './view';
-import {SLOT_STATUS, Slot, ExpansionState} from './slot';
+import {SLOT_STATUS, Slot, ExpansionParameters} from './slot';
 import {ListState} from './state';
 
 /**
@@ -108,21 +108,21 @@ log(`selecting ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view for ${as
  *     before being returned.
  * @returns {View<T>} The parent view, with any size-related changes applied from the child to the parent view and/or slot.
  */
-export function ascend<T>(group: number, childView: View<T>, status: SLOT_STATUS, expand?: ExpansionState): View<T> {
+export function ascend<T>(group: number, childView: View<T>, status: SLOT_STATUS, expand?: ExpansionParameters): View<T> {
   var childSlot = childView.slot;
 
   if(childSlot.size === 0) {
     console.warn(`unhandled edge case warning: ascending from child slot that has no elements (group: ${childView.group}, slot index: ${childView.slotIndex})`);
   }
 
-log(`[ASCEND] from view (${childView.id}), is root: ${childView.isRoot()}, has changed: ${childView.hasUncommittedChanges()}, status: ${status === SLOT_STATUS.NO_CHANGE ? 'NO CHANGE' : status === SLOT_STATUS.RELEASE ? 'RELEASE' : 'RESERVE'}, slot index: ${childView.slotIndex}` + (!expand ? '' : `, shift: ${expand.shift}`));
+log(`[ASCEND] from view (${childView.id}), is root: ${childView.isRoot()}, has changed: ${childView.hasUncommittedChanges()}, status: ${status === SLOT_STATUS.NO_CHANGE ? 'NO CHANGE' : status === SLOT_STATUS.RELEASE ? 'RELEASE' : 'RESERVE'}, slot index: ${childView.slotIndex}`);
   // Ascending from the root slot effectively means growing the tree by one level.
   if(childView.isRoot()) {
     // Non-zero delta values for the child view can be disregarded, as we're absorbing the child view's final computed
     // values in advance.
-    if(isDefined(expand)) {
-      expand.next(1);
-    }
+    // if(isDefined(expand)) {
+    //   expand.next(1);
+    // }
     return new View<T>(group, childView.offset, childView.anchor, 0, 0, 0, View.none<T>(), childSlot.createParent(group, status, expand));
   }
 
@@ -143,16 +143,16 @@ log(`clean parent retrieval with no modifications to the child`);
     // Optional expansion parameters can add slots to the start or end of the parent slot.
     var prepend = 0, append = 0, extraSize = 0;
     if(isDefined(expand)) {
-      expand.next(parentSlot.slots.length);
-      extraSize = expand.addedSize;
-      if(expand.prepend) {
-        prepend = expand.addedSlots;
-        slotIndex += prepend;
+      // expand.next(parentSlot.slots.length);
+      extraSize = expand.sizeDelta;
+      append = expand.padRight;
+      prepend = expand.padLeft;
+      slotIndex += prepend;
 log(`slot index increased by ${prepend} to ${slotIndex}`);
-      }
-      else {
-        append = expand.addedSlots;
-      }
+      // if(expand.prepend) {
+      // }
+      // else {
+      // }
     }
 
     // Prepare the parent view and slot for modifications, and optionally append or prepend additional slots as needed.
@@ -175,15 +175,17 @@ log(`parent slot will be cloned from group ${parentSlot.group} to group ${group}
     }
 log(`parent view has offset ${parentView.offset}, has changes:`, hasChanges)
     // If the direction of expansion is the same as the current offset anchor, the offset anchor must be flipped so that
-    // the relative offset is not invalidated by the expanded size of the slot.
+    // the relative offset is not invalidated by the expanded size of the slot. If expanding both sides, offset
+    // adjustments will need to be calculated externally.
     if(isDefined(expand)) {
-      if((expand.prepend && parentView.anchor === OFFSET_ANCHOR.LEFT) || (!expand.prepend && parentView.anchor === OFFSET_ANCHOR.RIGHT)) {
-log(`view ${parentView.id} anchor will be flipped to prevent offset invalidation resulting from slot expansion`);
-        parentView.flipAnchor((<ExpansionState>expand).totalSize - childView.sizeDelta);
-      }
+//       if((expand.padLeft && !expand.padRight && parentView.anchor === OFFSET_ANCHOR.LEFT) ||
+//          (expand.padRight && !expand.padLeft && parentView.anchor === OFFSET_ANCHOR.RIGHT)) {
+// log(`view ${parentView.id} anchor will be flipped to prevent offset invalidation resulting from slot expansion`);
+//         parentView.flipAnchor((<ExpansionState>expand).totalSize - childView.sizeDelta);
+//       }
       parentSlot.size += extraSize;
       if(!parentView.isRoot()) {
-        parentView.sizeDelta += expand.addedSize;
+        parentView.sizeDelta += extraSize;
       }
 log(`due to expansion, parent slot size increased to ${parentSlot.size}, size delta changed to ${parentView.sizeDelta}`);
     }
@@ -197,7 +199,17 @@ log(`parent view has offset ${parentView.offset}`, hasChanges)
       }
       parentSlot.subcount += childView.slotsDelta;
       parentSlot.size += childView.sizeDelta;
+
+
+
+
+
       childView.setCommitted(parentView);
+
+
+
+
+
 log(`due to uncommitted changes from child view ${childView.id}, parent slot size increased by ${childView.sizeDelta} to ${parentSlot.size}, size delta is now ${parentView.sizeDelta}`);
 
       // If the child or parent is a relaxed slot, set the recompute count to ensure that accumulated sums are updated
@@ -552,6 +564,14 @@ export function focusHead<T>(state: ListState<T>, isWriteTarget: boolean): View<
 
 export function focusTail<T>(state: ListState<T>, isWriteTarget: boolean): View<T> {
   return focusEdge(state, isWriteTarget, OFFSET_ANCHOR.RIGHT);
+}
+
+export function focusView<T>(state: ListState<T>, ordinal: number, anchor: OFFSET_ANCHOR, isWriteTarget: boolean): View<T> {
+  var view = state.getView(anchor, true, ordinal);
+  if(!isViewInRange(view, ordinal, state.size)) {
+    view = refocusView(state, view, ordinal, true);
+  }
+  return view;
 }
 
 export function getAtOrdinal<T>(state: ListState<T>, ordinal: number): T|undefined {

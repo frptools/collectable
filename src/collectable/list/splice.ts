@@ -1,11 +1,13 @@
-import {normalizeIndex} from './common';
+import {max, blockCopy, invertOffset, normalizeIndex, log, publish} from './common';
 import {ListState} from './state';
 import {OFFSET_ANCHOR, View} from './view';
-import {focusOrdinal, isViewInRange} from './traversal';
+import {SLOT_STATUS, Slot} from './slot';
+import {ascend, focusView, isViewInRange} from './traversal';
 
 export function slice<T>(state: ListState<T>, start: number, end: number): void {
   start = normalizeIndex(state.size, start);
-  end = normalizeIndex(state.size, end);
+  end = max(-1, end < 0 ? state.size + end : end);
+log(`[slice] size: ${state.size}, start: ${start}, end: ${end}`);
   if(end <= 0 || start >= end || start >= state.size) {
     if(state.size > 0) {
       state.left = View.empty<T>(OFFSET_ANCHOR.LEFT);
@@ -21,35 +23,55 @@ export function slice<T>(state: ListState<T>, start: number, end: number): void 
   if(start < 0) start = 0;
   if(end >= state.size) end = state.size;
 
-  var group = state.group;
+  var doneLeft = start === 0, doneRight = end === state.size;
+  var left = doneLeft
+    ? state.left
+    : focusView(state, start, OFFSET_ANCHOR.LEFT, true);
+  var right = doneRight
+    ? state.right
+    : !doneLeft && isViewInRange(left, end - 1, state.size)
+      ? left
+      : focusView(state, end - 1, OFFSET_ANCHOR.RIGHT, true);
+  var leftChild = left, rightChild = right;
+  var rightEnd = 0, shift = 0;
 
-  // var left = state.getView(OFFSET_ANCHOR.LEFT, true);
-  // var left = <View<T>>focusOrdinal(state, start, true);
 
-  // 1. left is none, right is active
-  // 2. left is active, right is none
-  // 3. left is active, right is active
-
-  var left = state.left, right = state.right;
-  if(!left.isNone()) {
-    if(isViewInRange(left, start, start))
-  }
-
-  if(!left.slot.isEditable(group)) {
-    if(!left.isEditable(group)) {
-      left = left.cloneToGroup(group);
+  do {
+    if(!doneRight) {
+      rightEnd = right.anchor === OFFSET_ANCHOR.LEFT
+        ? right.offset + right.slot.size
+        : state.size - right.offset;
     }
-    left.slot = left.slot.cloneToGroup(group, true);
-  }
 
-  var right: View<T>;
-  if(isViewInRange(left, end - 1, state.size)) {
-    right = left;
-  }
-  else {
-    if(left.anchor === OFFSET_ANCHOR.RIGHT) {
-      left.flipAnchor(state.size);
+    var trimLeft = doneLeft || start === left.offset ? 0
+      : shift === 0 ? left.offset - start : -leftChild.slotIndex;
+    var trimRight = doneRight || end === rightEnd ? 0
+      : shift === 0 ? end - rightEnd : right.slotCount() - rightChild.slotIndex - 1;
+
+    var isRoot = doneLeft ? right.isRoot() : left.isRoot();
+
+    if(trimLeft) {
+      left.adjustRange(trimLeft, left === right ? trimRight : 0, shift === 0);
+      if(isRoot || left.slotIndex === 0) {
+        doneLeft = true;
+      }
     }
-  }
+
+    if(trimRight) {
+      if(!trimLeft || left !== right) {
+        right.adjustRange(0, trimRight, shift === 0);
+      }
+      if(isRoot || right.slotIndex === right.parent.slotCount() - 1) {
+        doneRight = true;
+      }
+    }
+
+    if(!doneLeft) {
+      leftChild = left;
+      left = ascend(state.group, left, SLOT_STATUS.RESERVE);
+    }
+
+  } while(!doneLeft || !doneRight);
+
+  state.size = end - start;
 }
-

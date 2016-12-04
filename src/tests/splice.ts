@@ -21,22 +21,22 @@ suite('[List: slicing and splicing]', () => {
 
     test('slicing a superset of a non-empty list is a noop', () => {
       var values = makeValues(BRANCH_FACTOR*2);
-      var list1 = List.of(values)._state;
+      var list = List.of(values)._state;
 
-      slice(list1, 0, values.length);
-      commitToRoot(list1);
+      slice(list, 0, values.length);
+      commitToRoot(list);
 
-      assert.strictEqual(list1.size, values.length);
-      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.strictEqual(list.size, values.length);
+      assert.deepEqual(gatherLeafValues(list), values);
     });
 
     test('slicing a zero-length subset of a list returns an empty list', () => {
       var values = makeValues(BRANCH_FACTOR*2);
-      var list1 = List.of(values)._state;
+      var list = List.of(values)._state;
 
-      slice(list1, 5, 5);
+      slice(list, 5, 5);
 
-      assert.strictEqual(list1.size, 0);
+      assert.strictEqual(list.size, 0);
     });
 
     test('slicing away the left side of the head slot leaves the head view in an uncommitted state', () => {

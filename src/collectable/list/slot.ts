@@ -88,7 +88,7 @@ export class Slot<T> {
   //   return slot;
   // }
 
-  createParent(group: number, status: SLOT_STATUS, expand?: ExpansionState): Slot<T> {
+  createParent(group: number, status: SLOT_STATUS, expand?: ExpansionParameters): Slot<T> {
     var childSlot: Slot<T> = this;
 log(`create parent of slot ${this.id}, group: ${group}, status: ${status}`);
     if(status === SLOT_STATUS.RELEASE) {
@@ -99,11 +99,9 @@ log(`create parent of slot ${this.id}, group: ${group}, status: ${status}`);
     }
     var slotCount = 1, nodeSize = this.size, slotIndex = 0;
     if(isDefined(expand)) {
-      slotCount += expand.addedSlots;
-      nodeSize += expand.addedSize;
-      if(expand.prepend) {
-        slotIndex = slotCount - 1;
-      }
+      slotCount += expand.padLeft + expand.padRight;
+      nodeSize += expand.sizeDelta;
+      slotIndex += expand.padLeft;
     }
 // log(`slot count for new parent is: ${slotCount}`);
 
@@ -126,10 +124,6 @@ log(`create parent of slot ${this.id}, group: ${group}, status: ${status}`);
 
   isEditable(group: number): boolean {
     return abs(this.group) === group;
-  }
-
-  calculateSlotsToAdd(totalSlotsToAdd: number): number {
-    return calculateSlotsToAdd(this.slots.length, totalSlotsToAdd);
   }
 
   calculateRecompute(slotCountDelta: number): number {
@@ -333,48 +327,22 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
 }
 
 
-/**
- * This class is used to help track and manage the parameters and output values required during the expansion of a set
- * of edge nodes over several iterative steps.
- *
- * @export
- * @class ExpansionState
- */
-export class ExpansionState {
-  private static _default = new ExpansionState();
+export class ExpansionParameters {
+  private static _default = new ExpansionParameters();
 
-  addedSize = 0;
-  addedSlots = 0;
-  totalSize = 0;
-  remainingSize = 0;
-  shift = 0;
-  prepend = false;
+  padLeft = 0;
+  padRight = 0;
+  sizeDelta = 0;
 
   private constructor() {}
 
-  next(originalSlotCount: number): void {
-// log(`[EXPANSION STATE] WAS: totalSize: ${this.totalSize}, remainingSize: ${this.remainingSize}, shift: ${this.shift}, addedSize: ${this.addedSize}, addedSlots: ${this.addedSlots}`);
-    this.addedSlots = calculateSlotsToAdd(originalSlotCount, shiftDownRoundUp(this.remainingSize, this.shift));
-    this.addedSize = min(this.remainingSize, this.addedSlots << this.shift);
-    this.remainingSize -= this.addedSize;
-// log(`[EXPANSION STATE] IS NOW: totalSize: ${this.totalSize}, remainingSize: ${this.remainingSize}, shift: ${this.shift}, addedSize: ${this.addedSize}, addedSlots: ${this.addedSlots}`);
-  }
-
-  static reset(totalSize: number, remainingSize: number, shift: number, prepend: boolean): ExpansionState {
-// log(`[EXPANSION STATE] RESET: remainingSize: ${remainingSize}, shift: ${shift}`);
-    var state = ExpansionState._default;
-    state.addedSize = 0;
-    state.addedSlots = 0;
-    state.totalSize = totalSize;
-    state.remainingSize = remainingSize;
-    state.shift = shift;
-    state.prepend = prepend;
+  static get(padLeft: number, padRight: number, sizeDelta: number): ExpansionParameters {
+    var state = ExpansionParameters._default;
+    state.padLeft = padLeft;
+    state.padRight = padRight;
+    state.sizeDelta = sizeDelta;
     return state;
   }
-}
-
-export function calculateSlotsToAdd(initialSlotCount: number, totalAdditionalSlots: number): number {
-  return min(CONST.BRANCH_FACTOR - initialSlotCount, totalAdditionalSlots);
 }
 
 export var emptySlot = new Slot<any>(nextId(), 0, 0, -1, 0, []);

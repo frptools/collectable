@@ -729,13 +729,16 @@ function main({DOM, events}) {
     // var list = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2));
     // var list = List.of(makeValues(BRANCH_FACTOR*BRANCH_FACTOR + BRANCH_FACTOR + 1)).asMutable();
     var list = List.empty().asMutable();
-    var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+    var values = makeValues(100 /*Math.pow(BRANCH_FACTOR, 3)*/);
     // var values = makeValues(BRANCH_FACTOR*2, list.size);
+    // list.appendArray(values);
     for(var i = 0; i < values.length; i++) {
-      list.prepend(values[i]);
+      list.append(values[i]);
     }
 publish(list, true, 'all values added');
-publish(list, true, `value #${8}: ${list.get(8)}`);
+publish(list, true, `value #${0}: ${list.get(0)}`);
+publish(list, true, `value #${448}: ${list.get(448)}`);
+publish(list, true, `value #${9}: ${list.get(9)}`);
 //     for(var i = 0; i < values.length; i++) {
 // publish(list, true, `value #${i}: ${list.get(i)}`);
 //     }

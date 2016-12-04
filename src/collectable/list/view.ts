@@ -61,6 +61,10 @@ export class View<T> {
     return this.offset + this.slot.size;
   }
 
+  slotCount(): number {
+    return this.slot.slots.length;
+  }
+
   cloneToGroup(group: number): View<T> {
     return new View<T>(group, this.offset, this.anchor, this.slotIndex, this.sizeDelta, this.slotsDelta, this.parent, this.slot);
   }
@@ -85,8 +89,17 @@ export class View<T> {
     this.slot = slot;
   }
 
-  slotCount(): number {
-    return this.slot.slots.length;
+  adjustRange(padLeft: number, padRight: number, isLeaf: boolean): void {
+    var slot = this.slot;
+    var oldSize = slot.size;
+    if(slot.isEditable(this.group)) {
+      slot.adjustRange(padLeft, padRight, isLeaf);
+    }
+    else {
+      this.slot = slot = slot.cloneWithAdjustedRange(this.group, padLeft, padRight, isLeaf, true);
+    }
+    this.sizeDelta += slot.size - oldSize;
+    this.slotsDelta += padLeft + padRight;
   }
 }
 

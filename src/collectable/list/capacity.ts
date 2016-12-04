@@ -1,6 +1,6 @@
 import {CONST, min, last, modulo, shiftDownRoundUp, publish, log} from './common';
 import {focusHead, focusTail, ascend, tryCommitOtherView} from './traversal';
-import {SLOT_STATUS, Slot, ExpansionState} from './slot';
+import {SLOT_STATUS, Slot, ExpansionParameters} from './slot';
 import {OFFSET_ANCHOR, View} from './view';
 import {ListState} from './state';
 
@@ -96,7 +96,7 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
 
   var slot = childView.slot;
   var group = state.group;
-  var numberOfAddedSlots = slot.calculateSlotsToAdd(increaseBy);
+  var numberOfAddedSlots = calculateSlotsToAdd(slot.slots.length, increaseBy);
 
   state.size += numberOfAddedSlots;
 log(`number of added slots: ${numberOfAddedSlots} (total capacity to add: ${increaseBy}, for a total list size of: ${state.size})`);
@@ -155,12 +155,14 @@ log('Slot capacity increased at edge/leaf node. No secondary expansion was requi
   // updated with output values by the ascend function to allow the calling function to keep track of what was changed.
 log(`(${state.size} - ${increaseBy} === ${state.size - increaseBy}) %>> ${CONST.BRANCH_INDEX_BITCOUNT} << ${CONST.BRANCH_INDEX_BITCOUNT} === ${state.size - (shiftDownRoundUp((state.size - increaseBy), CONST.BRANCH_INDEX_BITCOUNT) << CONST.BRANCH_INDEX_BITCOUNT)}`)
 log(`Leaf capacity increased. Upper branches will be expanded next.`);
-  var expand = ExpansionState.reset(state.size, increaseBy - numberOfAddedSlots, 0, prepend);
+  // var expand = ExpansionState.reset(state.size, increaseBy - numberOfAddedSlots, 0, prepend);
+  var expand = ExpansionParameters.get(0, 0, 0);
   var viewPath = [childView]; // An array of the views along the edge of the tree, used during subtree population.
   var shift = 0, level = 0;
   var otherView = state.getOtherView(childView.anchor);
   var hasOtherView = !otherView.isDefaultEmpty();
   var isOtherViewUncommitted = hasOtherView;
+  var remainingSize = increaseBy - numberOfAddedSlots;
 
   // Starting with the head or tail, ascend to each node along the edge, expanding any nodes with additional slots until
   // the requested capacity has been added. At each level, the additional slots are populated with a subtree of the
@@ -168,17 +170,30 @@ log(`Leaf capacity increased. Upper branches will be expanded next.`);
   // of list element values by the calling function. If the root is reached and additional capacity is still required,
   // additional nodes are added above the root, increasing the depth of the tree.
   do {
-log(`[INCREASE CAPACITY | LOOP START] expand.totalSize: ${expand.totalSize}`);
-publish(state, false, `[INCREASE CAPACITY | LOOP START] expand.totalSize: ${expand.totalSize}`);
+log(`[INCREASE CAPACITY | LOOP START] state.size: ${state.size}`);
+publish(state, false, `[INCREASE CAPACITY | LOOP START] state.size: ${state.size}`);
 
     shift += CONST.BRANCH_INDEX_BITCOUNT;
-    expand.shift = shift;
+    numberOfAddedSlots = calculateSlotsToAdd(childView.isRoot() ? 1 : childView.parent.slotCount(), shiftDownRoundUp(remainingSize, shift));
+    expand.sizeDelta = min(remainingSize, numberOfAddedSlots << shift);
+    remainingSize -= expand.sizeDelta;
+    if(prepend) {
+      expand.padLeft = numberOfAddedSlots;
+    }
+    else {
+      expand.padRight = numberOfAddedSlots;
+    }
+
     var view = ascend(group, childView, SLOT_STATUS.RELEASE, expand);
-    state.size += expand.addedSize;
-    expand.totalSize = state.size;
+    if(numberOfAddedSlots && (prepend && view.anchor === OFFSET_ANCHOR.LEFT) || (!prepend && view.anchor === OFFSET_ANCHOR.RIGHT)) {
+log(`view ${view.id} anchor will be flipped to prevent offset invalidation resulting from slot expansion`);
+      view.flipAnchor(state.size + expand.sizeDelta);
+    }
+
+    state.size += expand.sizeDelta;
 
 log(`${isOtherViewUncommitted ? '' : 'NOT '}going to try and commit the other view now`, expand, otherView, childView.parent);
-    if(isOtherViewUncommitted && tryCommitOtherView(state, otherView, childView.parent, view, prepend ? expand.addedSlots : 0)) {
+    if(isOtherViewUncommitted && tryCommitOtherView(state, otherView, childView.parent, view, prepend ? numberOfAddedSlots : 0)) {
 log(`Committed other view`);
       isOtherViewUncommitted = false;
     }
@@ -188,13 +203,13 @@ log(`Committed other view`);
     childView.slotsDelta = 0;
 
     if(prepend) {
-      childView.slotIndex += expand.addedSlots;
-      collector.index -= shiftDownRoundUp(expand.addedSize, CONST.BRANCH_INDEX_BITCOUNT);
-log(`collector index changed to ${collector.index} due to size expansion by ${expand.addedSize} @ shift ${shift}`);
+      childView.slotIndex += numberOfAddedSlots;
+      collector.index -= shiftDownRoundUp(expand.sizeDelta, CONST.BRANCH_INDEX_BITCOUNT);
+log(`collector index changed to ${collector.index} due to size expansion by ${expand.sizeDelta} @ shift ${shift}`);
       collector.mark();
     }
 
-log(`Ascended to level ${level + 1}. Added slots: ${expand.addedSlots}. Remaining: ${expand.remainingSize}`);
+log(`Ascended to level ${level + 1}. Added slots: ${numberOfAddedSlots}. Remaining: ${remainingSize}`);
 
     // If the other view exists and has now been committed, we can't modify the upper views in the shared path of both
     // leaf views, which is what would normally happen during subtree population in order to keep a set of views focused
@@ -221,7 +236,7 @@ log(`Also need to update grandchild view`);
 
 
     level++;
-    if(expand.remainingSize > 0 || expand.addedSlots > 0) {
+    if(remainingSize > 0 || numberOfAddedSlots > 0) {
       // if(childView.slot.isReserved()) {
       //   if(view.slot.group !== -group) {
       //     view.slot = view.slot.shallowCloneToGroup(group);
@@ -230,15 +245,15 @@ log(`Also need to update grandchild view`);
       // }
       if(!hasOtherView || (hasOtherView && isOtherViewUncommitted)) {
         if((prepend && view.anchor === OFFSET_ANCHOR.RIGHT) || (!prepend && view.anchor === OFFSET_ANCHOR.LEFT)) {
-log(`view ${view.id} should be flipped`);
+publish(state, false, `view ${view.id} should be flipped`);
           view.flipAnchor(state.size);
         }
       }
 log(`add view ${view.id} to the subtree view path`);
       viewPath.push(view);
-      if(expand.addedSlots > 0) {
-        populateSubtrees(collector, viewPath, level, prepend ? -expand.addedSlots : view.slotCount() - expand.addedSlots, expand.addedSize + expand.remainingSize, state);
-        // if(expand.remainingSize > 0) {
+      if(numberOfAddedSlots > 0) {
+        populateSubtrees(collector, viewPath, level, prepend ? -numberOfAddedSlots : view.slotCount() - numberOfAddedSlots, expand.sizeDelta + remainingSize, state);
+        // if(remainingSize > 0) {
         //   view.slot.group = -group;
         // }
         if(prepend) {
@@ -248,7 +263,7 @@ log(`add view ${view.id} to the subtree view path`);
 
       childView = view;
     }
-  } while(expand.remainingSize > 0);
+  } while(remainingSize > 0);
 
 log(state.right);
 publish(state, false, 'Slot capacity increased.');
@@ -447,4 +462,8 @@ log(`now pointing at slot ${slot.id}`);
 
 publish(state, false, `subtree population completed`);
   // return elementsIndex;
+}
+
+function calculateSlotsToAdd(initialSlotCount: number, totalAdditionalSlots: number): number {
+  return min(CONST.BRANCH_FACTOR - initialSlotCount, totalAdditionalSlots);
 }

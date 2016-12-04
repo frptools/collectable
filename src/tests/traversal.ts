@@ -24,7 +24,7 @@ import {text,
 
 suite('[List: traversal]', () => {
   test('activating the left view for the first time', () => {
-    var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+    var values = makeValues(Math.pow(BRANCH_FACTOR, 3) + 1);
     var list = List.empty<any>().asMutable();
     for(var i = 0; i < values.length; i++) {
       list.append(values[i]);
