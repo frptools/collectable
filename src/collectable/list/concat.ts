@@ -204,7 +204,7 @@ export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): Li
   }
 
   rightOuterView = leftState.right;
-  leftState.lastWrite = rightOuterView.slot.isReserved() ? leftState.size - rightOuterView.slot.size : -1;
+  leftState.lastWrite = rightOuterView.slot.isReserved() || leftState.left.isNone() ? OFFSET_ANCHOR.RIGHT : OFFSET_ANCHOR.LEFT;
 
 // publish(leftState, true, `concat done`);
 

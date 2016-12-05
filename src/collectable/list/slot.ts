@@ -247,6 +247,8 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
   var destSlots = dest.slots;
   var srcIndex: number, destIndex: number, amount: number;
 
+log(`adjust slot (id ${src.id}->${dest.id}) bounds by ${padLeft > 0 ? '+' : ''}${padLeft}:${padRight > 0 ? '+' : ''}${padRight}`);
+
   // if(padLeft === 0) {
   //   if(srcSlots === destSlots) {
   //     destSlots.length += padRight;
@@ -281,32 +283,42 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
     amount += padRight;
   }
 
-  if(srcSlots === destSlots) {
+  var slotCountDelta = padLeft + padRight;
+  if(srcSlots === destSlots && slotCountDelta > 0) {
     destSlots.length += padLeft + padRight;
   }
 
+log(`srcIndex: ${srcIndex}, destIndex: ${destIndex}, amount: ${amount}`);
+
   var copySlots = padLeft !== 0 || srcSlots !== destSlots;
-  if(copySlots || padRight < 0) {
+  var step = 1;
+  if(padLeft > 0) {
     srcIndex += amount - 1;
     destIndex += amount - 1;
+    step = -1;
   }
 
-// var devMode = srcSlots === destSlots;
+log(`srcIndex: ${srcIndex}, destIndex: ${destIndex}, amount: ${amount}`);
+var devMode = srcSlots === destSlots;
 
 // log(`[adjustSlotBounds] amount: ${amount}, original size: ${src.size}`);
   if(isLeaf) {
     if(copySlots) {
-      for(var c = 0; c < amount; srcIndex--, destIndex--, c++) {
+log(`copy ${amount} slots from right to left; ${devMode ? 'internal copy' : 'copy between nodes'}`);
+log('from:', srcSlots.slice(0));
+log('to:', destSlots.slice(0));
+      for(var c = 0; c < amount; srcIndex += step, destIndex += step, c++) {
+log(`src value: #${srcIndex}:${srcSlots[srcIndex]}, copying to index ${destIndex}`);
         destSlots[destIndex] = srcSlots[srcIndex];
 // if(devMode) srcSlots[srcIndex] = <any>void 0;
       }
     }
-    dest.size = amount + padLeft + padRight;
+    dest.size = amount + max(0, slotCountDelta);
   }
   else {
     if(copySlots || padRight < 0) {
       var subcount = 0, size = 0;
-      for(var c = 0; c < amount; srcIndex--, destIndex--, c++) {
+      for(var c = 0; c < amount; srcIndex += step, destIndex += step, c++) {
         var slot = <Slot<T>>srcSlots[srcIndex];
         subcount += slot.slots.length;
         size += slot.size;
@@ -323,7 +335,12 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
       dest.recompute += padRight;
     }
   }
-// log(`[adjustSlotBounds] size updated to: ${dest.size}`);
+
+  if(srcSlots === destSlots && slotCountDelta < 0) {
+    destSlots.length = amount;
+  }
+
+log(`[adjustSlotBounds] size updated to: ${dest.size}`);
 }
 
 

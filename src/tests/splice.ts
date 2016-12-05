@@ -82,7 +82,7 @@ suite('[List: slicing and splicing]', () => {
       assert.strictEqual(list.left.slotsDelta, -2);
       assert.isTrue(list.left.slot.isReserved());
       assert.isTrue((<Slot<any>>list.left.parent.slot.slots[list.left.slotIndex]).isReserved());
-      assert.strictEqual(list.size, values.length - 2);
+      assert.strictEqual(list.size, values.length - 4);
       assert.strictEqual(list.right.offset, 0);
       assert.strictEqual(list.right.slot.size, BRANCH_FACTOR - 2);
       assert.strictEqual(list.right.sizeDelta, -2);
@@ -123,7 +123,6 @@ suite('[List: slicing and splicing]', () => {
       assert.isFalse(list.right.parent.isRoot());
 
       slice(list, start, end);
-      commitToRoot(list);
 
       assert.strictEqual(list.size, end - start);
       assert.strictEqual(list.left.slot.size, halfbf);

@@ -25,7 +25,7 @@ export class ListState<T> {
   constructor(
     public group: number,
     public size: number,
-    public lastWrite: number,
+    public lastWrite: OFFSET_ANCHOR,
     public mutable: boolean,
     public left: View<T>,
     public right: View<T>

@@ -583,7 +583,9 @@ function renderList(model) {
       var state = list._state || list;
       return div('.list', [
         div('.props', [
-          div('.size', withProps ? ['list size: ', ('size' in state ? state.size : state.slot.size).toString()] : '!')
+          div('.size', withProps ? ['elements: ', ('size' in state ? state.size : state.slot.size).toString()] : '.'),
+          div('.group', withProps ? ['group: ', ('group' in state ? state.group : state.slot.group).toString()] : '.'),
+          div('.last-write', withProps && 'lastWrite' in state ? ['last write: ', (state.lastWrite === 0 ? 'LEFT' : 'RIGHT').toString()] : '.'),
         ]),
         div('.container', [
           nodeContainer,
@@ -663,7 +665,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 340;
+        var startIndex = 45;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -728,18 +730,34 @@ function main({DOM, events}) {
     // var right = List.of(makeValues(n1, n0));
     // var list = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2));
     // var list = List.of(makeValues(BRANCH_FACTOR*BRANCH_FACTOR + BRANCH_FACTOR + 1)).asMutable();
-    var list = List.empty().asMutable();
-    var values = makeValues(100 /*Math.pow(BRANCH_FACTOR, 3)*/);
+    // var list = List.of(['@']).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
+    //                     .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2))
+    //                     .prepend('X');
+
+    // var values = makeValues(BRANCH_FACTOR*2);
+    var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
+    var halfbf = BRANCH_FACTOR >>> 1;
+    var start = values.length - halfbf;
+    var end = values.length;
+    // var values = makeValues(1000);
+    var list = List.of(values).asMutable();
+    // var list = List.empty().asMutable();
     // var values = makeValues(BRANCH_FACTOR*2, list.size);
     // list.appendArray(values);
-    for(var i = 0; i < values.length; i++) {
-      list.append(values[i]);
-    }
+    // for(var i = 0; i < values.length; i++) {
+    //   list.append(values[i]);
+    // }
 publish(list, true, 'all values added');
-publish(list, true, `value #${0}: ${list.get(0)}`);
-publish(list, true, `value #${448}: ${list.get(448)}`);
-publish(list, true, `value #${9}: ${list.get(9)}`);
-//     for(var i = 0; i < values.length; i++) {
+    list.slice(start, end);
+publish(list, true, 'slice completed');
+  // list.slice(2, values.length - 2);
+
+// var index = list.get(BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
+// publish(list, true, `value #${index}: ${list.get(index)}`);
+// publish(list, true, `value #${0}: ${list.get(0)}`);
+// publish(list, true, `value #${448}: ${list.get(448)}`);
+// publish(list, true, `value #${9}: ${list.get(9)}`);
+//     for(var i = 0; i < list.size; i++) {
 // publish(list, true, `value #${i}: ${list.get(i)}`);
 //     }
     // log(`reset left view to position 0: ${list.get(0)}`);

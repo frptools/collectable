@@ -78,10 +78,9 @@ log(`right is none, left is root: ${right.isRoot()}`);
 log(`left and right exist; selecting...`);
     var leftEnd = left.bound();
     var rightStart = state.size - right.bound();
-    var lastWriteWasLeft = state.lastWrite < leftEnd;
     anchor = rightStart <= ordinal ? OFFSET_ANCHOR.RIGHT
       : leftEnd > ordinal ? OFFSET_ANCHOR.LEFT
-      : lastWriteWasLeft ? OFFSET_ANCHOR.RIGHT : OFFSET_ANCHOR.LEFT;
+      : state.lastWrite === OFFSET_ANCHOR.LEFT ? OFFSET_ANCHOR.RIGHT : OFFSET_ANCHOR.LEFT;
   }
 log(`selecting ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view for ${asWriteTarget ? 'WRITING' : 'READING'}`);
   return resolve
@@ -141,10 +140,10 @@ log(`clean parent retrieval with no modifications to the child`);
   var slotIndex = childView.slotIndex;
   if(hasChanges || status === SLOT_STATUS.RESERVE || isDefined(expand) || (childSlot.isReserved() && status === SLOT_STATUS.RELEASE)) {
     // Optional expansion parameters can add slots to the start or end of the parent slot.
-    var prepend = 0, append = 0, extraSize = 0;
+    var prepend = 0, append = 0;
     if(isDefined(expand)) {
+log(`(expand) pad left: ${expand.padLeft}, pad right: ${expand.padRight}, size delta: ${expand.sizeDelta}`);
       // expand.next(parentSlot.slots.length);
-      extraSize = expand.sizeDelta;
       append = expand.padRight;
       prepend = expand.padLeft;
       slotIndex += prepend;
@@ -162,7 +161,7 @@ log(`parent slot will be cloned from group ${parentSlot.group} to group ${group}
       if(!parentView.isEditable(group)) {
         parentView = parentView.cloneToGroup(group);
       }
-      parentSlot = extraSize > 0
+      parentSlot = append || prepend
         ? parentSlot.cloneWithAdjustedRange(group, prepend, append, false, true)
         : parentSlot.cloneToGroup(group, true);
       if(status === SLOT_STATUS.RESERVE && !parentSlot.isReserved()) {
@@ -170,7 +169,7 @@ log(`parent slot will be cloned from group ${parentSlot.group} to group ${group}
       }
       parentView.slot = parentSlot;
     }
-    else if(extraSize > 0) {
+    else if(append || prepend) {
       parentSlot.adjustRange(prepend, append, false);
     }
 log(`parent view has offset ${parentView.offset}, has changes:`, hasChanges)
@@ -183,9 +182,9 @@ log(`parent view has offset ${parentView.offset}, has changes:`, hasChanges)
 // log(`view ${parentView.id} anchor will be flipped to prevent offset invalidation resulting from slot expansion`);
 //         parentView.flipAnchor((<ExpansionState>expand).totalSize - childView.sizeDelta);
 //       }
-      parentSlot.size += extraSize;
+      parentSlot.size += expand.sizeDelta;
       if(!parentView.isRoot()) {
-        parentView.sizeDelta += extraSize;
+        parentView.sizeDelta += expand.sizeDelta;
       }
 log(`due to expansion, parent slot size increased to ${parentSlot.size}, size delta changed to ${parentView.sizeDelta}`);
     }
@@ -200,24 +199,20 @@ log(`parent view has offset ${parentView.offset}`, hasChanges)
       parentSlot.subcount += childView.slotsDelta;
       parentSlot.size += childView.sizeDelta;
 
-
-
-
-
+      if(childView.slotsDelta < 0 && slotIndex < parentSlot.slots.length - 1 && parentSlot.recompute === -1) {
+log(`recompute set to 0, prior to recalculation`);
+        parentSlot.recompute = 0;
+      }
       childView.setCommitted(parentView);
 
-
-
-
-
 log(`due to uncommitted changes from child view ${childView.id}, parent slot size increased by ${childView.sizeDelta} to ${parentSlot.size}, size delta is now ${parentView.sizeDelta}`);
-
       // If the child or parent is a relaxed slot, set the recompute count to ensure that accumulated sums are updated
       // before any further descent from the parent slot takes place.
       if(parentSlot.isRelaxed() || childSlot.isRelaxed()) {
         parentSlot.recompute = parentSlot.isRelaxed()
           ? max(parentSlot.recompute, parentSlot.slots.length - slotIndex)
           : parentSlot.slots.length;
+log(`recompute is now ${parentSlot.recompute}`);
       }
       else {
         parentSlot.recompute = -1;
@@ -386,7 +381,7 @@ log(`other view is now committed`);
     // check if the new parent view is a range match, and if so, prepare to also reserve the rest of the upward path so
     // that the final leaf node can be written to safely (assuming we've requested a write target).
     if(!branchFound) {
-log(`check if view ${parentView.id} is in range for ordinal ${ordinal}; anchor: ${parentView.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}, offset: ${parentView.offset}, slot size: ${parentView.slot.size}`);
+log(`check if view ${parentView.id} is in range for ordinal ${ordinal}; anchor: ${parentView.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}, offset: ${parentView.offset}, slot size: ${parentView.slot.size}`, ordinal);
       branchFound = isViewInRange(parentView, ordinal, state.size);
 log(`branch found: ${branchFound}`);
       if(branchFound) {
@@ -421,8 +416,8 @@ log(ascentComplete ? `ascent complete` : `ascent INCOMPLETE (branchFound: ${bran
 publish(state, false, `[refocus] begin descent with initial offset ${view.offset}`);
 
   var slot = view.slot;
-  if(asWriteTarget && !view.slot.isEditable(state.group)) {
-    view.slot = slot = slot.toReservedNode(state.group);
+  if(asWriteTarget && !slot.isEditable(state.group)) {
+    view.slot = slot = view.isRoot() ? slot.cloneToGroup(state.group) : slot.toReservedNode(state.group);
   }
   var out = {slot, index: 0, offset: 0}; // TODO: reuse a preallocated object
   var offset = view.offset;
@@ -435,9 +430,10 @@ log(`captured offset inverted to: ${offset}`);
   // Descend from the common ancestral branch node to the final node that owns the the destination ordinal position.
   xx = 0;
   do {
-log(`[LOOP START | REFOCUS:DESCEND | OFFSET: ${offset}] view: ${view.id}, parentView: ${parentView.id}, slot: ${slot.id}`, slot);
+log(`[LOOP START | REFOCUS:DESCEND | OFFSET: ${offset}] view: ${view.id}, parentView: ${parentView.id}, slot: ${slot.id}, ordinal: ${ordinal}`, slot);
     if(!slot.resolveChild(ordinal, shift, out)) {
 log(`slot ${slot.id}`, slot);
+      debugger;
       throw new Error(`No child found at ordinal ${ordinal}`);
     }
     if(out.slot.isReserved()) {
@@ -516,12 +512,13 @@ log(view.anchor, offset);
       view.offset = view.anchor === OFFSET_ANCHOR.LEFT ? offset : invertOffset(offset, slot.size, state.size);
 
       if(shift > 0) {
-        if(slot.recompute === -1) {
-          ordinal -= view.slotIndex << shift;
-        }
-        else {
-          ordinal -= slot.sum - slot.size;
-        }
+        ordinal -= view.anchor === OFFSET_ANCHOR.LEFT ? view.offset : invertOffset(view.offset, view.slot.size, state.size);
+        // if(slot.recompute === -1) {
+        //   ordinal -= view.slotIndex << shift;
+        // }
+        // else {
+        //   ordinal -= slot.sum - slot.size;
+        // }
   log(`ordinal reduced to ${ordinal} to cater for descent to slot index ${view.slotIndex}`);
       }
 

@@ -11,7 +11,7 @@ publish(state, false, `[BEGIN APPEND] total values: ${values.length}, initial si
 publish(state, false, `ready to expand nodes to increase capacity`);
 log(`innerIndex: ${innerIndex}, total values: ${values.length}, last value:`, values[values.length - 1], values);
   increaseCapacity(state, values.length, false).populate(values, innerIndex);
-  state.lastWrite = state.size - 1;
+  state.lastWrite = OFFSET_ANCHOR.RIGHT;
 publish(state, true, `append completed`);
   return state;
 }
@@ -21,7 +21,7 @@ publish(state, false, `[BEGIN PREPEND] total values: ${values.length}, initial s
   focusHead(state, true);
   // var elements = increaseCapacity(state, values.length, true);
   increaseCapacity(state, values.length, true).populate(values, 0);
-  state.lastWrite = 0;
+  state.lastWrite = OFFSET_ANCHOR.LEFT;
 publish(state, true, `prepend completed`);
   return state;
 }

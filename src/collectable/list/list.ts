@@ -2,6 +2,7 @@ import {isDefined, log} from './common';
 import {append, prepend} from './capacity';
 import {getAtOrdinal} from './traversal';
 import {concat} from './concat';
+import {slice} from './splice';
 import {ListState} from './state';
 
 export type ListMutationCallback<T> = (list: List<T>) => void;
@@ -98,8 +99,8 @@ export class List<T> {
     return void 0;
   }
 
-  slice(start: number, end?: number): List<T> {
-    throw new Error('Not implemented yet');
+  slice(start: number, end = 0): List<T> {
+    return this._exec(state => (slice(state, start, end), void 0));
   }
 
   concat(...lists: List<T>[]): List<T>

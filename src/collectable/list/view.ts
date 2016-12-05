@@ -85,21 +85,34 @@ export class View<T> {
     }
   }
 
+  setAsRoot(): void {
+    this.parent = View.none<T>();
+    this.offset = 0;
+    this.sizeDelta = 0;
+    this.slotsDelta = 0;
+    this.slotIndex = 0;
+  }
+
   replaceSlot(slot: Slot<T>): void {
     this.slot = slot;
   }
 
-  adjustRange(padLeft: number, padRight: number, isLeaf: boolean): void {
+  adjustSlotRange(padLeft: number, padRight: number, isLeaf: boolean): void {
     var slot = this.slot;
     var oldSize = slot.size;
     if(slot.isEditable(this.group)) {
+log(`slot ${slot.id} will now be range adjusted`);
       slot.adjustRange(padLeft, padRight, isLeaf);
     }
     else {
+log(`slot ${slot.id} will now be copied with an adjusted range`);
       this.slot = slot = slot.cloneWithAdjustedRange(this.group, padLeft, padRight, isLeaf, true);
     }
-    this.sizeDelta += slot.size - oldSize;
-    this.slotsDelta += padLeft + padRight;
+    if(!this.isRoot()) {
+      this.sizeDelta += slot.size - oldSize;
+      this.slotsDelta += padLeft + padRight;
+log(`view ${this.id} size delta: ${this.sizeDelta}, slot count delta: ${this.slotsDelta}`);
+    }
   }
 }
 
