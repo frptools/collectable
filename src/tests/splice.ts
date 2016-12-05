@@ -101,7 +101,6 @@ suite('[List: slicing and splicing]', () => {
       assert.isFalse(list.right.parent.isRoot());
 
       slice(list, 2, end);
-      commitToRoot(list);
 
       assert.strictEqual(list.size, end - 2);
       assert.strictEqual(list.left.slot.size, BRANCH_FACTOR - 2);
@@ -110,6 +109,9 @@ suite('[List: slicing and splicing]', () => {
       assert.strictEqual(list.right.offset, 0);
       assert.strictEqual(list.left.parent, list.right.parent);
       assert.isTrue(list.left.parent.isRoot());
+
+      commitToRoot(list);
+      assert.deepEqual(gatherLeafValues(list), values.slice(2, end));
     });
 
     test('a right slice that does not include the current root reduces the height of the tree', () => {
@@ -131,6 +133,9 @@ suite('[List: slicing and splicing]', () => {
       assert.strictEqual(list.right.offset, 0);
       assert.strictEqual(list.left.parent, list.right.parent);
       assert.isTrue(list.left.parent.isRoot());
+
+      commitToRoot(list);
+      assert.deepEqual(gatherLeafValues(list), values.slice(start, end));
     });
 
     test('a slice that is a subset of a central leaf node removes the rest of the tree', () => {
@@ -141,13 +146,18 @@ suite('[List: slicing and splicing]', () => {
       var end = start + halfbf;
 
       slice(list, start, end);
-      commitToRoot(list);
 
+      var view = list.left;
+      if(view.isNone()) view = list.right;
+      var other = list.getOtherView(view.anchor);
       assert.strictEqual(list.size, halfbf);
-      assert.strictEqual(list.left.slot.size, halfbf);
-      assert.strictEqual(list.left.offset, 0);
-      assert.isTrue(list.left.isRoot());
-      assert.isTrue(list.right.isNone());
+      assert.strictEqual(view.slot.size, halfbf);
+      assert.strictEqual(view.offset, 0);
+      assert.isTrue(other.isNone());
+      assert.isTrue(view.isRoot());
+
+      commitToRoot(list);
+      assert.deepEqual(gatherLeafValues(list), values.slice(start, end));
     });
 
     test('a slice that is a subset of the head node removes the rest of the tree', () => {
@@ -158,13 +168,15 @@ suite('[List: slicing and splicing]', () => {
       var end = halfbf + 1;
 
       slice(list, start, end);
-      commitToRoot(list);
 
-      assert.strictEqual(list.size, halfbf);
-      assert.strictEqual(list.left.slot.size, halfbf);
+      assert.strictEqual(list.size, halfbf + 1);
+      assert.strictEqual(list.left.slot.size, halfbf + 1);
       assert.strictEqual(list.left.offset, 0);
       assert.isTrue(list.left.isRoot());
       assert.isTrue(list.right.isNone());
+
+      commitToRoot(list);
+      assert.deepEqual(gatherLeafValues(list), values.slice(start, end));
     });
 
     test('a slice that is a subset of the tail node removes the rest of the tree', () => {
@@ -175,13 +187,34 @@ suite('[List: slicing and splicing]', () => {
       var end = values.length;
 
       slice(list, start, end);
-      commitToRoot(list);
 
       assert.strictEqual(list.size, halfbf);
       assert.strictEqual(list.right.slot.size, halfbf);
       assert.strictEqual(list.right.offset, 0);
       assert.isTrue(list.left.isNone());
       assert.isTrue(list.right.isRoot());
+
+      commitToRoot(list);
+      assert.deepEqual(gatherLeafValues(list), values.slice(start, end));
+    });
+
+    test('a slice can occur between node boundaries', function() {
+      this.timeout(30000); // tslint:disable-line
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 4) - Math.pow(BRANCH_FACTOR, 3)*2);
+      var list = List.of(values)._state;
+      var start = Math.pow(BRANCH_FACTOR, 3);
+      var end = values.length - start;
+
+      slice(list, start, end);
+
+      assert.strictEqual(list.size, end - start);
+      assert.strictEqual(list.left.offset, 0);
+      assert.strictEqual(list.left.slot.size, BRANCH_FACTOR);
+      assert.strictEqual(list.right.offset, 0);
+      assert.strictEqual(list.right.slot.size, BRANCH_FACTOR);
+
+      commitToRoot(list);
+      assert.deepEqual(gatherLeafValues(list), values.slice(start, end));
     });
   });
 });

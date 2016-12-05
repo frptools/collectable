@@ -665,7 +665,7 @@ function main({DOM, events}) {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 45;
+        var startIndex = 27;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -734,11 +734,11 @@ function main({DOM, events}) {
     //                     .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2))
     //                     .prepend('X');
 
-    // var values = makeValues(BRANCH_FACTOR*2);
-    var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-    var halfbf = BRANCH_FACTOR >>> 1;
-    var start = values.length - halfbf;
-    var end = values.length;
+    var values = ['X'];
+    // var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
+    // var halfbf = BRANCH_FACTOR >>> 1;
+    // var start = 0;
+    // var end = halfbf + 1;
     // var values = makeValues(1000);
     var list = List.of(values).asMutable();
     // var list = List.empty().asMutable();
@@ -748,8 +748,9 @@ function main({DOM, events}) {
     //   list.append(values[i]);
     // }
 publish(list, true, 'all values added');
-    list.slice(start, end);
-publish(list, true, 'slice completed');
+    list.popFront();
+    // list.slice(start, end);
+publish(list, true, 'pop completed');
   // list.slice(2, values.length - 2);
 
 // var index = list.get(BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));

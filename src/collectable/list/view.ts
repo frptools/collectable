@@ -86,6 +86,14 @@ export class View<T> {
   }
 
   setAsRoot(): void {
+    if(this.slot.isReserved()) {
+      if(this.slot.isReservedFor(this.group)) {
+        this.slot.group = -this.slot.group;
+      }
+      else {
+        this.slot = this.slot.cloneToGroup(this.group);
+      }
+    }
     this.parent = View.none<T>();
     this.offset = 0;
     this.sizeDelta = 0;

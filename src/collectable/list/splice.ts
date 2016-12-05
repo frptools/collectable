@@ -1,13 +1,14 @@
-import {max, invertOffset, normalizeIndex, log, publish} from './common';
+import {max, invertOffset, normalizeIndex, isUndefined, log, publish} from './common';
 import {ListState} from './state';
 import {OFFSET_ANCHOR, View} from './view';
 import {SLOT_STATUS, ExpansionParameters} from './slot';
 import {ascend, focusHead, focusTail, focusView, isViewInRange} from './traversal';
 
 export function slice<T>(state: ListState<T>, start: number, end: number): void {
-  start = normalizeIndex(state.size, start);
+  if(start < 0) {
+    start = normalizeIndex(state.size, start);
+  }
   end = max(-1, end < 0 ? state.size + end : end);
-log(`[slice] size: ${state.size}, start: ${start}, end: ${end}`);
   if(end <= 0 || start >= end || start >= state.size) {
     if(state.size > 0) {
       state.left = View.empty<T>(OFFSET_ANCHOR.LEFT);
@@ -31,26 +32,46 @@ publish(state, true, `pre-slice: ${start} -> ${end}`);
   var doneLeft = start === 0,
       doneRight = end === state.size;
 
-  var left = doneLeft
-              ? focusHead(state, true)
-              : focusView(state, start, OFFSET_ANCHOR.LEFT, true);
+  var left: View<T> = <any>void 0, right: View<T> = <any>void 0;
+  if(start === 0) {
+    left = focusHead(state, true);
+    if(isViewInRange(left, end - 1, state.size)) {
+      right = left;
+      // doneRight = true;
+    }
+  }
+  if(isUndefined(right)) {
+    right = end === state.size ? focusTail(state, true) : focusView(state, end - 1, OFFSET_ANCHOR.RIGHT, true);
+  }
+  if(isUndefined(left)) {
+    left = isViewInRange(right, start, state.size) ? right : focusView(state, start, OFFSET_ANCHOR.LEFT, true);
+    // if(left === right) {
+      // doneLeft = true;
+    // }
+  }
 
-  var right = doneRight
-              ? focusTail(state, true)
-              : isViewInRange(left, end - 1, state.size) ? left : focusView(state, end - 1, OFFSET_ANCHOR.RIGHT, true);
+log(`done left: ${doneLeft}, done right: ${doneRight}, same: ${left === right}, same parents: ${left.parent === right.parent}`);
+
+  // var left = doneLeft
+  //             ? focusHead(state, true)
+  //             : focusView(state, start, OFFSET_ANCHOR.LEFT, true);
+
+  // var right = doneRight
+  //             ? focusTail(state, true)
+  //             : isViewInRange(left, end - 1, state.size) ? left : focusView(state, end - 1, OFFSET_ANCHOR.RIGHT, true);
 
   var rightBound = doneRight ? 0 : calculateRightEnd(right, state.size);
-  var truncateLeft = doneLeft || start <= left.offset ? 0 : left.offset - start;
+  var leftOffset = getOffset(left, OFFSET_ANCHOR.LEFT, state.size);
+  var truncateLeft = doneLeft || start <= leftOffset ? 0 : leftOffset - start;
   var truncateRight = doneRight || end >= rightBound ? 0 : end - rightBound;
   var isRoot = (doneLeft ? right : left).isRoot();
 
-log(`left offset: ${left.offset}, right bound: ${rightBound}, truncate left: ${truncateLeft}, truncate right: ${truncateRight}, is root: ${isRoot}`);
-log(`done left: ${doneLeft}, done right: ${doneRight}`);
+log(`left offset: ${leftOffset}, right bound: ${rightBound}, truncate left: ${truncateLeft}, truncate right: ${truncateRight}, is root: ${isRoot}`);
 publish(state, true, `views selected and ready for slicing`);
 
   if(truncateLeft) {
     left.adjustSlotRange(truncateLeft, left === right ? truncateRight : 0, true);
-    if(!isRoot && left.offset === 0) {
+    if(isRoot || leftOffset === 0 || left === right) {
       // if(left !== right) {
       //   left.sizeDelta -= (start - left.offset);
       //   left.slotsDelta += truncateLeft;
@@ -65,20 +86,18 @@ publish(state, false, 'left leaf truncation applied');
     if(!truncateLeft || left !== right) {
       right.adjustSlotRange(0, truncateRight, true);
     }
-    if(!isRoot && right.offset === 0) {
+    if(isRoot || right.offset === 0 || left === right) {
       // if(left !== right) {
       //   right.sizeDelta -= (rightBound - end);
       //   right.slotsDelta += truncateRight;
       // }
       doneRight = true;
     }
-    else if(left === right) {
-      doneRight = true;
-    }
   }
 
 publish(state, false, 'right leaf truncation applied');
 
+  var noAscent = doneLeft && doneRight;
   var xx = 0;
   while(!doneLeft || !doneRight) {
 publish(state, false, `[SLICE | BEGIN LOOP] done left: ${doneLeft}, done right: ${doneRight}`);
@@ -131,6 +150,12 @@ publish(state, false, '[SLICE | LOOP DONE]');
 
   if(!isRoot && left === right) {
     left.setAsRoot();
+    if(noAscent) {
+      var otherView = state.left === left ? state.right : state.left;
+      if(!otherView.isNone()) {
+        state.setView(View.empty<T>(otherView.anchor));
+      }
+    }
   }
 
   state.size = end - start;

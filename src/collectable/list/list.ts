@@ -95,12 +95,29 @@ export class List<T> {
       : this._exec(state => prepend(state, values));
   }
 
-  pop(): T|undefined {
-    return void 0;
+  pop(): List<T> {
+    return this._state.size === 0 ? this
+      : this._exec(state => (slice(state, 0, -1), void 0));
+  }
+
+  popFront(): List<T> {
+    return this._state.size === 0 ? this
+      : this._exec(state => (slice(state, 1, state.size), void 0));
+  }
+
+  skip(count: number): List<T> {
+    return this._state.size === 0 || count === 0 ? this
+      : this._exec(state => (slice(state, count, state.size), void 0));
+  }
+
+  take(count: number): List<T> {
+    return this._state.size === 0 || count >= this._state.size ? this
+      : this._exec(state => (slice(state, 0, count), void 0));
   }
 
   slice(start: number, end = 0): List<T> {
-    return this._exec(state => (slice(state, start, end), void 0));
+    return this._state.size === 0 ? this
+      : this._exec(state => (slice(state, start, end), void 0));
   }
 
   concat(...lists: List<T>[]): List<T>
