@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {append} from '../collectable/list/capacity';
+import {append} from '../collectable/list/insertion';
 import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
 import {concat, join} from '../collectable/list/concat';

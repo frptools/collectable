@@ -19,7 +19,7 @@ import {
   text
 } from './test-utils';
 
-suite.only('[List: public]', () => {
+suite('[List: public]', () => {
   // var empty: List<string>;
   // var listBF: List<string>;
   var listH1plus1: List<string>;
