@@ -4,28 +4,6 @@ import {SLOT_STATUS, Slot, ExpansionParameters} from './slot';
 import {OFFSET_ANCHOR, View} from './view';
 import {ListState} from './state';
 
-export function append<T>(state: ListState<T>, values: T[]): ListState<T> {
-publish(state, false, `[BEGIN APPEND] total values: ${values.length}, initial size: ${state.size}, group: ${state.group}`);
-  var tail = focusTail(state, true);
-  var innerIndex = tail.slot.size % CONST.BRANCH_FACTOR;
-publish(state, false, `ready to expand nodes to increase capacity`);
-log(`innerIndex: ${innerIndex}, total values: ${values.length}, last value:`, values[values.length - 1], values);
-  increaseCapacity(state, values.length, false).populate(values, innerIndex);
-  state.lastWrite = OFFSET_ANCHOR.RIGHT;
-publish(state, true, `append completed`);
-  return state;
-}
-
-export function prepend<T>(state: ListState<T>, values: T[]): ListState<T> {
-publish(state, false, `[BEGIN PREPEND] total values: ${values.length}, initial size: ${state.size}, group: ${state.group}`);
-  focusHead(state, true);
-  // var elements = increaseCapacity(state, values.length, true);
-  increaseCapacity(state, values.length, true).populate(values, 0);
-  state.lastWrite = OFFSET_ANCHOR.LEFT;
-publish(state, true, `prepend completed`);
-  return state;
-}
-
 export class Collector<T> {
   private static _default = new Collector<any>();
 

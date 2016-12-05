@@ -7,9 +7,16 @@ import {List, isDefaultEmptyList} from './list';
 import {OFFSET_ANCHOR, View} from './view';
 
 export class ListState<T> {
+  private static _defaultEmpty = new ListState<any>(0, 0, OFFSET_ANCHOR.RIGHT, false, View.empty<any>(OFFSET_ANCHOR.LEFT), View.empty<any>(OFFSET_ANCHOR.RIGHT));
   static empty<T>(mutable: boolean): ListState<T> {
     return new ListState<T>(nextId(), 0, -1, mutable, View.empty<T>(OFFSET_ANCHOR.LEFT), View.empty<T>(OFFSET_ANCHOR.RIGHT));
   }
+
+  // static empty<T>(mutable: boolean): ListState<T> {
+  //   return mutable
+  //     ? new ListState<T>(nextId(), 0, -1, true, View.empty<T>(OFFSET_ANCHOR.LEFT), View.empty<T>(OFFSET_ANCHOR.RIGHT))
+  //     : ListState._defaultEmpty;
+  // }
 
   /**
    * Creates an instance of MutableState.

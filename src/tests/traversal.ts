@@ -4,7 +4,7 @@ import {assert} from 'chai';
 import {List} from '../collectable/list';
 import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
-import {append, prepend} from '../collectable/list/capacity';
+import {append, prepend} from '../collectable/list/insertion';
 import {getAtOrdinal} from '../collectable/list/traversal';
 import {concat} from '../collectable/list/concat';
 

@@ -541,7 +541,7 @@ log(`[focusOrdinal: ${ordinal}] state.size: ${state.size}`);
     return void 0;
   }
   var view = selectView(state, ordinal, asWriteTarget);
-publish(state, true, `view selected prior to refocusing`);
+// publish(state, true, `view selected prior to refocusing`);
   return isViewInRange(view, ordinal, state.size) ? view
     : refocusView(state, view, ordinal, asWriteTarget);
 }
@@ -574,6 +574,9 @@ export function focusView<T>(state: ListState<T>, ordinal: number, anchor: OFFSE
 export function getAtOrdinal<T>(state: ListState<T>, ordinal: number): T|undefined {
   var view = focusOrdinal(state, ordinal, false);
   if(view === void 0) return void 0;
-  var slot = view.slot;
-  return <T>slot.slots[ordinal - (view.anchor === OFFSET_ANCHOR.LEFT ? view.offset : invertOffset(view.offset, slot.size, state.size))];
+  return <T>view.slot.slots[getLeafIndex(view, ordinal, state.size)];
+}
+
+export function getLeafIndex<T>(view: View<T>, ordinal: number, listSize: number): number {
+  return ordinal - (view.anchor === OFFSET_ANCHOR.LEFT ? view.offset : invertOffset(view.offset, view.slot.size, listSize));
 }

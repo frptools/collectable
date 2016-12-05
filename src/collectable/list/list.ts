@@ -1,5 +1,5 @@
 import {isDefined, log} from './common';
-import {append, prepend} from './capacity';
+import {append, prepend, setValue} from './insertion';
 import {getAtOrdinal} from './traversal';
 import {concat} from './concat';
 import {slice} from './splice';
@@ -71,6 +71,10 @@ export class List<T> {
 
   get(index: number): T|undefined {
     return getAtOrdinal(this._state, index);
+  }
+
+  set(index: number, value: T): List<T> {
+    return this._exec(state => (setValue(state, index, value), void 0));
   }
 
   append(...values: T[]): List<T>

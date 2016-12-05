@@ -296,6 +296,64 @@ suite.only('[List: public]', () => {
       assert.strictEqual(list._state.right.slot, list._state.right.parent.slot.slots[list._state.right.slotIndex]);
     });
   });
+
+  suite('#set()', () => {
+    test('throws an error if the index is out of range', () => {
+      assert.throws(() => List.empty<any>().set(0, 'X'));
+      assert.throws(() => List.of(['X', 'Y']).set(2, 'Z'));
+      assert.throws(() => List.of(['X', 'Y']).set(-3, 'Z'));
+    });
+
+    test('updates the value at the specified index', () => {
+      var values = ['A', 'B', 'C', 'X', 'Y', 'Z'];
+      var list1 = List.of<any>(values);
+      var list2 = list1.set(0, 'J');
+      list2 = list2.set(2, 'K');
+      list2 = list2.set(5, 'L');
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), ['J', 'B', 'K', 'X', 'Y', 'L']);
+
+      values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+      var expected = values.slice();
+      expected[0] = 'J';
+      expected[BRANCH_FACTOR*2] = 'K';
+      expected[expected.length - 1] = 'L';
+
+      list1 = List.of<any>(values);
+      list2 = list1.set(0, 'J');
+      list2 = list2.set(BRANCH_FACTOR*2, 'K');
+      list2 = list2.set(expected.length - 1, 'L');
+      commitToRoot(list1);
+      commitToRoot(list2);
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), expected);
+
+      list1 = List.of<any>(values);
+      list2 = list1.set(expected.length - 1, 'L');
+      list2 = list2.set(BRANCH_FACTOR*2, 'K');
+      list2 = list2.set(0, 'J');
+      commitToRoot(list1);
+      commitToRoot(list2);
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), expected);
+
+      list1 = List.of<any>(values);
+      list2 = list1.set(BRANCH_FACTOR*2, 'K');
+      list2 = list2.set(expected.length - 1, 'L');
+      list2 = list2.set(0, 'J');
+      commitToRoot(list1);
+      commitToRoot(list2);
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), expected);
+    });
+
+    test('updates the value at a location relative to the end of the list if the specified index is negative', () => {
+      var list1 = List.of<any>(['A', 'B', 'C', 'X', 'Y', 'Z']);
+      var list2 = list1.set(-2, 'J');
+      assert.deepEqual(gatherLeafValues(list1), ['A', 'B', 'C', 'X', 'Y', 'Z']);
+      assert.deepEqual(gatherLeafValues(list2), ['A', 'B', 'C', 'X', 'J', 'Z']);
+    });
+  });
 });
 
 

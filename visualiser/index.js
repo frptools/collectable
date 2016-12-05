@@ -734,23 +734,27 @@ function main({DOM, events}) {
     //                     .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2))
     //                     .prepend('X');
 
-    var values = ['X'];
+    // var values = ['X'];
     // var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
     // var halfbf = BRANCH_FACTOR >>> 1;
     // var start = 0;
     // var end = halfbf + 1;
     // var values = makeValues(1000);
-    var list = List.of(values).asMutable();
+    // var list = List.of(values).asMutable();
     // var list = List.empty().asMutable();
     // var values = makeValues(BRANCH_FACTOR*2, list.size);
     // list.appendArray(values);
     // for(var i = 0; i < values.length; i++) {
     //   list.append(values[i]);
     // }
-publish(list, true, 'all values added');
-    list.popFront();
-    // list.slice(start, end);
-publish(list, true, 'pop completed');
+    var list1 = List.of(['A', 'B', 'C', 'X', 'Y', 'Z']);
+publish(list1, true, 'all values added');
+    var list2 = list1.set(0, 'J');
+publish([list1, list2], true, 'assigned at 0');
+    var list3 = list2.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2));
+publish([list1, list2, list3], true, 'appended some values');
+    var list4 = list3.set(5, 'L');
+publish([list1, list2, list3, list4], true, 'assigned at 5');
   // list.slice(2, values.length - 2);
 
 // var index = list.get(BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
@@ -822,7 +826,7 @@ publish(list, true, 'pop completed');
 // publish([left, right], true, 'pre-concat');
 //       left.concat(right);
 
-publish(list, true, 'FINAL STATE');
+// publish(list, true, 'FINAL STATE');
     // var prefix = 'A'.charCodeAt(0);
     // var sizes = [7, 56, 1, 13, 2, 5, 70];
     // var offset = 0;
