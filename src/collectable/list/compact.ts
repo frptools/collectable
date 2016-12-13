@@ -1,4 +1,4 @@
-import {CONST, max, min} from './common';
+import {CONST, max, min, log, publish} from './common';
 import {Slot, emptySlot} from './slot';
 
 interface CompactionState<T> {
@@ -36,6 +36,7 @@ interface Position<T> {
 }
 
 function isCompactable<T>(node: Slot<T>): boolean {
+// log(`slot ${node.id} ${node.slots.length < CONST.BRANCH_INDEX_MASK ? 'IS' : 'is NOT'} compactable`);
   return node.slots.length < CONST.BRANCH_INDEX_MASK;
 }
 
@@ -111,14 +112,22 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
   incrementPos(right, nodes);
   var removed = 0;
 
+  // Check if the reduction target can be reduced further to eliminate the additional slots to the right and leave only a single node
+  if(finalSlotCount > CONST.BRANCH_FACTOR && left.upper.subcount + right.upper.subcount <= CONST.BRANCH_FACTOR << CONST.BRANCH_INDEX_BITCOUNT) {
+    // reductionTarget += finalSlotCount - CONST.BRANCH_FACTOR;
+    // finalSlotCount = CONST.BRANCH_FACTOR;
+  }
+
   do {
     // Move the position markers until the left is at a location that is eligible for receiving subslots from the right
     if(isReductionTargetMet || !left.compactable) {
       incrementPos(left, nodes);
+// log(`increment left`);
       if(removed > 0) {
         copySlotLeft(left, right);
       }
       incrementPos(right, nodes);
+// log(`increment right`);
     }
 
     if(!isReductionTargetMet && left.compactable) {
@@ -135,6 +144,7 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
       var rslots = right.lower.slots;
       var startIndex = lslots.length;
       var slotsToMove = min(CONST.BRANCH_FACTOR - startIndex, rslots.length);
+// log(`move ${slotsToMove} slots from slot ${right.lower.id} to slot ${left.lower.id}`);
       var subcountMoved = 0;
       lslots.length = startIndex + slotsToMove;
 
@@ -150,6 +160,7 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
         if(j + slotsToMove < rslots.length) {
           rslots[j] = rslots[j + slotsToMove];
         }
+// publish(lists, false, `shifted some slots left!`);
       }
 
       left.lower.size += sizeMoved;
@@ -176,6 +187,7 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
         incrementPos(right, nodes);
       }
     }
+// publish(lists, false, `[compact] one iteration complete`);
   } while(left.absoluteIndex < lastFinalIndex);
 
   nodes[1].slots.length = max(0, finalSlotCount - nodes[0].slots.length);

@@ -1,8 +1,8 @@
-import {max, invertOffset, normalizeIndex, isUndefined, log, publish} from './common';
+import {CONST, COMMIT_MODE, OFFSET_ANCHOR, max, invertOffset, normalizeIndex, isUndefined, log, publish} from './common';
 import {ListState} from './state';
-import {OFFSET_ANCHOR, View} from './view';
-import {SLOT_STATUS, ExpansionParameters} from './slot';
-import {ascend, focusHead, focusTail, focusView, isViewInRange} from './traversal';
+import {View} from './view';
+import {ExpansionParameters} from './slot';
+import {TreeWorker, isViewInRange} from './traversal';
 
 export function slice<T>(state: ListState<T>, start: number, end: number): void {
   if(start < 0) {
@@ -10,6 +10,7 @@ export function slice<T>(state: ListState<T>, start: number, end: number): void 
   }
   end = max(-1, end < 0 ? state.size + end : end);
   if(end <= 0 || start >= end || start >= state.size) {
+log(`slicing to an empty list; start: ${start}, end: ${end}`);
     if(state.size > 0) {
       state.left = View.empty<T>(OFFSET_ANCHOR.LEFT);
       state.right = View.empty<T>(OFFSET_ANCHOR.LEFT);
@@ -19,6 +20,7 @@ export function slice<T>(state: ListState<T>, start: number, end: number): void 
     return;
   }
   if(end >= state.size && start <= 0) {
+log(`no slice will be performed; start: ${start}, end: ${end}`);
     return;
   }
   if(start < 0) start = 0;
@@ -28,29 +30,29 @@ export function slice<T>(state: ListState<T>, start: number, end: number): void 
 }
 
 function sliceInternal<T>(state: ListState<T>, start: number, end: number): void {
-publish(state, true, `pre-slice: ${start} -> ${end}`);
+publish(state, false, `pre-slice: ${start} -> ${end}`);
   var doneLeft = start === 0,
       doneRight = end === state.size;
 
   var left: View<T> = <any>void 0, right: View<T> = <any>void 0;
   if(start === 0) {
-    left = focusHead(state, true);
+    left = TreeWorker.focusHead(state, true);
     if(isViewInRange(left, end - 1, state.size)) {
       right = left;
       // doneRight = true;
     }
   }
   if(isUndefined(right)) {
-    right = end === state.size ? focusTail(state, true) : focusView(state, end - 1, OFFSET_ANCHOR.RIGHT, true);
+    right = end === state.size ? TreeWorker.focusTail(state, true) : TreeWorker.focusView(state, end - 1, OFFSET_ANCHOR.RIGHT, true);
   }
   if(isUndefined(left)) {
-    left = isViewInRange(right, start, state.size) ? right : focusView(state, start, OFFSET_ANCHOR.LEFT, true);
+    left = isViewInRange(right, start, state.size) ? right : TreeWorker.focusView(state, start, OFFSET_ANCHOR.LEFT, true);
     // if(left === right) {
       // doneLeft = true;
     // }
   }
 
-log(`done left: ${doneLeft}, done right: ${doneRight}, same: ${left === right}, same parents: ${left.parent === right.parent}`);
+log(`done left: ${doneLeft}, done right: ${doneRight}, same: ${left === right}, same parents: ${left.xparent === right.xparent}`);
 
   // var left = doneLeft
   //             ? focusHead(state, true)
@@ -65,9 +67,11 @@ log(`done left: ${doneLeft}, done right: ${doneRight}, same: ${left === right}, 
   var truncateLeft = doneLeft || start <= leftOffset ? 0 : leftOffset - start;
   var truncateRight = doneRight || end >= rightBound ? 0 : end - rightBound;
   var isRoot = (doneLeft ? right : left).isRoot();
+  var leftWorker: TreeWorker<T> = <any>void 0;
+  var rightWorker: TreeWorker<T> = <any>void 0;
 
 log(`left offset: ${leftOffset}, right bound: ${rightBound}, truncate left: ${truncateLeft}, truncate right: ${truncateRight}, is root: ${isRoot}`);
-publish(state, true, `views selected and ready for slicing`);
+publish(state, false, `views selected and ready for slicing`);
 
   if(truncateLeft) {
     left.adjustSlotRange(truncateLeft, left === right ? truncateRight : 0, true);
@@ -95,9 +99,15 @@ publish(state, false, 'left leaf truncation applied');
     }
   }
 
+  if(!doneLeft || !doneRight) {
+    leftWorker = TreeWorker.defaultPrimary<T>().reset(state, left, state.group, -1);
+    rightWorker = TreeWorker.defaultSecondary<T>().reset(state, right, state.group, -1);
+  }
+
 publish(state, false, 'right leaf truncation applied');
 
   var noAscent = doneLeft && doneRight;
+  // var shift = 0;
   var xx = 0;
   while(!doneLeft || !doneRight) {
 publish(state, false, `[SLICE | BEGIN LOOP] done left: ${doneLeft}, done right: ${doneRight}`);
@@ -108,41 +118,48 @@ publish(state, false, `[SLICE | BEGIN LOOP] done left: ${doneLeft}, done right: 
       rightBound = calculateRightEnd(right, state.size);
     }
 
-    truncateLeft = doneLeft ? 0 : -left.slotIndex;
-    truncateRight = doneRight ? 0 : right.slotIndex - right.parent.slotCount() + 1;
+    truncateLeft = doneLeft ? 0 : -left.xslotIndex;
+    truncateRight = doneRight ? 0 : right.xslotIndex - right.xparent.slotCount() + 1;
 
-    var areSiblings = left !== right && left.parent === right.parent;
+    var areSiblings = left !== right && left.xparent === right.xparent;
 
-    var leftChild = left;
+    // var leftChild = left;
 log(`left offset: ${left.offset}, right bound: ${rightBound}, truncate left: ${truncateLeft}, truncate right: ${truncateRight}, is root: ${isRoot}, siblings: ${areSiblings}`);
 log(`SLICE/ASCEND LEFT`);
-    left = ascend(state.group, left, SLOT_STATUS.RESERVE, doneLeft && !areSiblings ? void 0 : ExpansionParameters.get(truncateLeft, areSiblings ? truncateRight : 0, 0));
-    leftChild.offset = 0;
+    left = leftWorker.ascend(COMMIT_MODE.RESERVE, doneLeft && !areSiblings ? void 0 : ExpansionParameters.get(truncateLeft, areSiblings ? truncateRight : 0, 0));
+    // left = ascend(state.group, left, shift === 0, COMMIT_MODE.RESERVE, doneLeft && !areSiblings ? void 0 : ExpansionParameters.get(truncateLeft, areSiblings ? truncateRight : 0, 0));
+log(`leftWorker.previous.id: ${leftWorker.previous.id}`);
+    leftWorker.previous.offset = 0;
+    // leftChild.offset = 0;
     if(!doneLeft) {
-      leftChild.slotIndex += truncateLeft;
+      // leftWorker.previous.xslotIndex += truncateLeft;
       if(getOffset(left, OFFSET_ANCHOR.LEFT, state.size) === 0) {
         doneLeft = true;
-log(`DONE LEFT`);
+publish(state, true, `DONE LEFT`);
       }
     }
-    leftChild.parent = left;
+    // leftWorker.previous.xparent = left;
 
     if(areSiblings) {
-      right.parent = left;
-      right.slotIndex += truncateLeft;
+      right.xparent = left;
+      right.xslotIndex += truncateLeft;
       doneLeft = true;
       doneRight = true;
 log(`DONE LEFT AND RIGHT`);
     }
 
-    var rightChild = right;
+    // var rightChild = right;
 log(`SLICE/ASCEND RIGHT`);
-    right = ascend(state.group, right, SLOT_STATUS.RESERVE, doneRight ? void 0 : ExpansionParameters.get(0, truncateRight, 0));
-    rightChild.offset = 0;
+    right = rightWorker.ascend(COMMIT_MODE.RESERVE, doneRight ? void 0 : ExpansionParameters.get(0, truncateRight, 0));
+    // right = ascend(state.group, right, shift === 0, COMMIT_MODE.RESERVE, doneRight ? void 0 : ExpansionParameters.get(0, truncateRight, 0));
+    rightWorker.previous.offset = 0;
+    // rightChild.offset = 0;
     isRoot = (doneLeft ? right : left).isRoot();
     if(!doneRight && !isRoot && getOffset(right, OFFSET_ANCHOR.RIGHT, state.size) === 0) {
       doneRight = true;
     }
+
+    // shift += CONST.BRANCH_INDEX_BITCOUNT;
 
 log(`is now root: ${isRoot}`);
   }
@@ -161,6 +178,7 @@ publish(state, false, '[SLICE | LOOP DONE]');
   state.size = end - start;
   state.lastWrite = start > 0 ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT;
 
+log(state)
 publish(state, false, '[SLICE | COMPLETE]');
 }
 

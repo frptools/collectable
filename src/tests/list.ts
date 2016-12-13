@@ -2,46 +2,10 @@ declare function require(moduleName: string): any;
 
 import {assert} from 'chai';
 import {List} from '../collectable/list';
-import {Slot} from '../collectable/list/slot';
 
-import {
-  BRANCH_FACTOR,
-  listOf,
-  commitToRoot,
-  gatherLeafValues,
-  slotValues,
-  tailSize,
-  // tailView,
-  headSize,
-  headSlot,
-  rootSlot,
-  makeValues,
-  text
-} from './test-utils';
+import {BRANCH_FACTOR, listOf, commitToRoot, gatherLeafValues, makeValues, text} from './test-utils';
 
 suite('[List: public]', () => {
-  // var empty: List<string>;
-  // var listBF: List<string>;
-  var listH1plus1: List<string>;
-  var listH2plusBFplus1: List<string>;
-  var listH3plusBFplus1: List<string>;
-  var listH4plusBFplus1: List<string>;
-  // var list70k: List<string>;
-  // var list100k: List<string>;
-  // var tailSize70k: number;
-
-  suiteSetup(function() {
-    // empty = List.empty<string>();
-    // listBF = listOf(BRANCH_FACTOR);
-    // listH1plus1 = listOf(BRANCH_FACTOR + 1);
-    // listH2plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
-    // listH3plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1);
-    // listH4plusBFplus1 = listOf(Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1);
-    // list70k = listOf(70000);
-    // list100k = listOf(100000);
-    // tailSize70k = (<LNode<string>>list70k._tail).size;
-  });
-
   suite('.empty()', () => {
     test('should have size 0', () => {
       const list = List.empty<string>();
@@ -109,7 +73,7 @@ suite('[List: public]', () => {
       var values = ['foo', 'bar', 'baz'];
       const list = List.empty<string>().append(...values);
       assert.strictEqual(list.size, 3);
-      assert.deepEqual(gatherLeafValues(list), values)
+      assert.deepEqual(gatherLeafValues(list), values);
     });
   });
 
@@ -293,7 +257,7 @@ suite('[List: public]', () => {
       list.get(BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
       assert.isFalse(list._state.right.slot.isReserved());
       assert.isTrue(list._state.left.slot.isReserved());
-      assert.strictEqual(list._state.right.slot, list._state.right.parent.slot.slots[list._state.right.slotIndex]);
+      assert.strictEqual(list._state.right.slot, list._state.right.xparent.slot.slots[list._state.right.xslotIndex]);
     });
   });
 
@@ -353,6 +317,54 @@ suite('[List: public]', () => {
       assert.deepEqual(gatherLeafValues(list1), ['A', 'B', 'C', 'X', 'Y', 'Z']);
       assert.deepEqual(gatherLeafValues(list2), ['A', 'B', 'C', 'X', 'J', 'Z']);
     });
+  });
+
+  suite('#insert()', () => {
+    test('returns the same list if no arguments are provided', () => {
+      var values = ['A', 'B', 'C', 'X', 'Y', 'Z'];
+      var list1 = List.of<any>(values);
+      var list2 = list1.insert(0);
+      assert.strictEqual(list1, list2);
+      assert.deepEqual(gatherLeafValues(list2), values);
+    });
+
+    test('appends to the list when using index === list.size', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      var list1 = List.of<any>(values);
+      var list2 = list1.insert(list1.size, 'J', 'K');
+      commitToRoot(list1);
+      commitToRoot(list2);
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), values.concat(['J', 'K']));
+    });
+
+    test('prepends to the list when using index 0', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      var list1 = List.of<any>(values);
+      var list2 = list1.insert(0, 'J', 'K');
+      // commitToRoot(list1);
+      commitToRoot(list2);
+      // assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), ['J', 'K'].concat(values));
+    });
+
+    test('inserts the arguments in their respective order before the specified index', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      var list1 = List.of<any>(values);
+      var index = BRANCH_FACTOR + (BRANCH_FACTOR >>> 1);
+      var list2 = list1.insert(index, 'J', 'K');
+      commitToRoot(list1);
+      commitToRoot(list2);
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, index).concat(['J', 'K']).concat(values.slice(index)));
+    });
+  });
+
+  suite('#insertArray()', () => {
+    test('returns the same list if the value array is empty');
+    test('appends to the list when using index === list.size');
+    test('prepends to the list when using index 0');
+    test('inserts the elements of the array in their respective order before the specified index');
   });
 });
 

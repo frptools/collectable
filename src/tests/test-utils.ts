@@ -1,11 +1,11 @@
 import {assert} from 'chai';
 
-import {CONST, last} from '../collectable/list/common';
+import {CONST, COMMIT_MODE, last} from '../collectable/list/common';
 import {List} from '../collectable/list';
 import {ListState} from '../collectable/list/state';
-import {SLOT_STATUS, Slot} from '../collectable/list/slot';
+import {Slot} from '../collectable/list/slot';
 import {View} from '../collectable/list/view';
-import {ascend, tryCommitOtherView} from '../collectable/list/traversal';
+import {TreeWorker} from '../collectable/list/traversal';
 
 export const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
 export const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
@@ -21,7 +21,7 @@ export function rootSlot<T>(arg: ListOrView<T>): Slot<any> {
 
 export function rootView<T>(arg: ListOrView<T>): View<T> {
   var view = arg instanceof View ? arg : firstActiveView(arg);
-  while(view && view.parent && view.parent.parent) view = view.parent;
+  while(view && view.xparent && view.xparent.xparent) view = view.xparent;
   return view;
 }
 
@@ -127,15 +127,10 @@ export function assertArrayElementsAreEqual(arr1: any[], arr2: any[], message?: 
 }
 
 export function gatherLeafValues(arg: AnyListType<any>, flatten = true): any[] {
-  var x = glf.apply(null, arguments);
-  return x;
-}
-
-function glf(arg: AnyListType<any>, flatten = true): any[] {
   var slot = arg instanceof Slot ? arg : rootSlot(arg);
   return flatten
-    ? slot.slots.reduce((vals: any[], slot: Slot<any>) => vals.concat(slot instanceof Slot ? glf(slot, true) : [slot]), [])
-    : slot.slots.map(slot => slot instanceof Slot ? glf(slot, false) : slot);
+    ? slot.slots.reduce((vals: any[], slot: Slot<any>) => vals.concat(slot instanceof Slot ? gatherLeafValues(slot, true) : [slot]), [])
+    : slot.slots.map(slot => slot instanceof Slot ? gatherLeafValues(slot, false) : slot);
 }
 
 export function makeValues(count: number, valueOffset = 0): string[] {
@@ -147,22 +142,17 @@ export function makeValues(count: number, valueOffset = 0): string[] {
 }
 
 export function commitToRoot<T>(arg: ListType<T>) {
-
   var state = getState(arg);
-  function commit(view: View<T>, isOther: boolean) {
-    var otherView = state.getOtherView(view.anchor);
-    var isUncommitted = !isOther && !otherView.isNone();
-    while(!view.parent.isNone()) {
-      var oldParent = view.parent;
-      var parent = ascend(state.group, view, SLOT_STATUS.RELEASE);
-      if(isUncommitted && tryCommitOtherView(state, otherView, oldParent, parent, 0)) {
-        isUncommitted = false;
-      }
-      view.parent = parent;
-      view.slot = <Slot<T>>parent.slot.slots[view.slotIndex];
-      view = parent;
-    }
+  var worker = TreeWorker.defaultPrimary().reset(state, firstActiveView(state), state.group, COMMIT_MODE.RELEASE);
+  while(!worker.isRoot()) {
+    worker.ascend(COMMIT_MODE.RELEASE);
   }
-  if(!state.left.isNone()) commit(state.left, false);
-  if(!state.right.isNone()) commit(state.right, true);
+}
+
+export function assertViewPath<T>(arg: ListOrView<T>, callback: (view: View<T>, level?: number) => void) {
+  var view = arg instanceof View ? arg : firstActiveView(arg);
+  var level = 0;
+  do {
+    callback(view, level++);
+  } while(!view.isNone());
 }

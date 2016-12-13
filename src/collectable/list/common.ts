@@ -12,6 +12,26 @@ export const enum CONST {
   MAX_OFFSET_ERROR = (BRANCH_INDEX_BITCOUNT >>> 2) + 1, // `e` in the RRB paper
 }
 
+/**
+ * An offset value is relative to either the left or the right of the list. Flipping the offset and anchor of an
+ * intermediate view can allow the referenced node to be size-adjusted without affecting the offset values of other
+ * views.
+ *
+ * @export
+ * @enum {number}
+ */
+export const enum OFFSET_ANCHOR {
+  LEFT = 0,
+  RIGHT = 1
+}
+
+export const enum COMMIT_MODE {
+  NO_CHANGE = 0,
+  RESERVE = 1,
+  RELEASE = 2,
+  RELEASE_DISCARD = 3,
+}
+
 var _nextId = 0;
 export function nextId() {
   return ++_nextId;
@@ -29,6 +49,10 @@ export function nextId() {
 export function invertOffset(offset: number, slotSize: number, listSize: number): number {
 // log(`[invertOffset] offset: ${offset}, slotSize: ${slotSize}, listSize: ${listSize}, result: ${listSize - offset - slotSize}`);
   return listSize - offset - slotSize;
+}
+
+export function invertAnchor(anchor: OFFSET_ANCHOR): OFFSET_ANCHOR {
+  return anchor === OFFSET_ANCHOR.RIGHT ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT;
 }
 
 export function normalizeIndex(size: number, index: number): number {

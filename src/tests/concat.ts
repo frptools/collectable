@@ -1,5 +1,6 @@
 import {assert} from 'chai';
 import {append} from '../collectable/list/insertion';
+import {List} from '../collectable/list';
 import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
 import {concat, join} from '../collectable/list/concat';
@@ -325,8 +326,8 @@ suite('[List: concatenation]', () => {
       concat(left, right);
 
       var root = rootSlot(left);
-      assert.isTrue(left.right.parent.hasUncommittedChanges());
-      assert.isTrue(left.right.parent.slot.isRelaxed());
+      assert.isTrue(left.right.xparent.hasUncommittedChanges());
+      assert.isTrue(left.right.xparent.slot.isRelaxed());
       assert.strictEqual(left.size, n0 + n1);
 
       commitToRoot(left);
@@ -347,6 +348,26 @@ suite('[List: concatenation]', () => {
 
       commitToRoot(left);
       assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+    });
+
+    test('joins lists when both lists each have pre-existing reserved head and tail views', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2) - (BRANCH_FACTOR >>> 2));
+      var leftValues = values.slice(0, BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
+      var rightValues = values.slice(leftValues.length);
+      var list1 = List.of<any>(leftValues).prepend('X');
+      var list2 = List.of<any>(rightValues).prepend('Y');
+      leftValues.unshift('X');
+      rightValues.unshift('Y');
+
+      var list3 = list1.concat(list2);
+
+      commitToRoot(list1);
+      commitToRoot(list2);
+      commitToRoot(list3);
+
+      assert.deepEqual(gatherLeafValues(list1, true), leftValues);
+      assert.deepEqual(gatherLeafValues(list2, true), rightValues);
+      assert.deepEqual(gatherLeafValues(list3, true), leftValues.concat(rightValues));
     });
   });
 });

@@ -51,7 +51,7 @@ suite('[List: slicing and splicing]', () => {
       assert.strictEqual(list.left.sizeDelta, -2);
       assert.strictEqual(list.left.slotsDelta, -2);
       assert.isTrue(list.left.slot.isReserved());
-      assert.isTrue((<Slot<any>>list.left.parent.slot.slots[list.left.slotIndex]).isReserved());
+      assert.isTrue((<Slot<any>>list.left.xparent.slot.slots[list.left.xslotIndex]).isReserved());
     });
 
     test('slicing away the right side of the tail slot leaves the tail view in an uncommitted state', () => {
@@ -66,7 +66,7 @@ suite('[List: slicing and splicing]', () => {
       assert.strictEqual(list.right.sizeDelta, -2);
       assert.strictEqual(list.right.slotsDelta, -2);
       assert.isTrue(list.right.slot.isReserved());
-      assert.isTrue((<Slot<any>>list.right.parent.slot.slots[list.right.slotIndex]).isReserved());
+      assert.isTrue((<Slot<any>>list.right.xparent.slot.slots[list.right.xslotIndex]).isReserved());
     });
 
     test('slicing away the ends of the head and tail slots leaves both respective views in uncommitted states', () => {
@@ -81,14 +81,14 @@ suite('[List: slicing and splicing]', () => {
       assert.strictEqual(list.left.sizeDelta, -2);
       assert.strictEqual(list.left.slotsDelta, -2);
       assert.isTrue(list.left.slot.isReserved());
-      assert.isTrue((<Slot<any>>list.left.parent.slot.slots[list.left.slotIndex]).isReserved());
+      assert.isTrue((<Slot<any>>list.left.xparent.slot.slots[list.left.xslotIndex]).isReserved());
       assert.strictEqual(list.size, values.length - 4);
       assert.strictEqual(list.right.offset, 0);
       assert.strictEqual(list.right.slot.size, BRANCH_FACTOR - 2);
       assert.strictEqual(list.right.sizeDelta, -2);
       assert.strictEqual(list.right.slotsDelta, -2);
       assert.isTrue(list.right.slot.isReserved());
-      assert.isTrue((<Slot<any>>list.right.parent.slot.slots[list.right.slotIndex]).isReserved());
+      assert.isTrue((<Slot<any>>list.right.xparent.slot.slots[list.right.xslotIndex]).isReserved());
     });
 
     test('a left slice that does not include the current root reduces the height of the tree', () => {
@@ -97,8 +97,8 @@ suite('[List: slicing and splicing]', () => {
       var halfbf = BRANCH_FACTOR >>> 1;
       var end = BRANCH_FACTOR*halfbf + halfbf;
 
-      assert.isFalse(list.left.parent.isRoot());
-      assert.isFalse(list.right.parent.isRoot());
+      assert.isFalse(list.left.xparent.isRoot());
+      assert.isFalse(list.right.xparent.isRoot());
 
       slice(list, 2, end);
 
@@ -107,8 +107,8 @@ suite('[List: slicing and splicing]', () => {
       assert.strictEqual(list.left.offset, 0);
       assert.strictEqual(list.right.slot.size, halfbf);
       assert.strictEqual(list.right.offset, 0);
-      assert.strictEqual(list.left.parent, list.right.parent);
-      assert.isTrue(list.left.parent.isRoot());
+      assert.strictEqual(list.left.xparent, list.right.xparent);
+      assert.isTrue(list.left.xparent.isRoot());
 
       commitToRoot(list);
       assert.deepEqual(gatherLeafValues(list), values.slice(2, end));
@@ -121,8 +121,8 @@ suite('[List: slicing and splicing]', () => {
       var start = values.length - BRANCH_FACTOR - halfbf;
       var end = values.length - 2;
 
-      assert.isFalse(list.left.parent.isRoot());
-      assert.isFalse(list.right.parent.isRoot());
+      assert.isFalse(list.left.xparent.isRoot());
+      assert.isFalse(list.right.xparent.isRoot());
 
       slice(list, start, end);
 
@@ -131,8 +131,8 @@ suite('[List: slicing and splicing]', () => {
       assert.strictEqual(list.left.offset, 0);
       assert.strictEqual(list.right.slot.size, BRANCH_FACTOR - 2);
       assert.strictEqual(list.right.offset, 0);
-      assert.strictEqual(list.left.parent, list.right.parent);
-      assert.isTrue(list.left.parent.isRoot());
+      assert.strictEqual(list.left.xparent, list.right.xparent);
+      assert.isTrue(list.left.xparent.isRoot());
 
       commitToRoot(list);
       assert.deepEqual(gatherLeafValues(list), values.slice(start, end));

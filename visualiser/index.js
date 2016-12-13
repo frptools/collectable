@@ -3,9 +3,11 @@ import {fromEvent} from 'most';
 import {create} from '@most/create'
 import {a, h, div, span, thunk, makeDOMDriver} from '@motorcycle/dom';
 import {List, setCallback} from '../lib/collectable/list';
-// import {ListState} from '../lib/collectable/list/state';
 import {nextId as nextInternalId, log, publish} from '../lib/collectable/list/common';
-import {ascend, tryCommitOtherView} from '../lib/collectable/list/traversal';
+import {TreeWorker, tryCommitOtherView, getAtOrdinal} from '../lib/collectable/list/traversal';
+import {append} from '../lib/collectable/list/insertion';
+import {slice} from '../lib/collectable/list/splice';
+import {ListState} from '../lib/collectable/list/state';
 import {Slot} from '../lib/collectable/list/slot';
 import {View} from '../lib/collectable/list/view';
 import Immutable from 'immutable';
@@ -14,6 +16,23 @@ import CJ from 'circular-json';
 require('./styles.styl');
 
 var nextId = 0;
+const storageKey = 'collectable-visualiser-';
+var alignment = getSavedValue('alignment');
+
+function updateAlignment(delta) {
+  var listsEl = document.querySelector('.list-container .lists');
+  if(listsEl.children.length === 1) {
+    if(delta < 0 && (alignment === 4 || alignment === 2)) {
+      delta = -2;
+    }
+    else if(delta > 0 && (alignment === 0 || alignment === 2)) {
+      delta = 2;
+    }
+  }
+  alignment = Math.min(4, Math.max(0, delta + alignment));
+  saveValue('alignment', alignment);
+  updateEdges();
+}
 
 var colors = {
   0: ['white', '#7fbad8', '#0075b2'],
@@ -68,8 +87,6 @@ function chooseStyle(id, textOnly) {
   var index = number % colorWheelSize;
   var isMid = number % (colorWheelSize*2) > colorWheelSize;
   return textOnly ? colorText(index, isMid) : colorFill(index, isMid);
-  // var isInverse = number % (colorWheelSize*4) > colorWheelSize*2;
-  // return isInverse ? colorFillInv(index, isMid) : colorFill(index, isMid);
 }
 
 function getViewSlotKey() {
@@ -93,15 +110,21 @@ function addView(map, key, view) {
   set.add(view);
 }
 
-var list$ = create(add => {
+var _addLogEvent, _canStartLogging = false;
+function beginCollectingLogs() {
+  _canStartLogging = true;
+  if(!_addLogEvent) return;
+  var add = _addLogEvent;
   var logs = [];
   var previousList = [];
   setCallback(function(lists, done, message) {
     if(Array.isArray(lists)) {
       if(arguments.length === 1) {
-        if(lists.find(arg => arg instanceof Error)) {
+        var err;
+        if(err = lists.find(arg => arg instanceof Error)) {
           logs.push(lists);
-          message = 'ERROR';
+          message = `ERROR: ${err && err.message || err}`;
+          done = true;
           lists = previousList;
         }
         else {
@@ -116,7 +139,14 @@ var list$ = create(add => {
     previousList = lists;
 
     lists = lists.map(list => {
-      list = CJ.parse(CJ.stringify(list));
+      var json = CJ.stringify(list);
+      try {
+        list = CJ.parse(json);
+      }
+      catch(e) {
+        console.log(json);
+        throw e;
+      }
       var views = {
         bySlotId: new Map(),
         byLocation: new Map(),
@@ -145,6 +175,10 @@ var list$ = create(add => {
     logs = [];
     add(entry);
   });
+}
+var list$ = create(add => {
+  _addLogEvent = add;
+  if(_canStartLogging) beginCollectingLogs();
 });
 
 function renderTimeline(DOM, model) {
@@ -169,7 +203,7 @@ function isReservedNode(slot) {
 }
 
 function isPlaceholderNode(slot) {
-  return isReservedNode(slot); // && slot.slots[0] === null && slot.slots[slot.slots.length - 1] === null;
+  return isReservedNode(slot);
 }
 
 var containers = [];
@@ -345,14 +379,22 @@ function drawLines() {
   setTimeout(() => {
     document.querySelector('.version.active').scrollIntoViewIfNeeded(false);
     var el = document.querySelector('.list-container')
-    if(listsEl.children.length > 1) {
-      // el.scrollLeft = listsEl.children[1].offsetLeft - (el.offsetWidth/2)
-      // el.scrollLeft = el.scrollWidth;
+    switch(alignment) {
+      case 0: el.scrollLeft = 0; break;
+      case 1: el.scrollLeft = listsEl.children.length > 1 ? listsEl.children[0].offsetWidth/2 - el.offsetWidth/2 : el.scrollWidth/2 - el.offsetWidth/2; break;
+      case 2: el.scrollLeft = listsEl.children.length > 1 ? listsEl.children[1].offsetLeft - el.offsetWidth/2 : el.scrollWidth/2 - el.offsetWidth/2; break;
+      case 3: el.scrollLeft = listsEl.children.length > 1 ? listsEl.children[1].offsetLeft + listsEl.children[1].offsetWidth/2 - el.offsetWidth/2 : el.scrollWidth/2 - el.offsetWidth/2; break;
+      case 4: el.scrollLeft = el.scrollWidth; break;
     }
-    else {
-      // el.scrollLeft = el.scrollWidth/2 - el.offsetWidth/2;
-      // el.scrollLeft = el.scrollWidth;
-    }
+    // if(listsEl.children.length > 1) {
+
+    //   // el.scrollLeft = listsEl.children[1].offsetLeft - (el.offsetWidth/2)
+    //   // el.scrollLeft = el.scrollWidth;
+    // }
+    // else {
+    //   // el.scrollLeft = el.scrollWidth/2 - el.offsetWidth/2;
+    //   el.scrollLeft = el.scrollWidth;
+    // }
     el.scrollTop = el.scrollHeight;
   }, 100);
 }
@@ -572,7 +614,26 @@ function renderList(model) {
   edges.length = 0;
   var entry = model.timeline.get(model.index);
   if(entry.logs.length > 0) {
-    entry.logs.forEach(logs => console.log.apply(console, logs));
+    entry.logs.forEach(logs => {
+      if(typeof logs[0] === 'string') {
+        var match = /^\[([A-Za-z0-9]+)(([#\.])\s*([A-Za-z0-9]+))?\s*(\([^\)]+\))?\]/.exec(logs[0]);
+        if(match) {
+          var msg = '%c]' + logs[0].slice(match[0].length);
+          logs = [''].concat(logs.slice(1));
+          if(match[5]) {
+            msg = ` %c${match[5]}${msg}`;
+            logs.unshift('color: white');
+          }
+          if(match[4]) {
+            msg = `%c${match[3]}%c${match[4]}${msg}`;
+            logs.unshift('color: #999', 'color: #f06');
+          }
+          msg = `[%c${match[1]}${msg}`;
+          logs.unshift(msg, match[3] ? 'color: orange' : 'color: #f06');
+        }
+      }
+      console.log.apply(console, logs);
+    });
   }
   console.debug(`# VERSION INDEX ${model.index}${entry.message ? `: ${entry.message}` : ''}`);
   var i = 0;
@@ -583,14 +644,15 @@ function renderList(model) {
       var state = list._state || list;
       return div('.list', [
         div('.props', [
-          div('.size', withProps ? ['elements: ', ('size' in state ? state.size : state.slot.size).toString()] : '.'),
+          div('.id', withProps ? ['id: ', ('id' in state ? state.id : state.slot.id).toString()] : '.'),
+          div('.size', withProps ? ['size: ', ('size' in state ? state.size : state.slot.size).toString()] : '.'),
           div('.group', withProps ? ['group: ', ('group' in state ? state.group : state.slot.group).toString()] : '.'),
           div('.last-write', withProps && 'lastWrite' in state ? ['last write: ', (state.lastWrite === 0 ? 'LEFT' : 'RIGHT').toString()] : '.'),
         ]),
         div('.container', [
           nodeContainer,
           // ...Array.from(unusedViews).map(view => renderView(i, {view, isCorrectSlotRef: false}, -1))
-        ])
+        ]),
       ]);
     }
     var left = findRoot(list, false);
@@ -608,7 +670,7 @@ function renderList(model) {
   var message = entry.message || '';
   return div('.list-container', {class: {done: !!entry.done}}, [
     h('svg#edges', {style: {zoom: model.zoom}, attr: {'data-temp': Math.random()}, hook: {insert: updateEdges, postpatch: updateEdges}}),
-    div('.message', {class: {done: !!entry.done}}, message),
+    // div('.message', {class: {done: !!entry.done}}, message),
     div('.lists', {style: {zoom: model.zoom}}, lists)
   ]);
 }
@@ -621,6 +683,18 @@ function render(DOM) {
     ])
   };
 }
+
+function getSavedValue(key) {
+  var value = localStorage.getItem(`${storageKey}-${key}`);
+  console.log(`saved value for ${`${storageKey}-${key}`} is ${value}.`);
+  return value ? parseInt(value) : 0;
+}
+
+function saveValue(key, value) {
+  localStorage.setItem(`${storageKey}-${key}`, value.toString());
+  console.log(`${key} (${value}) saved.`);
+}
+
 
 function main({DOM, events}) {
   var model = {
@@ -643,6 +717,9 @@ function main({DOM, events}) {
         case 39:  /* right */ fn = model => { if(model.index + 1 < model.timeline.size) model.index++; }; break;
         case 107: /* +     */ fn = model => { if(model.zoom < 1) model.zoom = Math.min(1, model.zoom + 0.1); }; break;
         case 109: /* -     */ fn = model => { if(model.zoom > 0.1) model.zoom = Math.max(0.1, Math.round((model.zoom - 0.1)*10)/10); }; break;
+        case 219: /* [     */ fn = model => { updateAlignment(-1); }; break;
+        case 221: /* ]     */ fn = model => { updateAlignment(1); }; break;
+        case 83:  /* s     */ fn = model => { saveValue('current index', model.index); }; break;
         case 88:  /* x     */ console.clear(); fn = false; break;
         case 33:  /* pgup  */ fn = model => {
             for(var i = model.index - 1; i >= 0; i--) {
@@ -661,11 +738,12 @@ function main({DOM, events}) {
     })
     .filter(fn => fn);
 
+  const startIndex = getSavedValue('current index');
+
   return {
     DOM: list$
       .map(args => model => {
         model.timeline = model.timeline.push(args);
-        var startIndex = 27;
         var thisIndex = Math.min(startIndex, model.timeline.size - 1);
         if(thisIndex === startIndex && model.index !== startIndex) {
           console.clear();
@@ -687,10 +765,6 @@ function main({DOM, events}) {
   });
 
   setTimeout(() => {
-//     var list = List.empty();
-// publish(list, true, 'EMPTY LIST');
-    // var list = listOf(95);
-    // list = listOf(1).concat(listOf(32, 1), listOf(1, 33)).append(...makeValues(70, 34));
     function getState(arg) {
       return arg instanceof List ? arg._state : arg;
     }
@@ -703,159 +777,316 @@ function main({DOM, events}) {
     }
     function commitToRoot(arg) {
       var state = getState(arg);
-      function commit(view, isOther) {
-        var otherView = state.getOtherView(view.anchor);
-        var isUncommitted = !isOther && !otherView.isNone();
-        var level = 0;
-        while(!view.parent.isNone()) {
-          var oldParent = view.parent;
-          var parent = ascend(state.group, view, 2);
-          if(isUncommitted && tryCommitOtherView(state, otherView, oldParent, parent, 0)) {
-            isUncommitted = false;
-          }
-          view.parent = parent;
-          view.slot = parent.slot.slots[view.slotIndex];
-          view = parent;
-        }
+      var worker = TreeWorker.defaultPrimary().reset(state, firstActiveView(state), state.group, 2);
+      while(!worker.isRoot()) {
+        worker.ascend(2);
       }
-      if(!state.left.isNone()) commit(state.left, false);
-      if(!state.right.isNone()) commit(state.right, true);
+    }
+    function makeList(values, initialSize, usePrepend) {
+      const list = List.empty().asMutable();
+      if(initialSize > 0) {
+        list.appendArray(values.slice(0, initialSize));
+        commitToRoot(list);
+        values = values.slice(initialSize);
+      }
+      if(usePrepend) {
+        list.prependArray(values);
+      }
+      else {
+        list.appendArray(values);
+      }
+      commitToRoot(list);
+      return list;
     }
 
     var BRANCH_FACTOR = 8;
-    // var m = BRANCH_FACTOR/2;
-    // var n0 = BRANCH_FACTOR*m + 1;
-    // var n1 = BRANCH_FACTOR*m + 3;
-    // var left = List.of(makeValues(n0));
-    // var right = List.of(makeValues(n1, n0));
-    // var list = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2));
-    // var list = List.of(makeValues(BRANCH_FACTOR*BRANCH_FACTOR + BRANCH_FACTOR + 1)).asMutable();
-    // var list = List.of(['@']).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
-    //                     .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2))
-    //                     .prepend('X');
+    publish(List.empty(), true, 'START');
 
-    // var values = ['X'];
-    // var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-    // var halfbf = BRANCH_FACTOR >>> 1;
-    // var start = 0;
-    // var end = halfbf + 1;
-    // var values = makeValues(1000);
-    // var list = List.of(values).asMutable();
-    // var list = List.empty().asMutable();
-    // var values = makeValues(BRANCH_FACTOR*2, list.size);
-    // list.appendArray(values);
-    // for(var i = 0; i < values.length; i++) {
-    //   list.append(values[i]);
-    // }
-    var list1 = List.of(['A', 'B', 'C', 'X', 'Y', 'Z']);
-publish(list1, true, 'all values added');
-    var list2 = list1.set(0, 'J');
-publish([list1, list2], true, 'assigned at 0');
-    var list3 = list2.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2));
-publish([list1, list2, list3], true, 'appended some values');
-    var list4 = list3.set(5, 'L');
-publish([list1, list2, list3, list4], true, 'assigned at 5');
-  // list.slice(2, values.length - 2);
+    function runCapacityTests1() {
+      beginCollectingLogs();
+      var list = List.empty()/*.asMutable()*/.appendArray(makeValues(BRANCH_FACTOR >>> 2));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 1, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR << 1, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 2), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 3), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      // list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 4), list.size));
+      // publish(list, true, `list size: ${list.size}`);
+      // list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      // publish(list, true, `list size: ${list.size}`);
+    }
 
-// var index = list.get(BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
-// publish(list, true, `value #${index}: ${list.get(index)}`);
-// publish(list, true, `value #${0}: ${list.get(0)}`);
-// publish(list, true, `value #${448}: ${list.get(448)}`);
-// publish(list, true, `value #${9}: ${list.get(9)}`);
-//     for(var i = 0; i < list.size; i++) {
-// publish(list, true, `value #${i}: ${list.get(i)}`);
-//     }
-    // log(`reset left view to position 0: ${list.get(0)}`);
-// publish(list, true, `pre-commit`);
-//     commitToRoot(list);
-    // var list = List.of(makeValues(BRANCH_FACTOR));
-    // list = list.concat(List.of(makeValues(1, BRANCH_FACTOR)));
-    // list = list.appendArray(makeValues(BRANCH_FACTOR*2, BRANCH_FACTOR + 1));
-//     var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
-//     var index = values.length >>> 1;
-//     var value = text(index);
-// console.log(`${values.length} values; #${index} should equal "${value}"`);
-//     var list = List.empty().prependArray(values);
-    // var list = listOf(1).concat(listOf(BRANCH_FACTOR, 1), listOf(1, BRANCH_FACTOR + 1))
-    //                     .append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2))
-    //                     .prepend('X');
+    function runCapacityTests2() {
+      beginCollectingLogs();
+      var list = List.empty()/*.asMutable()*/.prependArray(makeValues(BRANCH_FACTOR >>> 2));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 1, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR << 1, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(Math.pow(BRANCH_FACTOR, 2), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(Math.pow(BRANCH_FACTOR, 3), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(Math.pow(BRANCH_FACTOR, 4), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+    }
 
-// publish(list, true, `pre-get index ${index}`);
-    // log(`item at index ${index}: ${list.get(index)}`);
-// publish(list, true, `pre-get index ${index+1}`);
-//     log(`item at index ${index+1}: ${list.get(index+1)}`);
-// publish(list, true, `pre-get index ${index-1}`);
-//     log(`item at index ${index-1}: ${list.get(index-1)}`);
-// publish(list, true, `post-get index ${index-1}`);
-//     list = list.append(...makeValues(BRANCH_FACTOR*2 + 1, BRANCH_FACTOR + 2));
-//     log(`item at index ${index}: ${list.get(index)}`);
-// publish(list, true, `got index ${index}`);
+    function runCapacityTests3() {
+      beginCollectingLogs();
+      var list = List.empty()/*.asMutable()*/.appendArray(makeValues(BRANCH_FACTOR >>> 2));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 1, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 2), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 3), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      // list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      // publish(list, true, `list size: ${list.size}`);
+      // list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 4), list.size));
+      // publish(list, true, `list size: ${list.size}`);
+      // list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      // publish(list, true, `list size: ${list.size}`);
+      // list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      // publish(list, true, `list size: ${list.size}`);
+      // list = list.prependArray(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR, list.size));
+      // publish(list, true, `list size: ${list.size}`);
+    }
 
-    // var iterations = 70;
-    // for(var i = 0, c = 1, d = 0, prepend = true; i < iterations; i++, d += c, c = ((d>>>2)%2 === 1 ? i : iterations - i), prepend = !prepend) {
-    //   list = prepend ? list.prependArray(makeValues(c, d)) : list.appendArray(makeValues(c, d))
-    // }
+    function runCapacityTests4() {
+      beginCollectingLogs();
+      var list = List.empty()/*.asMutable()*/.prependArray(makeValues(BRANCH_FACTOR >>> 2));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 1, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(Math.pow(BRANCH_FACTOR, 2), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(Math.pow(BRANCH_FACTOR, 3), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(Math.pow(BRANCH_FACTOR, 4), list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+      list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
+      publish(list, true, `list size: ${list.size}`);
+    }
 
-//     var n0 = Math.pow(BRANCH_FACTOR, 2) + 1;
-//     var n1 = BRANCH_FACTOR + 1;
+    function runAppendTests() {
+      var list = ListState.empty(true);
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+      for(var i = 0; i < values.length; i++) {
+        append(list, [values[i]]);
+        if(i % BRANCH_FACTOR === BRANCH_FACTOR - 1) {
+          // publish(list, true, `list size: ${list.size}`);
+        }
+      }
+      beginCollectingLogs();
+      publish(list, true, `list size: ${list.size}`);
+      for(var i = 0; i < values.length; i++) {
+        var value = getAtOrdinal(list, i);
+        publish(list, true, `value at index ${i} is ${value}`);
+      }
+    }
 
-//     list = List.of(makeValues(n0));
-// publish(list, true, 'PRE CONCAT');
-//     list = list.concat(List.of(makeValues(n1, n0)));
-//     list = list.append('X');
-      // list = list.prepend('X');
-      // list = list.append('Y', 'Z');
-// publish(left, true, 'FINAL STATE #1');
-      // list = list.append(...makeValues(BRANCH_FACTOR*145 + BRANCH_FACTOR/2 + 1));
-      // list = list.prepend(...makeValues(BRANCH_FACTOR*145 + BRANCH_FACTOR/2 + 1));
-      // list = list.prepend(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
-      // list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
-      // list = list.append(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
-      // list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
-      // list = list.append(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
-      // list = list.append(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
-      // list = list.prepend(...makeValues(BRANCH_FACTOR*2 + BRANCH_FACTOR/2));
-      // list = list.prepend(...makeValues(BRANCH_FACTOR*3 + BRANCH_FACTOR/2));
-// publish(left, true, 'FINAL STATE #2');
-      // left = left.prepend(...makeValues(BRANCH_FACTOR*BRANCH_FACTOR*BRANCH_FACTOR+1, 99));
-// publish([left], true, 'left');
-//       var right = MutableList.empty().append(...makeValues(BRANCH_FACTOR*3, BRANCH_FACTOR));
-// publish([right], true, 'right; pre-get');
-// log(`the value at position #40 is ${right.get(BRANCH_FACTOR + 8)}`);
-// publish([right], true, 'post-get');
-// publish([left, right], true, 'pre-concat');
-//       left.concat(right);
+    function runConcatTests1() {
+      beginCollectingLogs();
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2) - (BRANCH_FACTOR >>> 2));
+      var leftValues = values.slice(0, BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
+      var rightValues = values.slice(leftValues.length);
 
-// publish(list, true, 'FINAL STATE');
-    // var prefix = 'A'.charCodeAt(0);
-    // var sizes = [7, 56, 1, 13, 2, 5, 70];
-    // var offset = 0;
-    // for(var i = 0; i < sizes.length; i++, prefix++) {
-    //   var size = sizes[i];
-    //   var newList = List.of(makeValues(size, offset, i => `${String.fromCharCode(prefix)}${i}`));
-    //   offset += size;
-    //   list = i === 0 ? newList : list.concat(newList);
-    // }
-    // list = list.append('X');
-    // list = list.append('A', 'B', 'C');
-    // for(var i = 0, j = 1, c = 'A'; i < 20; i++, j = (j*257>>>1), c = String.fromCharCode(c.charCodeAt(0) + 1)) {
-    //   list = list
-    //     ? list.concat(List.of(makeValues(j%257 + 1, i => `${c}${i}`)))
-    //     : List.of(makeValues(3, i => `${c}${i}`));
-    // }
-    // runTest();
+      var list1 = List.of(leftValues).prepend('X');
+      publish(list1, true, `list #1 size: ${list1.size}`);
+
+      var list2 = List.of(rightValues).prepend('Y');
+      publish(list2, true, `list #2 size: ${list2.size}`);
+
+      var list3 = list1.concat(list2);
+      publish(list3, true, `list #3 size: ${list3.size}`);
+
+      commitToRoot(list1);
+      commitToRoot(list2);
+      commitToRoot(list3);
+
+      publish(list1, true, 'list1: X + leftValues');
+      publish(list2, true, 'list2: Y + rightValues');
+      publish(list3, true, 'list3');
+    }
+
+    function runConcatTests2() {
+      beginCollectingLogs();
+      const n0 = BRANCH_FACTOR - 1;
+      const n1 = BRANCH_FACTOR - 2;
+      var list0 = makeList(makeValues(n0), 1, false);
+      publish(list0, true, `list0 size: ${list0.size}`);
+      var list1 = makeList(makeValues(n1, n0), 1, false);
+      publish(list1, true, `list1 size: ${list1.size}`);
+      var list2 = list0.concat(list1);
+      publish(list2, true, `list2 size: ${list2.size}`);
+      var list3 = list2.append('X', 'Y', 'Z', 'K');
+      publish(list3, true, `list3 size: ${list3.size}`);
+    }
+
+    function runConcatTests3() {
+      beginCollectingLogs();
+      const n0 = BRANCH_FACTOR - 1;
+      const n1 = Math.pow(BRANCH_FACTOR, 2) - n0 - 1;
+      var list0 = makeList(makeValues(n0), 1, false);
+      publish(list0, true, `list0 size: ${list0.size}`);
+      var list1 = makeList(makeValues(n1, n0), 1, false);
+      publish(list1, true, `list1 size: ${list1.size}`);
+      var list2 = list0.concat(list1);
+      publish(list2, true, `list2 size: ${list2.size}`);
+      var list3 = list2.append('X');
+      publish(list3, true, `list3 size: ${list3.size}`);
+    }
+
+    function runTraversalTests() {
+      var list = List.empty().prependArray(makeValues(Math.pow(BRANCH_FACTOR, 2) + (BRANCH_FACTOR>>>2)));
+      beginCollectingLogs();
+      publish(list, true, `Initial list size: ${list.size}`);
+      list = list.appendArray(makeValues(BRANCH_FACTOR*3, list.size));
+      publish(list, true, `Appended some values. New list size: ${list.size}`);
+      var index = list.size - BRANCH_FACTOR - (BRANCH_FACTOR >>> 2);
+      var value = list.get(index);
+      publish(list, true, `Value at index ${index} is ${value}`);
+      index -= 2;
+      value = list.get(index);
+      publish(list, true, `Value at index ${index} is ${value}`);
+      index -= BRANCH_FACTOR;
+      value = list.get(index);
+      publish(list, true, `Value at index ${index} is ${value}`);
+      index += BRANCH_FACTOR;
+      value = list.get(index);
+      publish(list, true, `Value at index ${index} is ${value}`);
+      for(index = 0; index < list.size; index++) {
+        value = list.get(index);
+        publish(list, true, `Value at index ${index} is ${value}`);
+      }
+    }
+
+    function runSliceTests1() {
+      beginCollectingLogs();
+      var list1 = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) - (BRANCH_FACTOR >>> 2)))
+      publish(list1, true, 'Left initial list');
+      var list2 = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR - (BRANCH_FACTOR >>> 1), list1.size));
+      publish(list2, true, 'Right initial list');
+      var list3 = list1.concat(list2);
+      publish(list3, true, 'Initial concatenated list');
+
+      publish(list3.slice(0, 4), true, 'list3.slice(0, 4)');
+      publish(list3.slice(4), true, 'list3.slice(4)');
+      var value = list3.get(70);
+      publish(list3, true, `the value at index 70 is ${value}`);
+      publish(list3.slice(70), true, 'list3.slice(70)');
+      publish(list3.slice(70, 128), true, 'list3.slice(70, 128)');
+      publish(list3.slice(128), true, 'list3.slice(128)');
+    }
+
+    function runSliceTests2() {
+      beginCollectingLogs();
+
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
+      var list = List.of(values)._state;
+      var halfbf = BRANCH_FACTOR >>> 1;
+      var end = BRANCH_FACTOR*halfbf + halfbf;
+
+      publish(list, true, 'Initial list');
+      slice(list, 2, end);
+
+
+      publish(list, true, `list.slice(2, ${end})`);
+      commitToRoot(list);
+      publish(list, true, `committed to root`);
+    }
+
+    function runInsertionTests() {
+      beginCollectingLogs();
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      var list1 = List.of(values);
+      var index = BRANCH_FACTOR + (BRANCH_FACTOR >>> 1);
+      var list2 = list1.insert(index, 'J', 'K');
+    }
+
+    function runUpdateTests() {
+      beginCollectingLogs();
+
+      var values = ['A', 'B', 'C', 'X', 'Y', 'Z'];
+      var list1 = List.of(values);
+      var list2 = list1.set(0, 'J');
+      list2 = list2.set(2, 'K');
+      list2 = list2.set(5, 'L');
+      publish(list1, true, `original list should be: [${values}]`);
+      publish(list2, true, `updated list should be: [J,B,K,X,Y,L]`);
+
+      values = makeValues(Math.pow(BRANCH_FACTOR, 3));
+      list1 = List.of(values);
+      list2 = list1.set(0, 'J');
+      list2 = list2.set(BRANCH_FACTOR*2, 'K');
+      list2 = list2.set(values.length - 1, 'L');
+      publish(list1, true, `original list`);
+      publish(list2, true, `updated list`);
+
+      list1 = List.of(values);
+      list2 = list1.set(values.length - 1, 'L');
+      list2 = list2.set(BRANCH_FACTOR*2, 'K');
+      list2 = list2.set(0, 'J');
+      publish(list1, true, `original list`);
+      publish(list2, true, `updated list`);
+
+      list1 = List.of(values);
+      list2 = list1.set(BRANCH_FACTOR*2, 'K');
+      list2 = list2.set(values.length - 1, 'L');
+      list2 = list2.set(0, 'J');
+      list2 = list2.set(1, 'H');
+      publish(list1, true, `original list`);
+      publish(list2, true, `updated list`);
+    }
+
+    runSliceTests2();
 
   }, 100);
 })();
-
-function listOf(size, offset = 0) {
-  const values = makeValues(size, offset);
-  var list = List.empty();
-  while(list.size < size) {
-    list = list.append(...values.slice(list.size, list.size + 13));
-  }
-  return list;
-}
 
 function text(i) {
   return '' + i;
@@ -868,120 +1099,4 @@ function makeValues(count, offset = 0, format = text) {
     values[i] = format(i + offset);
   }
   return values;
-}
-
-function runTest() {
-  var BRANCH_FACTOR = 8;
-  var BRANCH_INDEX_BITCOUNT = 3;
-  var large = BRANCH_FACTOR << BRANCH_INDEX_BITCOUNT;
-  var small = BRANCH_FACTOR;
-  var group = nextInternalId();
-
-  function copySum(src, srcidx, dest, destidx) {
-      dest.slots[destidx].sum = src.slots[srcidx].sum;
-  }
-
-  function makeRelaxedPair() {
-      var offset = 0;
-      var left = makeRelaxedSlot([
-          makeStandardSlot(large, 1, 0),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(small, 1, offset += large),
-          makeStandardSlot(small, 1, offset += small),
-          makeStandardSlot(large, 1, offset += small),
-          makeStandardSlot(large, 1, offset += large)
-      ]);
-      var right = makeRelaxedSlot([
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(small, 1, offset += large),
-          makeStandardSlot(small, 1, offset += small),
-      ]);
-      return [left, right];
-  }
-  function makeBalancedPair(originalPair) {
-      var offset = 0;
-      var left = makeRelaxedSlot([
-          makeStandardSlot(large, 1, 0),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large),
-          makeStandardSlot(large, 1, offset += large)
-      ]);
-      var right = makeRelaxedSlot([
-          makeStandardSlot(small * 3, 1, offset += large),
-          makeStandardSlot(small, 1, offset += small * 3)
-      ]);
-      copySum(originalPair[0], 4, left, 4);
-      copySum(originalPair[0], 6, left, 5);
-      copySum(originalPair[0], 7, left, 6);
-      copySum(originalPair[1], 0, left, 7);
-      copySum(originalPair[1], 1, right, 0);
-      copySum(originalPair[1], 3, right, 1);
-      left.recompute = 4;
-      return [left, right];
-  }
-  function makeStandardSlot(requiredSize, level, valueOffset) {
-    var slots;
-    var size = 0;
-    var subcount = 0;
-    if (level === 0) {
-      slots = makeValues(requiredSize, valueOffset);
-      size = requiredSize;
-    }
-    else {
-      slots = [];
-      var lowerSubtreeMaxSize = 1 << (BRANCH_INDEX_BITCOUNT * level);
-      while (size < requiredSize) {
-        var lowerSize = Math.min(requiredSize - size, lowerSubtreeMaxSize);
-        var lowerSlot = makeStandardSlot(lowerSize, level - 1, valueOffset + size);
-        subcount += lowerSlot.slots.length;
-        size += lowerSize;
-        slots.push(lowerSlot);
-      }
-    }
-    var slot = new Slot(1, size, 0, -1, subcount, slots);
-    return slot;
-  }
-  function makeRelaxedSlot(slots) {
-    var size = 0, subcount = 0, sum = 0;
-    slots.forEach(slot => {
-      size += slot.size;
-      subcount += slot.slots.length;
-      sum += slot.size;
-      slot.sum = sum;
-    });
-    var slot = new Slot(group, size, 0, 0, subcount, slots);
-    return slot;
-  }
-  function createViewFromSlot(slot) {
-    var start = 0, end = slot.size, index = 0, group = slot.group;
-    var view = View.none();
-    do {
-      start = end - slot.size;
-      view = new View(group, start, end, index, 0, 0, false, view, slot);
-      index = slot.slots.length - 1;
-      slot = slot.slots[slot.slots.length - 1];
-    } while (slot instanceof Slot);
-    return view;
-  }
-  function buildListFromRootSlot(slot) {
-    var list = new List(slot.size, [createViewFromSlot(slot)], []);
-    return list;
-  }
-
-  var nodesA = makeRelaxedPair();
-  var nodesB = makeBalancedPair(nodesA);
-  var listA0 = buildListFromRootSlot(nodesA[0]);
-  var listA1 = buildListFromRootSlot(nodesA[1]);
-  publish([listA0, listA1], true, 'Artificial list pair created for concatenation testing');
-  var listA2 = listA0.concat(listA1);
-  var listB0 = buildListFromRootSlot(nodesB[0]);
-  var listB1 = buildListFromRootSlot(nodesB[1]);
-  publish([listB0, listB1], true, 'Comparison pair created for concatenation testing');
 }

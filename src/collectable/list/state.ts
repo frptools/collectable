@@ -1,22 +1,15 @@
-import {CONST, copyArray, last, nextId, log, publish} from './common';
-import {concat} from './concat';
-import {increaseCapacity} from './capacity';
-import {focusOrdinal, refocusView} from './traversal';
-
-import {List, isDefaultEmptyList} from './list';
-import {OFFSET_ANCHOR, View} from './view';
+import {COMMIT_MODE, OFFSET_ANCHOR, nextId, log, publish} from './common';
+import {TreeWorker} from './traversal';
+import {View} from './view';
 
 export class ListState<T> {
-  private static _defaultEmpty = new ListState<any>(0, 0, OFFSET_ANCHOR.RIGHT, false, View.empty<any>(OFFSET_ANCHOR.LEFT), View.empty<any>(OFFSET_ANCHOR.RIGHT));
   static empty<T>(mutable: boolean): ListState<T> {
-    return new ListState<T>(nextId(), 0, -1, mutable, View.empty<T>(OFFSET_ANCHOR.LEFT), View.empty<T>(OFFSET_ANCHOR.RIGHT));
+    return mutable
+      ? new ListState<T>(nextId(), 0, OFFSET_ANCHOR.RIGHT, mutable, View.empty<T>(OFFSET_ANCHOR.LEFT), View.empty<T>(OFFSET_ANCHOR.RIGHT))
+      : _defaultEmpty;
   }
 
-  // static empty<T>(mutable: boolean): ListState<T> {
-  //   return mutable
-  //     ? new ListState<T>(nextId(), 0, -1, true, View.empty<T>(OFFSET_ANCHOR.LEFT), View.empty<T>(OFFSET_ANCHOR.RIGHT))
-  //     : ListState._defaultEmpty;
-  // }
+  public id = nextId();
 
   /**
    * Creates an instance of MutableState.
@@ -60,35 +53,35 @@ export class ListState<T> {
   getView(anchor: OFFSET_ANCHOR, asWriteTarget: boolean, preferredOrdinal: number = -1): View<T> {
     var view = anchor === OFFSET_ANCHOR.LEFT ? this.left : this.right;
     if(view.isNone()) {
-log(`requested view is default empty`);
+log(`[ListState#getView (id:${this.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${this.group})] requested view ${view.id} is default empty`);
       var otherView = anchor === OFFSET_ANCHOR.RIGHT ? this.left : this.right;
       if(!otherView.isNone()) {
-log(`other view ${otherView.id} is active`);
-        if(otherView.parent.isNone() || otherView.slot.size + otherView.offset === this.size) {
-log(`other view ${otherView.id} has no parent or is already aligned to its opposite edge, so it will become this view`);
+log(`[ListState#getView (id:${this.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${this.group})] other view ${otherView.id} is active`);
+        if(otherView.xparent.isNone() || otherView.slot.size + otherView.offset === this.size) {
+log(`[ListState#getView (id:${this.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${this.group})] other view ${otherView.id} has no parent or is already aligned to its opposite edge, so it will become this view`);
           this.setView(View.empty<T>(otherView.anchor));
           otherView = otherView.cloneToGroup(this.group);
           otherView.flipAnchor(this.size);
           this.setView(view = otherView);
         }
         else {
-log(`other view ${otherView.id} has a parent (${otherView.parent.id}), so it's time to activate a second view via cloning`);
-          otherView = otherView.cloneToGroup(this.group);
-          otherView.setCommitted();
-          otherView.flipAnchor(this.size);
-this.setView(otherView);
-log(`cloned view ${otherView.id} is about to be refocused`);
-          view = refocusView(this, otherView, preferredOrdinal !== -1 ? preferredOrdinal : anchor === OFFSET_ANCHOR.LEFT ? 0 : -1, asWriteTarget, true);
-          view.offset = 0;
-log(`view has been refocused`);
-          this.setView(view);
+log(`[ListState#getView (id:${this.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${this.group})] other view ${otherView.id} has a parent (${otherView.xparent.id}), so it's time to activate a second view via cloning`);
+          // otherView = otherView.cloneToGroup(this.group);
+          // otherView.setCommitted();
+          // otherView.flipAnchor(this.size);
+// this.setView(otherView);
+log(`[ListState#getView (id:${this.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${this.group})] cloned view ${otherView.id} is about to be refocused`);
+          view = TreeWorker.refocusView<T>(this, otherView, preferredOrdinal !== -1 ? preferredOrdinal : anchor === OFFSET_ANCHOR.LEFT ? 0 : -1, true, true);
+          // view.offset = 0;
+log(`[ListState#getView (id:${this.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${this.group})] view ${view.id} has been refocused`);
+          // this.setView(view);
         }
       }
     }
     if(asWriteTarget && !view.isEditable(this.group)) {
       this.setView(view = view.cloneToGroup(this.group));
     }
-log(`view retrieved and ready for use`);
+log(`[ListState#getView (id:${this.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${this.group})] view ${view.id} retrieved and ready for use`);
     return view;
   }
 
@@ -99,17 +92,19 @@ log(`view retrieved and ready for use`);
   setView(view: View<T>): void {
     if(view.anchor === OFFSET_ANCHOR.LEFT) {
       this.left = view;
-log(`assign left view`, view);
+log(`[ListState#setView (id:${this.id} a:L g:${this.group})] assign left view (view: ${view.id}, slot: ${view.slot.id})`, view);
     }
     else {
       this.right = view;
-log(`assign right view`, view);
+log(`[ListState#setView (id:${this.id} a:R g:${this.group})] assign right view (view: ${view.id}, slot: ${view.slot.id})`, view);
     }
   }
 
   getAtOrdinal(ordinal: number): T|undefined {
-    var view = focusOrdinal(this, ordinal, false);
+    var view = TreeWorker.focusOrdinal<T>(this, ordinal, false);
     if(view === void 0) return void 0;
     return <T>view.slot.slots[ordinal - view.offset];
   }
 }
+
+var _defaultEmpty = new ListState<any>(0, 0, OFFSET_ANCHOR.RIGHT, false, View.empty<any>(OFFSET_ANCHOR.LEFT), View.empty<any>(OFFSET_ANCHOR.RIGHT));

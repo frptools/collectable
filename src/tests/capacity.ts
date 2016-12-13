@@ -2,7 +2,6 @@ declare function require(moduleName: string): any;
 
 import {assert} from 'chai';
 import {ListState} from '../collectable/list/state';
-import {Slot} from '../collectable/list/slot';
 import {append, prepend} from '../collectable/list/insertion';
 import {getAtOrdinal} from '../collectable/list/traversal';
 import {concat} from '../collectable/list/concat';
@@ -221,7 +220,8 @@ suite('[List: capacity]', () => {
       assertArrayElementsAreEqual(gatherLeafValues(list), values);
     });
 
-    test('values added to a list one-by-one are all present in the list', () => {
+    test('values added to a list one-by-one are all present in the list', function() {
+      this.timeout(30000);
       var list = ListState.empty<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       for(var i = 0; i < values.length; i++) {
@@ -263,7 +263,8 @@ suite('[List: capacity]', () => {
       assertArrayElementsAreEqual(gatherLeafValues(list), values);
     });
 
-    test('values added to a list one-by-one are all present in the list', () => {
+    test('values added to a list one-by-one are all present in the list', function() {
+      this.timeout(30000);
       var list = ListState.empty<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       for(var i = 0; i < values.length; i++) {
