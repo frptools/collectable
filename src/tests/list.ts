@@ -361,10 +361,263 @@ suite('[List: public]', () => {
   });
 
   suite('#insertArray()', () => {
-    test('returns the same list if the value array is empty');
-    test('appends to the list when using index === list.size');
-    test('prepends to the list when using index 0');
-    test('inserts the elements of the array in their respective order before the specified index');
+    test('returns the same list if the value array is empty', () => {
+      var values = ['A', 'B', 'C', 'X', 'Y', 'Z'];
+      var list1 = List.of<any>(values);
+      var list2 = list1.insertArray(0, []);
+      assert.strictEqual(list1, list2);
+      assert.deepEqual(gatherLeafValues(list2), values);
+    });
+
+    test('appends to the list when using index === list.size', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      var list1 = List.of<any>(values);
+      var list2 = list1.insertArray(list1.size, ['J', 'K']);
+      commitToRoot(list1);
+      commitToRoot(list2);
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), values.concat(['J', 'K']));
+    });
+
+    test('prepends to the list when using index 0', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      var list1 = List.of<any>(values);
+      var list2 = list1.insertArray(0, ['J', 'K']);
+      // commitToRoot(list1);
+      commitToRoot(list2);
+      // assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), ['J', 'K'].concat(values));
+    });
+
+    test('inserts the elements of the array in their respective order before the specified index', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
+      var list1 = List.of<any>(values);
+      var index = BRANCH_FACTOR + (BRANCH_FACTOR >>> 1);
+      var list2 = list1.insertArray(index, ['J', 'K']);
+      commitToRoot(list1);
+      commitToRoot(list2);
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, index).concat(['J', 'K']).concat(values.slice(index)));
+    });
+  });
+
+  suite('#delete()', () => {
+    test('returns an identical list if the index is out of bounds', () => {
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      var list1 = list0.delete(values.length);
+      var list2 = List.empty();
+      var list3 = list2.delete(1);
+
+      commitToRoot(list0);
+      commitToRoot(list1);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length);
+      assert.strictEqual(list2.size, 0);
+      assert.strictEqual(list3.size, 0);
+      assert.deepEqual(gatherLeafValues(list0), gatherLeafValues(list1));
+      assert.deepEqual(gatherLeafValues(list2), gatherLeafValues(list3));
+    });
+
+    test('returns an empty list if the index points at the first element of a single-element list', () => {
+      var list = List.of(['X']).delete(0);
+      assert.strictEqual(list.size, 0);
+      assert.deepEqual(gatherLeafValues(list), []);
+    });
+
+    test('removes the specified index when the list has only one node', () => {
+      var values = makeValues(BRANCH_FACTOR - 1);
+      var list0 = List.of(values);
+      var list1 = list0.delete(0);
+      var list2 = list0.delete(1);
+      var list3 = list0.delete(BRANCH_FACTOR - 2);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length - 1);
+      assert.strictEqual(list2.size, values.length - 1);
+      assert.strictEqual(list3.size, values.length - 1);
+      assert.deepEqual(gatherLeafValues(list0), values);
+      assert.deepEqual(gatherLeafValues(list1), values.slice(1));
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, 1).concat(values.slice(2)));
+      assert.deepEqual(gatherLeafValues(list3), values.slice(0, values.length - 1));
+    });
+
+    test('removes the specified index when it is located at the head of the list', () => {
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      var list1 = list0.delete(0);
+      var list2 = list0.delete(BRANCH_FACTOR >>> 1);
+      var list3 = list0.delete(BRANCH_FACTOR - 1);
+
+      commitToRoot(list0);
+      commitToRoot(list1);
+      commitToRoot(list2);
+      commitToRoot(list3);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length - 1);
+      assert.strictEqual(list2.size, values.length - 1);
+      assert.strictEqual(list3.size, values.length - 1);
+      assert.deepEqual(gatherLeafValues(list0), values);
+      assert.deepEqual(gatherLeafValues(list1), values.slice(1));
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, BRANCH_FACTOR >>> 1).concat(values.slice((BRANCH_FACTOR >>> 1) + 1)));
+      assert.deepEqual(gatherLeafValues(list3), values.slice(0, BRANCH_FACTOR - 1).concat(values.slice(BRANCH_FACTOR)));
+    });
+
+    test('removes the specified index when it is located at the tail of the list', () => {
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      var list1 = list0.delete(values.length - 1);
+      var list2 = list0.delete(values.length - (BRANCH_FACTOR >>> 1));
+      var list3 = list0.delete(values.length - BRANCH_FACTOR);
+
+      commitToRoot(list0);
+      commitToRoot(list1);
+      commitToRoot(list2);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length - 1);
+      assert.strictEqual(list2.size, values.length - 1);
+      assert.strictEqual(list3.size, values.length - 1);
+      assert.deepEqual(gatherLeafValues(list0), values);
+      assert.deepEqual(gatherLeafValues(list1), values.slice(0, values.length - 1));
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, values.length - (BRANCH_FACTOR >>> 1)).concat(values.slice(values.length - (BRANCH_FACTOR >>> 1) + 1)));
+      assert.deepEqual(gatherLeafValues(list3), values.slice(0, values.length - BRANCH_FACTOR).concat(values.slice(values.length - BRANCH_FACTOR + 1)));
+    });
+
+    test('removes the specified index when multi-level traversal would be required to find it', () => {
+      var values = makeValues(BRANCH_FACTOR*4);
+      var list0 = List.of(values);
+      var list1 = List.empty().prependArray(values);
+      var list2 = list0.delete(BRANCH_FACTOR + 2);
+      var list3 = list1.delete(list1.size - BRANCH_FACTOR - 2);
+
+      commitToRoot(list0);
+      commitToRoot(list1);
+      commitToRoot(list2);
+      commitToRoot(list3);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length);
+      assert.strictEqual(list2.size, values.length - 1);
+      assert.strictEqual(list3.size, values.length - 1);
+      assert.deepEqual(gatherLeafValues(list0), values);
+      assert.deepEqual(gatherLeafValues(list1), values.slice(0, values.length));
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, BRANCH_FACTOR + 2).concat(values.slice(BRANCH_FACTOR + 3)));
+      assert.deepEqual(gatherLeafValues(list3), values.slice(0, values.length - BRANCH_FACTOR - 2).concat(values.slice(values.length - BRANCH_FACTOR - 1)));
+    });
+  });
+
+  suite('#deleteRange()', () => {
+    test('returns an identical list if the index range is out of bounds', () => {
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      var list1 = list0.deleteRange(values.length, values.length + 2);
+      var list2 = List.empty();
+      var list3 = list2.deleteRange(1, 2);
+
+      commitToRoot(list0);
+      commitToRoot(list1);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length);
+      assert.strictEqual(list2.size, 0);
+      assert.strictEqual(list3.size, 0);
+      assert.deepEqual(gatherLeafValues(list0), gatherLeafValues(list1));
+      assert.deepEqual(gatherLeafValues(list2), gatherLeafValues(list3));
+    });
+
+    test('returns an empty list if the index range is a superset of the list', () => {
+      var list0 = List.of(makeValues(BRANCH_FACTOR*3));
+      var list1 = List.of(makeValues(BRANCH_FACTOR >>> 1));
+      assert.strictEqual(list0.deleteRange(0, list0.size).size, 0);
+      assert.strictEqual(list1.deleteRange(0, list1.size).size, 0);
+    });
+
+    test('removes the specified index range when the list has only one node', () => {
+      var values = makeValues(BRANCH_FACTOR - 1);
+      var list0 = List.of(values);
+      var list1 = list0.deleteRange(0, 2);
+      var list2 = list0.deleteRange(1, 3);
+      var list3 = list0.deleteRange(values.length - 2, values.length);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length - 2);
+      assert.strictEqual(list2.size, values.length - 2);
+      assert.strictEqual(list3.size, values.length - 2);
+      assert.deepEqual(gatherLeafValues(list0), values);
+      assert.deepEqual(gatherLeafValues(list1), values.slice(2));
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, 1).concat(values.slice(3)));
+      assert.deepEqual(gatherLeafValues(list3), values.slice(0, values.length - 2));
+    });
+
+    test('removes the specified index range when contained within the head of the list', () => {
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      var list1 = list0.deleteRange(0, 2);
+      var list2 = list0.deleteRange(1, 3);
+      var list3 = list0.deleteRange(BRANCH_FACTOR - 2, BRANCH_FACTOR);
+
+      commitToRoot(list0);
+      commitToRoot(list1);
+      commitToRoot(list2);
+      commitToRoot(list3);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length - 2);
+      assert.strictEqual(list2.size, values.length - 2);
+      assert.strictEqual(list3.size, values.length - 2);
+      assert.deepEqual(gatherLeafValues(list0), values);
+      assert.deepEqual(gatherLeafValues(list1), values.slice(2));
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, 1).concat(values.slice(3)));
+      assert.deepEqual(gatherLeafValues(list3), values.slice(0, BRANCH_FACTOR - 2).concat(values.slice(BRANCH_FACTOR)));
+    });
+
+    test('removes the specified index range when contained within the tail of the list', () => {
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      var list1 = list0.deleteRange(values.length - 2, values.length);
+      var list2 = list0.deleteRange(values.length - (BRANCH_FACTOR >>> 1), values.length - (BRANCH_FACTOR >>> 1) + 2);
+      var list3 = list0.deleteRange(values.length - BRANCH_FACTOR, values.length - BRANCH_FACTOR + 2);
+
+      commitToRoot(list0);
+      commitToRoot(list1);
+      commitToRoot(list2);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length - 2);
+      assert.strictEqual(list2.size, values.length - 2);
+      assert.strictEqual(list3.size, values.length - 2);
+      assert.deepEqual(gatherLeafValues(list0), values);
+      assert.deepEqual(gatherLeafValues(list1), values.slice(0, values.length - 2));
+      assert.deepEqual(gatherLeafValues(list2), values.slice(0, values.length - (BRANCH_FACTOR >>> 1)).concat(values.slice(values.length - (BRANCH_FACTOR >>> 1) + 2)));
+      assert.deepEqual(gatherLeafValues(list3), values.slice(0, values.length - BRANCH_FACTOR).concat(values.slice(values.length - BRANCH_FACTOR + 2)));
+    });
+
+    test('removes the specified index range when it spans multiple leaf nodes', () => {
+      var values = makeValues(BRANCH_FACTOR*4);
+      var start = BRANCH_FACTOR + 2, end = BRANCH_FACTOR*2 + 2;
+      var expected = values.slice(0, start).concat(values.slice(end));
+      var list0 = List.of(values);
+      var list1 = List.empty().prependArray(values);
+      var list2 = list0.deleteRange(start, end);
+      var list3 = list1.deleteRange(start, end);
+
+      commitToRoot(list0);
+      commitToRoot(list1);
+      commitToRoot(list2);
+      commitToRoot(list3);
+
+      assert.strictEqual(list0.size, values.length);
+      assert.strictEqual(list1.size, values.length);
+      assert.strictEqual(list2.size, expected.length);
+      assert.strictEqual(list3.size, expected.length);
+      assert.deepEqual(gatherLeafValues(list0), values);
+      assert.deepEqual(gatherLeafValues(list1), values);
+      assert.deepEqual(gatherLeafValues(list2), expected);
+      assert.deepEqual(gatherLeafValues(list3), expected);
+    });
   });
 });
 

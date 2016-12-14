@@ -1,4 +1,4 @@
-import {CONST, COMMIT_MODE, nextId, isDefined, abs, max, copyArray, normalizeArrayIndex, log} from './common';
+import {CONST, COMMIT_MODE, nextId, isDefined, abs, max, copyArray, verifyIndex, log} from './common';
 
 export type ChildSlotOutParams<T> = {
   slot: T|Slot<T>,
@@ -153,7 +153,7 @@ log(`[Slot#createParent (id:${this.id} g:${this.group})] slot count for new pare
   }
 
   reserveChildAtIndex(slotIndex: number): Slot<T> {
-    var index = normalizeArrayIndex(this.slots, slotIndex);
+    var index = verifyIndex(this.slots.length, slotIndex);
     var slot = <Slot<T>>this.slots[index];
     this.slots[index] = slot.cloneAsPlaceholder(slot.group);
     return slot;

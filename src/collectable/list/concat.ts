@@ -84,7 +84,12 @@ publish([leftState, rightState], false, `joined left and right: ${nodes[1].size 
 
       if(isJoined) {
         if(!rightIsRoot) {
+log(`right is not root`);
+          if(right.current.slot.isReserved()) {
+            left.current.slot.group = -group;
+          }
           left.current.xparent = right.current.xparent;
+          left.current.recalculateDeltas();
         }
         if(!right.otherCommittedChild.isNone()) {
 log(`joined with right committed child; slotCountDelta: ${slotCountDelta}, left.current.slotCount: ${left.current.slotCount()}`);
@@ -92,11 +97,14 @@ log(`joined with right committed child; slotCountDelta: ${slotCountDelta}, left.
           right.otherCommittedChild.xparent = left.current;
         }
         if(left.shift > 0) {
+log(`left is not leaf level`);
           right.previous.xslotIndex += slotCountDelta;
           right.previous.xparent = left.current;
+          right.previous.recalculateDeltas();
         }
       }
       else {
+log(`replace left slot of right list`);
         right.current.replaceSlot(nodes[1]);
         right.current.sizeDelta -= slotSizeDelta;
         right.current.slotsDelta -= slotCountDelta;
@@ -133,11 +141,14 @@ publish([leftState, rightState], false, `right ascended`);
       if(leftState.right.anchor !== OFFSET_ANCHOR.LEFT) {
         leftState.right.flipAnchor(leftState.size);
       }
-      leftState.setView(left.other);
+      leftState.setView(leftState.right);
     }
+log(`right.other.slot.size: ${right.other.slot.size}, anchor: ${right.other.anchor}`);
+log(`left state; left view: ${leftState.left.id}, right view: ${leftState.right.id}`);
 publish([leftState, rightState], false, `concat: pre-assign right view`);
     if(right.other.slot.size > 0) {
       leftState.setView(right.other);
+publish(leftState, false, `concat: post-assign right view`);
     }
     else {
       right.other.disposeIfInGroup(rightState.group, leftState.group);

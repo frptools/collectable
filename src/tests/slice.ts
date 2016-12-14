@@ -3,7 +3,7 @@ import {assert} from 'chai';
 import {List} from '../collectable/list';
 import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
-import {slice} from '../collectable/list/splice';
+import {slice} from '../collectable/list/slice';
 
 import {BRANCH_FACTOR, gatherLeafValues, commitToRoot, makeValues} from './test-utils';
 

@@ -1,6 +1,6 @@
-import {CONST, COMMIT_MODE, OFFSET_ANCHOR, isDefined, isUndefined, invertOffset, invertAnchor, max, normalizeIndex, log, publish} from './common';
+import {CONST, COMMIT_MODE, OFFSET_ANCHOR, isDefined, isUndefined, invertOffset, invertAnchor, max, verifyIndex, log, publish} from './common';
 import {View} from './view';
-import {ChildSlotOutParams, Slot, ExpansionParameters} from './slot';
+import {Slot, ExpansionParameters} from './slot';
 import {ListState} from './state';
 
 /**
@@ -133,7 +133,7 @@ export class TreeWorker<T> {
 
   static focusOrdinal<T>(state: ListState<T>, ordinal: number, asWriteTarget: boolean): View<T>|undefined {
 log(`[focusOrdinal: ${ordinal}] state.size: ${state.size}`);
-    ordinal = normalizeIndex(state.size, ordinal);
+    ordinal = verifyIndex(state.size, ordinal);
     if(ordinal === -1) return void 0;
     var view = selectView(state, ordinal, asWriteTarget);
 // publish(state, true, `view selected prior to refocusing`);
@@ -558,7 +558,7 @@ log(`[descendToOrdinal (${ordinal})] left offset: ${offset}, localised ordinal $
   }
 
   refocusView(ordinal: number, asAltView: boolean, asWriteTarget: boolean): View<T> {
-    ordinal = normalizeIndex(this.state.size, ordinal);
+    ordinal = verifyIndex(this.state.size, ordinal);
     var anchor = asAltView ? invertAnchor(this.current.anchor) : this.current.anchor;
 log(`[refocusView] refocusing view ${this.current.id} to ordinal ${ordinal} (as write target: ${asWriteTarget}, alternate view: ${asAltView})`);
     this.ascendToOrdinal(ordinal, asAltView ? COMMIT_MODE.NO_CHANGE : COMMIT_MODE.RELEASE_DISCARD, asWriteTarget);

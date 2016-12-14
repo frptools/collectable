@@ -2,7 +2,7 @@ declare function require(moduleName: string): any;
 
 import {assert} from 'chai';
 import {ListState} from '../collectable/list/state';
-import {append, prepend} from '../collectable/list/insertion';
+import {append, prepend} from '../collectable/list/values';
 import {getAtOrdinal} from '../collectable/list/traversal';
 import {concat} from '../collectable/list/concat';
 

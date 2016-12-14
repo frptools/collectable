@@ -130,6 +130,13 @@ log(`[View#slotIndex (id:${this.id}, g:${this.group})] slot index: ${value}`);
     return this.slot.slots.length;
   }
 
+  recalculateDeltas(): void {
+    var upper = <Slot<T>>this.xparent.slot.slots[this.slotIndex];
+    if(this.slot === upper) return;
+    this.slotsDelta = this.slot.slots.length - upper.slots.length;
+    this.sizeDelta = this.slot.size - upper.size;
+  }
+
   cloneToGroup(group: number): View<T> {
     return View.create<T>(group, this.offset, this.anchor, this.xslotIndex, this.sizeDelta, this.slotsDelta, this.xparent, this.slot);
   }

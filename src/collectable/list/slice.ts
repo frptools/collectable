@@ -5,10 +5,8 @@ import {ExpansionParameters} from './slot';
 import {TreeWorker, isViewInRange} from './traversal';
 
 export function slice<T>(state: ListState<T>, start: number, end: number): void {
-  if(start < 0) {
-    start = normalizeIndex(state.size, start);
-  }
-  end = max(-1, end < 0 ? state.size + end : end);
+  start = normalizeIndex(state.size, start);
+  end = normalizeIndex(state.size, end);
   if(end <= 0 || start >= end || start >= state.size) {
 log(`slicing to an empty list; start: ${start}, end: ${end}`);
     if(state.size > 0) {
@@ -27,6 +25,7 @@ log(`no slice will be performed; start: ${start}, end: ${end}`);
   if(end >= state.size) end = state.size;
 
   sliceInternal(state, start, end);
+publish(state, true, `slice completed: list cropped from indices ${start} to ${end}`);
 }
 
 function sliceInternal<T>(state: ListState<T>, start: number, end: number): void {
@@ -97,6 +96,10 @@ publish(state, false, 'left leaf truncation applied');
       // }
       doneRight = true;
     }
+  }
+  else if(!truncateLeft && left === right) {
+    doneLeft = true;
+    doneRight = true;
   }
 
   if(!doneLeft || !doneRight) {

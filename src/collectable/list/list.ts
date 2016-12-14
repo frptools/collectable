@@ -1,8 +1,8 @@
 import {isDefined, log, publish} from './common';
-import {append, prepend, setValue} from './insertion';
+import {append, prepend, setValue, insertValues, deleteValues} from './values';
 import {getAtOrdinal} from './traversal';
 import {concat} from './concat';
-import {slice} from './splice';
+import {slice} from './slice';
 import {ListState} from './state';
 
 export type ListMutationCallback<T> = (list: List<T>) => void;
@@ -101,29 +101,27 @@ export class List<T> {
 
   insert(index: number, ...values: T[]): List<T>
   insert(index: number): List<T> {
+    if(arguments.length <= 1) return this;
     var values = new Array<T>(arguments.length - 1);
     for(var i = 1; i < arguments.length; i++) {
       values[i - 1] = arguments[i];
     }
-    return this.insertArray(index, values);
+    return this._exec(state => insertValues(state, index, values));
   }
 
   insertArray(index: number, values: T[]): List<T> {
-    if(index === 0) return this.prependArray(values);
-    if(index >= this._state.size) return this.appendArray(values);
-    return this._exec(state => {
-publish(state, true, 'before insert');
-      var right = state.toMutable();
-      slice(right, index, right.size);
-publish(right, true, `sliced right [${index}, ${right.size}]`);
-      slice(state, 0, index);
-publish(state, true, `sliced left [${0}, ${index}]`);
-      append(state, values);
-publish([state, right], true, 'values inserted left (ready to concat with right slice)');
-      state = concat(state, right);
-publish(state, true, 'insertion complete');
-      return state;
-    });
+    if(values.length === 0) return this;
+    return this._exec(state => insertValues(state, index, values));
+  }
+
+  delete(index: number): List<T> {
+    return this._state.size === 0 ? this
+      : this._exec(state => deleteValues(state, index, index + 1));
+  }
+
+  deleteRange(start: number, end: number): List<T> {
+    return this._state.size === 0 ? this
+      : this._exec(state => deleteValues(state, start, end));
   }
 
   pop(): List<T> {

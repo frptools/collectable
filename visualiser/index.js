@@ -5,8 +5,8 @@ import {a, h, div, span, thunk, makeDOMDriver} from '@motorcycle/dom';
 import {List, setCallback} from '../lib/collectable/list';
 import {nextId as nextInternalId, log, publish} from '../lib/collectable/list/common';
 import {TreeWorker, tryCommitOtherView, getAtOrdinal} from '../lib/collectable/list/traversal';
-import {append} from '../lib/collectable/list/insertion';
-import {slice} from '../lib/collectable/list/splice';
+import {append} from '../lib/collectable/list/values';
+import {slice} from '../lib/collectable/list/slice';
 import {ListState} from '../lib/collectable/list/state';
 import {Slot} from '../lib/collectable/list/slot';
 import {View} from '../lib/collectable/list/view';
@@ -647,6 +647,7 @@ function renderList(model) {
           div('.id', withProps ? ['id: ', ('id' in state ? state.id : state.slot.id).toString()] : '.'),
           div('.size', withProps ? ['size: ', ('size' in state ? state.size : state.slot.size).toString()] : '.'),
           div('.group', withProps ? ['group: ', ('group' in state ? state.group : state.slot.group).toString()] : '.'),
+          div('.view-ids', withProps ? ['views: ', ('left' in state ? `[${state.left.id}, ${state.right.id}]` : '-').toString()] : '.'),
           div('.last-write', withProps && 'lastWrite' in state ? ['last write: ', (state.lastWrite === 0 ? 'LEFT' : 'RIGHT').toString()] : '.'),
         ]),
         div('.container', [
@@ -1048,6 +1049,29 @@ function main({DOM, events}) {
       var list2 = list1.insert(index, 'J', 'K');
     }
 
+    function runDeletionTests1() {
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      beginCollectingLogs();
+      publish(list0, true, `initial list`);
+      var list2 = list0.delete(BRANCH_FACTOR >>> 1);
+      publish(list2, true, `updated list`);
+      for(var i = 0; i < list2.size; i++) {
+        var value = list2.get(i);
+        publish(list2, true, `value at index ${i} is ${value}`);
+      }
+    }
+
+    function runDeletionTests2() {
+      beginCollectingLogs();
+      var values = makeValues(BRANCH_FACTOR*4);
+      var list0 = List.of(values);
+      var list1 = List.empty().prependArray(values);
+      var list2 = list0.delete(BRANCH_FACTOR + 2);
+log(`will now delete from list 2 (size: ${list2.size}) at ${list1.size - BRANCH_FACTOR - 2}`);
+      var list3 = list2.delete(list1.size - BRANCH_FACTOR - 2);
+    }
+
     function runUpdateTests() {
       beginCollectingLogs();
 
@@ -1083,7 +1107,7 @@ function main({DOM, events}) {
       publish(list2, true, `updated list`);
     }
 
-    runSliceTests2();
+    runDeletionTests2();
 
   }, 100);
 })();

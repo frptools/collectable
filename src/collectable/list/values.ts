@@ -1,12 +1,14 @@
-import {CONST, OFFSET_ANCHOR, normalizeIndex, log, publish} from './common';
+import {CONST, OFFSET_ANCHOR, min, max, normalizeIndex, verifyIndex, log, publish} from './common';
 import {ListState} from './state';
 import {View} from './view';
 import {increaseCapacity} from './capacity';
+import {slice} from './slice';
+import {concat} from './concat';
 import {TreeWorker, getLeafIndex} from './traversal';
 
 export function setValue<T>(state: ListState<T>, ordinal: number, value: T): void {
 publish(state, false, `prior to setting value at ordinal ${ordinal} (group: ${state.group})`);
-  if(ordinal < 0) ordinal = normalizeIndex(state.size, ordinal);
+  ordinal = verifyIndex(state.size, ordinal);
   if(ordinal === -1) {
     throw new Error(`Index ${ordinal} is out of range`);
   }
@@ -41,5 +43,47 @@ publish(state, false, `ready to expand nodes to increase capacity`);
   increaseCapacity(state, values.length, true).populate(values, 0);
   state.lastWrite = OFFSET_ANCHOR.LEFT;
 publish(state, false, `prepend completed`);
+  return state;
+}
+
+export function insertValues<T>(state: ListState<T>, ordinal: number, values: T[]): ListState<T> {
+  ordinal = normalizeIndex(state.size, ordinal);
+  if(ordinal === 0) return prepend(state, values);
+  if(ordinal >= state.size) return append(state, values);
+  var right = state.toMutable();
+  slice(right, ordinal, right.size);
+  slice(state, 0, ordinal);
+  append(state, values);
+  return concat(state, right);
+}
+
+export function deleteValues<T>(state: ListState<T>, start: number, end: number): ListState<T> {
+log(`[deleteValues A] start: ${start}, end: ${end}, total size: ${state.size}`);
+  start = normalizeIndex(state.size, start);
+  end = normalizeIndex(state.size, end);
+log(`[deleteValues B] start: ${start}, end: ${end}, total size: ${state.size}`);
+  if(start >= end) return state;
+  if(start === 0 || end === state.size) {
+    if(end - start === state.size) {
+log(`slice to empty`);
+      return ListState.empty<T>(true);
+    }
+    if(start > 0) {
+log(`slice 0:${start}`);
+      slice(state, 0, start);
+    }
+    else {
+log(`slice ${end}:${state.size}`);
+      slice(state, end, state.size);
+    }
+    return state;
+  }
+  var right = state.toMutable();
+log(`slice ${0}:${start} + ${end}:${right.size}`);
+  slice(state, 0, start);
+publish(state, true, 'DELETION: LEFT PART DONE');
+  slice(right, end, right.size);
+publish(right, true, 'DELETION: RIGHT PART DONE');
+  state = concat(state, right);
   return state;
 }

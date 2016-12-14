@@ -55,14 +55,13 @@ export function invertAnchor(anchor: OFFSET_ANCHOR): OFFSET_ANCHOR {
   return anchor === OFFSET_ANCHOR.RIGHT ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT;
 }
 
-export function normalizeIndex(size: number, index: number): number {
-  return index < 0
-    ? (index < -size ? -1 : size + index)
-    : (index >= size ? -1 : index);
+export function verifyIndex(size: number, index: number) {
+  index = normalizeIndex(size, index);
+  return index === size ? -1 : index;
 }
 
-export function normalizeArrayIndex(array: any[], index: number): number {
-  return normalizeIndex(array.length, index);
+export function normalizeIndex(size: number, index: number): number {
+  return max(-1, min(size, index < 0 ? size + index : index));
 }
 
 export function shiftDownRoundUp(value: number, shift: number): number {
