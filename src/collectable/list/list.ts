@@ -1,5 +1,5 @@
 import {CONST, OFFSET_ANCHOR, isDefined} from './common';
-import {append, appendOne, prepend, setValue, insertValues, deleteValues, createArray, createIterator, ListIterator} from './values';
+import {append, prepend, setValue, insertValues, deleteValues, createArray, createIterator, ListIterator} from './values';
 import {getAtOrdinal} from './traversal';
 import {concat} from './concat';
 import {slice} from './slice';
@@ -210,7 +210,7 @@ export class List<T> {
   concat(list: List<T>): List<T> {
     switch(arguments.length) {
       case 0: return this;
-      case 1: return this._exec(state => concat(state, list._state.toMutable()));
+      case 1: this._exec(state => concat(state, list._state.toMutable()));
       default:
         var args = Array.from<List<T>>(arguments);
         return this._exec(function(state) {
@@ -227,6 +227,10 @@ export class List<T> {
   }
 
   [Symbol.iterator](): ListIterator<T> {
+    return createIterator(this._state);
+  }
+
+  values(): ListIterator<T> {
     return createIterator(this._state);
   }
 }
