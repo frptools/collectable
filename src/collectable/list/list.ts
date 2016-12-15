@@ -1,5 +1,5 @@
 import {isDefined, log, publish} from './common';
-import {append, prepend, setValue, insertValues, deleteValues} from './values';
+import {append, prepend, setValue, insertValues, deleteValues, createArray, createIterator, ListIterator} from './values';
 import {getAtOrdinal} from './traversal';
 import {concat} from './concat';
 import {slice} from './slice';
@@ -164,6 +164,14 @@ export class List<T> {
           return state;
         });
     }
+  }
+
+  toArray(): T[] {
+    return createArray(this._state);
+  }
+
+  [Symbol.iterator](): ListIterator<T> {
+    return createIterator(this._state);
   }
 }
 

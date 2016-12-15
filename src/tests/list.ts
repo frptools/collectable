@@ -619,6 +619,69 @@ suite('[List: public]', () => {
       assert.deepEqual(gatherLeafValues(list3), expected);
     });
   });
+
+  suite('#[Symbol.iterator]()', () => {
+    test('returns an ES6-compliant iterator', () => {
+      var it = List.empty()[Symbol.iterator]();
+      assert.isFunction(it.next);
+    });
+
+    test('starts in a completed state if the list is empty', () => {
+      var it = List.empty()[Symbol.iterator]();
+      var current = it.next();
+      assert.isTrue(current.done);
+      assert.isUndefined(current.value);
+    });
+
+    test('iterates through all values sequentially', () => {
+      var list = List.of(['X', 'Y']);
+      assert.deepEqual(Array.from(<any>list), ['X', 'Y']);
+    });
+
+    test('is done when all values have been iterated over', () => {
+      var list = List.of(['X', 'Y']);
+      var it = list[Symbol.iterator]();
+      assert.deepEqual(it.next(), {value: 'X', done: false});
+      assert.deepEqual(it.next(), {value: 'Y', done: false});
+      assert.deepEqual(it.next(), {value: void 0, done: true});
+    });
+
+    test('traverses multiple leaf nodes', () => {
+      var values = makeValues(BRANCH_FACTOR*4);
+      var list = List.of(values);
+      assert.deepEqual(Array.from(<any>list), values);
+    });
+  });
+
+  suite('#toArray()', () => {
+    test('returns an empty array if the list is empty', () => {
+      assert.deepEqual(List.empty().toArray(), []);
+    });
+
+    test('returns an array of all values in a single-node list', () => {
+      var list = List.of(['X', 'Y']);
+      assert.deepEqual(list.toArray(), ['X', 'Y']);
+    });
+
+    test('returns an array of all values in a two-level list', () => {
+      var values = makeValues(BRANCH_FACTOR*4);
+      assert.deepEqual(List.of(values).toArray(), values);
+    });
+
+    test('returns an array of all values in a three-level list', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR);
+      var list = List.of(values).set(BRANCH_FACTOR + 1, 'X');
+      values[BRANCH_FACTOR + 1] = 'X';
+      assert.deepEqual(list.toArray(), values);
+    });
+
+    test('returns an array of all values in a four-level list', () => {
+      var values = makeValues(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR);
+      var list = List.of(values).set(BRANCH_FACTOR + 1, 'X');
+      values[BRANCH_FACTOR + 1] = 'X';
+      assert.deepEqual(list.toArray(), values);
+    });
+  });
 });
 
 

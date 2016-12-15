@@ -1,10 +1,11 @@
-import {CONST, OFFSET_ANCHOR, min, max, normalizeIndex, verifyIndex, log, publish} from './common';
+import {CONST, OFFSET_ANCHOR, blockCopy, copyArray, min, max, normalizeIndex, verifyIndex, log, publish} from './common';
 import {ListState} from './state';
 import {View} from './view';
+import {Slot} from './slot';
 import {increaseCapacity} from './capacity';
 import {slice} from './slice';
 import {concat} from './concat';
-import {TreeWorker, getLeafIndex} from './traversal';
+import {TreeWorker, getLeafIndex, getAtOrdinal} from './traversal';
 
 export function setValue<T>(state: ListState<T>, ordinal: number, value: T): void {
 publish(state, false, `prior to setting value at ordinal ${ordinal} (group: ${state.group})`);
@@ -86,4 +87,95 @@ publish(state, true, 'DELETION: LEFT PART DONE');
 publish(right, true, 'DELETION: RIGHT PART DONE');
   state = concat(state, right);
   return state;
+}
+
+export interface ListIteratorResult<T> {
+  value: T|undefined;
+  done: boolean;
+}
+
+export class ListIterator<T> {
+  private _index = 0;
+  constructor(private _state: ListState<T>) {}
+
+  next(): ListIteratorResult<T> {
+    if(this._index >= this._state.size) {
+      return {value: void 0, done: true};
+    }
+    return {
+      value: getAtOrdinal(this._state, this._index++),
+      done: false
+    };
+  }
+}
+
+export function createIterator<T>(state: ListState<T>): ListIterator<T> {
+  return new ListIterator(state);
+}
+
+export function createArray<T>(state: ListState<T>): T[] {
+  var map = new Map<number, Slot<T>>();
+  var [root, depth] = getRoot(state, map);
+  if(depth === 0) {
+    return copyArray(<T[]>root.slots);
+  }
+  var array = new Array<T>(state.size);
+  populateArray(array, root, map, depth - 1, 0);
+  return array;
+}
+
+function getRoot<T>(state: ListState<T>, map: Map<number, Slot<T>>): [Slot<T>, number] {
+  var left = state.left;
+  var right = state.right;
+  var root: Slot<T> = <any>void 0;
+  var depth = 0;
+
+  if(left.isNone()) {
+    if(right.isRoot()) {
+      return [right.slot, 0];
+    }
+  }
+  else {
+    if(right.isNone() && left.isRoot()) {
+      return [left.slot, 0];
+    }
+    [root, depth] = populateViewMap(left, map);
+  }
+
+  if(!right.isNone()) {
+    [root, depth] = populateViewMap(right, map);
+  }
+
+  return [root, depth];
+}
+
+function populateViewMap<T>(view: View<T>, map: Map<number, Slot<T>>): [Slot<T>, number] {
+  var root: Slot<T>, depth = 0;
+  do {
+    map.set(slotKey(view.xparent.slot.id, view.xslotIndex), view.slot);
+    root = view.slot;
+    view = view.xparent;
+    depth++;
+  } while(!view.isNone());
+  return [root, depth];
+}
+
+function populateArray<T>(array: T[], node: Slot<T>, map: Map<number, Slot<T>>, level: number, offset: number): number {
+  var slots = <Slot<T>[]>node.slots;
+  for(var i = 0, c = 0; i < slots.length; i++) {
+    var child = map.get(slotKey(node.id, i)) || slots[i];
+    if(level === 1) {
+      var elements = child.slots;
+      blockCopy(elements, array, 0, offset + c, elements.length);
+      c += elements.length;
+    }
+    else {
+      c += populateArray(array, child, map, level - 1, offset + c);
+    }
+  }
+  return c;
+}
+
+function slotKey(parentSlotId: number, slotIndex: number): number {
+  return parentSlotId << 8 + slotIndex;
 }
