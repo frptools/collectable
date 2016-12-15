@@ -188,26 +188,26 @@ export function isUndefined<T>(value: T|undefined): value is undefined {
   return value === void 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DEV USE ONLY
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// // DEV USE ONLY
 
-export function log(...args: any[])
-export function log() {
-  publish(Array.from(arguments));
-}
+// export function log(...args: any[])
+// export function log() {
+//   publish(Array.from(arguments));
+// }
 
-var __publishCallback: Function;
-export function publish(...args: any[]): void
-export function publish(): void {
-  if(__publishCallback) __publishCallback.apply(null, arguments);
-}
-export function setCallback(callback: Function): void {
-  __publishCallback = callback;
-}
+// var __publishCallback: Function;
+// export function publish(...args: any[]): void
+// export function publish(): void {
+//   if(__publishCallback) __publishCallback.apply(null, arguments);
+// }
+// export function setCallback(callback: Function): void {
+//   __publishCallback = callback;
+// }
 
-declare var window;
-if(typeof window !== 'undefined') {
-  window.addEventListener('error', ev => {
-    log(ev.error);
-  });
-}
+// declare var window;
+// if(typeof window !== 'undefined') {
+//   window.addEventListener('error', ev => {
+//     log(ev.error);
+//   });
+// }

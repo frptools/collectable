@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {append} from '../collectable/list/values';
+import {append, createArray} from '../collectable/list/values';
 import {List} from '../collectable/list';
 import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';
@@ -9,10 +9,9 @@ import {compact} from '../collectable/list/compact';
 import {
   BRANCH_FACTOR,
   BRANCH_INDEX_BITCOUNT,
+  gatherLeafValues,
   makeStandardSlot,
   makeRelaxedSlot,
-  gatherLeafValues,
-  commitToRoot,
   rootSlot,
   makeValues
 } from './test-utils';
@@ -92,8 +91,8 @@ suite('[List: concatenation]', () => {
           leftSlots.push(makeStandardSlot(size, level, offset));
           offset += size;
         }
-        for(i = 0; i < 4; i++) {
-          var size = i > 1 ? small : large;
+        for(i = 0; i < BRANCH_FACTOR - 2; i++) {
+          var size = i > 1 ? large : small;
           rightSlots.push(makeStandardSlot(size, level, offset));
           offset += size;
         }
@@ -102,42 +101,10 @@ suite('[List: concatenation]', () => {
         return [left, right];
       }
 
-      function makeBalancedPair(originalPair: [Slot<string>, Slot<string>]): [Slot<string>, Slot<string>] {
-        var leftSlots: Slot<string>[] = [];
-        const level = 1;
-        for(var i = 0, offset = 0; i < BRANCH_FACTOR; i++) {
-          var size = i === BRANCH_FACTOR - 1 ? small*3 : large;
-          leftSlots.push(makeStandardSlot(size, level, offset));
-          offset += size;
-        }
-        var left = makeRelaxedSlot(leftSlots);
-        var right = makeRelaxedSlot([
-          makeStandardSlot(small, 1, offset)
-        ]);
-        var leftCount = originalPair[0].slots.length;
-        // copySum(originalPair[0], leftCount - 4, left, leftCount - 4);
-        copySum(originalPair[0], leftCount - 3, left, leftCount - 3);
-        copySum(originalPair[0], leftCount - 1, left, leftCount - 2);
-        copySum(originalPair[1], 0, left, leftCount - 1);
-        copySum(originalPair[1], 1, left, leftCount);
-        copySum(originalPair[1], 3, right, 0);
-
-        // copySum(originalPair[0], 3, left, 3);
-        // copySum(originalPair[0], 5, left, 4);
-        // copySum(originalPair[0], 6, left, 5);
-        // copySum(originalPair[1], 0, left, 6);
-        // copySum(originalPair[1], 1, left, 7);
-        // copySum(originalPair[1], 3, right, 0);
-        left.recompute = 4;
-        right.recompute = 1;
-        return [left, right];
-      }
-
-      var nodesA = makeRelaxedPair();
-      var nodesB = makeBalancedPair(nodesA);
-      assert.notDeepEqual(nodesA, nodesB);
-      compact(nodesA, BRANCH_INDEX_BITCOUNT*2, 2);
-      assert.deepEqual(nodesA, nodesB);
+      var nodes = makeRelaxedPair();
+      assert.strictEqual(nodes[0].slots.length, BRANCH_FACTOR - 1 );
+      compact(nodes, BRANCH_INDEX_BITCOUNT*2, 2);
+      assert.strictEqual(nodes[0].slots.length, BRANCH_FACTOR);
     });
 
     test('the right node is emptied if all remaining slots can be moved left', () => {
@@ -255,6 +222,7 @@ suite('[List: concatenation]', () => {
       test('the function returns false', () => {
         var left = makeStandardSlot(BRANCH_FACTOR << (BRANCH_INDEX_BITCOUNT*2) - 1, 2, 0);
         var right = makeStandardSlot(BRANCH_FACTOR << (BRANCH_INDEX_BITCOUNT*2), 2, 0);
+
         assert.isFalse(join([left, right], BRANCH_INDEX_BITCOUNT*2, false));
       });
 
@@ -264,7 +232,9 @@ suite('[List: concatenation]', () => {
         var nodes: [Slot<string>, Slot<string>] = [left, right];
         var leftJSON = JSON.stringify(left);
         var rightJSON = JSON.stringify(right);
+
         join(nodes, BRANCH_INDEX_BITCOUNT*2, false);
+
         assert.strictEqual(leftJSON, JSON.stringify(nodes[0]));
         assert.strictEqual(rightJSON, JSON.stringify(nodes[1]));
       });
@@ -281,7 +251,7 @@ suite('[List: concatenation]', () => {
       var root = rootSlot(left);
       assert.isFalse(root.isRelaxed());
       assert.strictEqual(root.size, 3);
-      assert.deepEqual(gatherLeafValues(root, true), makeValues(3));
+      assert.deepEqual(createArray(left), makeValues(3));
     });
 
     test('joins two single-level lists into a two-level result if capacity is exceeded', () => {
@@ -295,9 +265,7 @@ suite('[List: concatenation]', () => {
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
       assert.strictEqual(root.size, n0 + n1);
-
-      commitToRoot(left);
-      assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+      assert.deepEqual(createArray(left), makeValues(n0 + n1));
     });
 
     test('joins two multi-level lists into a higher-level result if capacity is exceeded', () => {
@@ -312,9 +280,7 @@ suite('[List: concatenation]', () => {
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
       assert.strictEqual(root.size, n0 + n1);
-
-      commitToRoot(left);
-      assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+      assert.deepEqual(createArray(left), makeValues(n0 + n1));
     });
 
     test('joins a deeper left list to a shallower right list', () => {
@@ -325,13 +291,10 @@ suite('[List: concatenation]', () => {
 
       concat(left, right);
 
-      var root = rootSlot(left);
-      assert.isTrue(left.right.xparent.hasUncommittedChanges());
-      assert.isTrue(left.right.xparent.slot.isRelaxed());
+      assert.isTrue(left.right.parent.hasUncommittedChanges());
+      assert.isTrue(left.right.parent.slot.isRelaxed());
       assert.strictEqual(left.size, n0 + n1);
-
-      commitToRoot(left);
-      assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+      assert.deepEqual(createArray(left), makeValues(n0 + n1));
     });
 
     test('joins a shallower left list to a deeper right list', () => {
@@ -345,9 +308,7 @@ suite('[List: concatenation]', () => {
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
       assert.strictEqual(root.size, n0 + n1);
-
-      commitToRoot(left);
-      assert.deepEqual(gatherLeafValues(root, true), makeValues(n0 + n1));
+      assert.deepEqual(createArray(left), makeValues(n0 + n1));
     });
 
     test('joins lists when both lists each have pre-existing reserved head and tail views', () => {
@@ -361,13 +322,9 @@ suite('[List: concatenation]', () => {
 
       var list3 = list1.concat(list2);
 
-      commitToRoot(list1);
-      commitToRoot(list2);
-      commitToRoot(list3);
-
-      assert.deepEqual(gatherLeafValues(list1, true), leftValues);
-      assert.deepEqual(gatherLeafValues(list2, true), rightValues);
-      assert.deepEqual(gatherLeafValues(list3, true), leftValues.concat(rightValues));
+      assert.deepEqual(list1.toArray(), leftValues);
+      assert.deepEqual(list2.toArray(), rightValues);
+      assert.deepEqual(list3.toArray(), leftValues.concat(rightValues));
     });
   });
 });

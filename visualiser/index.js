@@ -1006,6 +1006,16 @@ function main({DOM, events}) {
       }
     }
 
+    function runTraversalTests2() {
+      const values_h4_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1);
+      const list = makeList(values_h4_pBF_p1, 1, false);
+      beginCollectingLogs();
+      publish(list, true, 'Initial list');
+      var array = list.toArray().reduce((arr, x, i) => typeof x === 'string' ? arr : arr.concat([[i, x]]), []);
+      log(array);
+      publish(list, true, 'Final list');
+    }
+
     function runSliceTests1() {
       beginCollectingLogs();
       var list1 = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) - (BRANCH_FACTOR >>> 2)))
@@ -1107,7 +1117,7 @@ log(`will now delete from list 2 (size: ${list2.size}) at ${list1.size - BRANCH_
       publish(list2, true, `updated list`);
     }
 
-    runDeletionTests2();
+    runConcatTests1();
 
   }, 100);
 })();

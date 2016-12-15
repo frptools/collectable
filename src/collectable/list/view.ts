@@ -1,4 +1,4 @@
-import {COMMIT_MODE, OFFSET_ANCHOR, abs, isDefined, isUndefined, nextId, invertOffset, invertAnchor, log} from './common';
+import {COMMIT_MODE, OFFSET_ANCHOR, abs, isDefined, isUndefined, nextId, invertOffset, invertAnchor} from './common';
 import {Slot, emptySlot} from './slot';
 
 export class View<T> {
@@ -7,8 +7,8 @@ export class View<T> {
     if(view.isNone()) {
       return void 0;
     }
-    _nextReusableView = view.xparent;
-    view.xparent = View.none<T>(); // default group has group === 0 (see comment below)
+    _nextReusableView = view.parent;
+    view.parent = View.none<T>(); // default group has group === 0 (see comment below)
     view.group = group;
     return view;
   }
@@ -16,10 +16,9 @@ export class View<T> {
   static pushReusableView(view: View<any>): void {
     view.slot = Slot.empty<any>();
     var next = _nextReusableView;
-log(`[View.pushReusableView (id:${view.id} g:${view.group})] view id: ${view.id}; there are now ${next.group + 1} reusable views in the pool`);
     if(next.group > 50) return; // group property reused as stack size counter
     view.group = next.group + 1;
-    view.xparent = next;
+    view.parent = next;
     _nextReusableView = view;
   }
 
@@ -37,61 +36,30 @@ log(`[View.pushReusableView (id:${view.id} g:${view.group})] view id: ${view.id}
     if(isUndefined(view)) {
       return new View<T>(group, offset, anchor, slotIndex, sizeDelta, slotsDelta, parent, slot);
     }
-log(`[View.create (id:${view.id} g:${group})] reusing view with slot ${slot.id}, index ${slotIndex}; there are ${_nextReusableView.group} reusable views remaining in the pool`);
     view.group = group;
     view.offset = offset;
     view.anchor = anchor;
-    view.xslotIndex = slotIndex;
+    view.slotIndex = slotIndex;
     view.sizeDelta = sizeDelta;
     view.slotsDelta = slotsDelta;
-    view.xparent = parent;
+    view.parent = parent;
     view.slot = slot;
     return view;
   }
 
-  public id = nextId();
-  private parent: View<T>;
-  private slotIndex: number;
+  // public id = nextId();
   constructor(
     public group: number,
     public offset: number,
     public anchor: OFFSET_ANCHOR,
-    slotIndex: number,
+    public slotIndex: number,
     public sizeDelta: number,
     public slotsDelta: number,
-    parent: View<T>,
+    public parent: View<T>,
     public slot: Slot<T>,
   ) {
-    this.xparent = parent;
-    this.xslotIndex = slotIndex;
-log(`[View#constructor (id:${this.id} g:${this.group})] slot ${slot.id} at index ${slotIndex}`);
-  }
-
-  get xslotIndex(): number {
-    return this.slotIndex;
-  }
-  set xslotIndex(value: number) {
-log(`[View#slotIndex (id:${this.id}, g:${this.group})] slot index: ${value}`);
-    this.slotIndex = value;
-  }
-
-  get xparent(): View<T> {
-    return this.parent;
-  }
-  set xparent(value: View<T>) {
-    if((this.id === 0 || this.group === 0) && value && value.id !== 0) {
-      debugger;
-      throw new Error('Attempted to assign non-void parent to void view');
-    }
-    if(this.group !== 0 && !value) {
-      debugger;
-      throw new Error('Attempted to assign undefined parent to view');
-    }
-    // if(value && this.group < value.group) {
-    //   debugger;
-    //   throw new Error('Attempted to reassign parent of immutable view');
-    // }
-    this.parent = value;
+    this.parent = parent;
+    this.slotIndex = slotIndex;
   }
 
   static empty<T>(anchor: OFFSET_ANCHOR): View<T> {
@@ -111,7 +79,7 @@ log(`[View#slotIndex (id:${this.id}, g:${this.group})] slot index: ${value}`);
   }
 
   isRoot(): boolean {
-    return this.xparent === voidView;
+    return this.parent === voidView;
   }
 
   isEditable(group: number): boolean {
@@ -131,14 +99,14 @@ log(`[View#slotIndex (id:${this.id}, g:${this.group})] slot index: ${value}`);
   }
 
   recalculateDeltas(): void {
-    var upper = <Slot<T>>this.xparent.slot.slots[this.slotIndex];
+    var upper = <Slot<T>>this.parent.slot.slots[this.slotIndex];
     if(this.slot === upper) return;
     this.slotsDelta = this.slot.slots.length - upper.slots.length;
     this.sizeDelta = this.slot.size - upper.size;
   }
 
   cloneToGroup(group: number): View<T> {
-    return View.create<T>(group, this.offset, this.anchor, this.xslotIndex, this.sizeDelta, this.slotsDelta, this.xparent, this.slot);
+    return View.create<T>(group, this.offset, this.anchor, this.slotIndex, this.sizeDelta, this.slotsDelta, this.parent, this.slot);
   }
 
   flipAnchor(listSize: number): void {
@@ -146,14 +114,13 @@ log(`[View#slotIndex (id:${this.id}, g:${this.group})] slot index: ${value}`);
     if(!this.isRoot()) {
       this.offset = invertOffset(this.offset, this.slot.size, listSize);
     }
-// log(`offset for view ${this.id} flipped ${this.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} to ${this.offset}`);
   }
 
   setCommitted(parent?: View<T>): void {
     this.sizeDelta = 0;
     this.slotsDelta = 0;
     if(isDefined(parent)) {
-      this.xparent = parent;
+      this.parent = parent;
     }
   }
 
@@ -241,11 +208,11 @@ log(`[View#slotIndex (id:${this.id}, g:${this.group})] slot index: ${value}`);
         this.slot = this.slot.cloneToGroup(this.group);
       }
     }
-    this.xparent = View.none<T>();
+    this.parent = View.none<T>();
     this.offset = 0;
     this.sizeDelta = 0;
     this.slotsDelta = 0;
-    this.xslotIndex = 0;
+    this.slotIndex = 0;
   }
 
   replaceSlot(slot: Slot<T>): void {
@@ -256,17 +223,14 @@ log(`[View#slotIndex (id:${this.id}, g:${this.group})] slot index: ${value}`);
     var slot = this.slot;
     var oldSize = slot.size;
     if(slot.isEditable(this.group)) {
-log(`[View#adjustSlotRange (id:${this.id} g:${this.group})] slot ${slot.id} will now be range adjusted`);
       slot.adjustRange(padLeft, padRight, isLeaf);
     }
     else {
-log(`[View#adjustSlotRange (id:${this.id} g:${this.group})] slot ${slot.id} will now be copied with an adjusted range`);
       this.slot = slot = slot.cloneWithAdjustedRange(this.group, padLeft, padRight, isLeaf, true);
     }
     if(!this.isRoot()) {
       this.sizeDelta += slot.size - oldSize;
       this.slotsDelta += padLeft + padRight;
-log(`[View#adjustSlotRange (id:${this.id} g:${this.group})] size delta: ${this.sizeDelta}, slot count delta: ${this.slotsDelta}`);
     }
   }
 
@@ -286,9 +250,6 @@ log(`[View#adjustSlotRange (id:${this.id} g:${this.group})] size delta: ${this.s
  * @export
  * */
 var voidView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, <any>void 0, emptySlot);
-voidView.id = 0;
 var emptyLeftView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, voidView, emptySlot);
-emptyLeftView.id = 0;
 var emptyRightView = new View<any>(0, 0, OFFSET_ANCHOR.RIGHT, 0, 0, 0, voidView, emptySlot);
-emptyRightView.id = 0;
 var _nextReusableView = voidView;

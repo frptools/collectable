@@ -1,4 +1,4 @@
-import {CONST, COMMIT_MODE, nextId, isDefined, abs, max, copyArray, verifyIndex, log} from './common';
+import {CONST, COMMIT_MODE, nextId, isDefined, abs, max, copyArray, verifyIndex} from './common';
 
 export type ChildSlotOutParams<T> = {
   slot: T|Slot<T>,
@@ -7,7 +7,7 @@ export type ChildSlotOutParams<T> = {
 };
 
 export class Slot<T> {
-  public id = nextId();
+  // public id = nextId();
   constructor(
     public group: number,
     public size: number, // the total number of descendent elements
@@ -15,9 +15,7 @@ export class Slot<T> {
     public recompute: number, // the number of child slots for which the sum must be recalculated
     public subcount: number, // the total number of slots belonging to immediate child slots
     public slots: (Slot<T>|T)[]
-  ) {
-log(`[Slot#constructor (id:${this.id} g:${this.group})] construct new slot ${this.id} with group: ${group}, size ${size}, sum ${sum}, recompute: ${recompute}, subcount: ${subcount}`);
-  }
+  ) {}
 
   static empty<T>(): Slot<T> {
     return emptySlot;
@@ -28,7 +26,6 @@ log(`[Slot#constructor (id:${this.id} g:${this.group})] construct new slot ${thi
               : mode === COMMIT_MODE.RESERVE ? -abs(this.group)
               : abs(this.group);
     var slot = new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, this.slots);
-log(`[Slot#shallowClone (id:${this.id} g:${this.group})] slot ${this.id} shallow-cloned with id ${slot.id} and group ${slot.group}`);
     return slot;
   }
 
@@ -36,18 +33,14 @@ log(`[Slot#shallowClone (id:${this.id} g:${this.group})] slot ${this.id} shallow
     if(preserveStatus && this.group < 0) {
       group = -abs(group);
     }
-    var slot = new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, this.slots);
-log(`[Slot#shallowCloneToGroup (id:${this.id} g:${this.group})] slot ${this.id} shallow-cloned with id ${slot.id} and group ${slot.group}`);
-return slot;
+    return new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, this.slots);
   }
 
   cloneToGroup(group: number, preserveStatus: boolean = false): Slot<T> {
     if(preserveStatus && this.group < 0) {
       group = -abs(group);
     }
-    var slot = new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, copyArray(this.slots));
-log(`[Slot#cloneToGroup (id:${this.id} g:${this.group})] slot ${this.id} cloned with id ${slot.id} and group ${slot.group}`);
-    return slot;
+    return new Slot<T>(group, this.size, this.sum, this.recompute, this.subcount, copyArray(this.slots));
   }
 
   toReservedNode(group: number): Slot<T> {
@@ -60,9 +53,7 @@ log(`[Slot#cloneToGroup (id:${this.id} g:${this.group})] slot ${this.id} cloned 
   }
 
   cloneAsPlaceholder(group: number): Slot<T> {
-    var slot = new Slot<T>(-abs(group), this.size, this.sum, this.recompute, this.subcount, new Array<T>(this.slots.length));
-log(`[Slot#cloneAsPlaceholder (id:${this.id} g:${this.group})] slot ${this.id} cloned as placeholder with id ${slot.id} and group ${slot.group}`);
-    return slot;
+    return new Slot<T>(-abs(group), this.size, this.sum, this.recompute, this.subcount, new Array<T>(this.slots.length));
   }
 
   cloneWithAdjustedRange(group: number, padLeft: number, padRight: number, isLeaf: boolean, preserveStatus: boolean = false): Slot<T> {
@@ -73,7 +64,6 @@ log(`[Slot#cloneAsPlaceholder (id:${this.id} g:${this.group})] slot ${this.id} c
     var slots = new Array<T|Slot<T>>(src.length + padLeft + padRight);
     var dest = new Slot<T>(group, this.size, 0, this.recompute, 0, slots);
     adjustSlotBounds(this, dest, padLeft, padRight, isLeaf);
-log(`[Slot#cloneWithAdjustedRange (id:${this.id} g:${this.group})] slot ${this.id} cloned as placeholder with id ${dest.id}, group ${dest.group}, adjusted range ${padLeft}:${padRight}, recompute: ${this.recompute}`);
     return dest;
   }
 
@@ -81,18 +71,8 @@ log(`[Slot#cloneWithAdjustedRange (id:${this.id} g:${this.group})] slot ${this.i
     adjustSlotBounds(this, this, padLeft, padRight, isLeaf);
   }
 
-  // editableChild(slotIndex: number): Slot<T> {
-  //   var slot = <Slot<T>>this.slots[slotIndex];
-  //   if(slot.group !== this.group) {
-  //     slot = slot.cloneToGroup(this.group);
-  //     this.slots[slotIndex] = slot;
-  //   }
-  //   return slot;
-  // }
-
   createParent(group: number, mode: COMMIT_MODE, expand?: ExpansionParameters): Slot<T> {
     var childSlot: Slot<T> = this;
-log(`[Slot#createParent (id:${this.id} g:${this.group})] create parent of slot ${this.id}, group: ${group}, mode: ${mode}`);
     if(mode === COMMIT_MODE.RELEASE) {
       childSlot = childSlot.prepareForRelease(group);
     }
@@ -105,7 +85,6 @@ log(`[Slot#createParent (id:${this.id} g:${this.group})] create parent of slot $
       nodeSize += expand.sizeDelta;
       slotIndex += expand.padLeft;
     }
-log(`[Slot#createParent (id:${this.id} g:${this.group})] slot count for new parent is: ${slotCount}`);
 
     var slots = new Array<Slot<T>>(slotCount);
     slots[slotIndex] = childSlot;
@@ -146,9 +125,6 @@ log(`[Slot#createParent (id:${this.id} g:${this.group})] slot count for new pare
 
   updatePlaceholder(actual: Slot<T>): void {
     this.size = actual.size;
-    // this.subcount = actual.subcount;
-    // this.recompute = actual.recompute;
-    // this.sum = actual.sum;
     this.slots.length = actual.slots.length;
   }
 
@@ -162,7 +138,6 @@ log(`[Slot#createParent (id:${this.id} g:${this.group})] slot count for new pare
   resolveChild(ordinal: number, shift: number, out: ChildSlotOutParams<T>): boolean {
     if(shift === 0) {
       if(ordinal >= this.slots.length) return false;
-log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (A)`);
       out.slot = this.slots[ordinal];
       out.index = ordinal;
       out.offset = 0;
@@ -173,7 +148,6 @@ log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (A)`)
     if(slotIndex >= this.slots.length) return false;
 
     if(this.recompute === -1) {
-log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (B)`);
       out.slot = <Slot<T>>this.slots[slotIndex];
       out.index = slotIndex;
       out.offset = slotIndex << shift;
@@ -187,7 +161,6 @@ log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (B)`)
         slot = <Slot<T>>this.slots[slotIndex];
       } while(ordinal >= slot.sum && slotIndex < invalidFromIndex && ++slotIndex);
       if(slotIndex < invalidFromIndex) {
-log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (C)`);
         out.slot = slot;
         out.index = slotIndex;
         out.offset = slotIndex === 0 ? 0 : (<Slot<T>>this.slots[slotIndex - 1]).sum;
@@ -204,12 +177,10 @@ log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (C)`)
 
     for(i = invalidFromIndex; i <= lastIndex; i++) {
       if(i === lastIndex && sum === maxSum && !(<Slot<T>>this.slots[i]).isRelaxed()) {
-log(`[Slot#resolveChild (id:${this.id} g:${this.group})] recomputation determined that this is no longer a relaxed node`, sum, maxSum);
         this.recompute = -1;
         if(!found) {
           slot = <Slot<T>>this.slots[i];
           if(sum + slot.size > ordinal) {
-log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (D)`);
             out.slot = slot;
             out.index = i;
             out.offset = sum - slot.size;
@@ -227,11 +198,9 @@ log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (D)`)
             this.slots[i] = slot = slot.shallowClone(COMMIT_MODE.NO_CHANGE);
           }
           slot.sum = sum;
-log(`[Slot#resolveChild (id:${this.id} g:${this.group})] recomputed slot #${i} with sum ${sum}`);
         }
 
         if(!found && sum > ordinal) {
-log(`[Slot#resolveChild (id:${this.id} g:${this.group})] OUT SLOT ASSIGNED (E)`);
           out.slot = slot;
           out.index = i;
           out.offset = sum - slot.size;
@@ -249,7 +218,6 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
   var destSlots = dest.slots;
   var srcIndex: number, destIndex: number, amount: number;
 
-log(`[adjustSlotBounds] adjust slot (id ${src.id}->${dest.id}) bounds by ${padLeft > 0 ? '+' : ''}${padLeft}:${padRight > 0 ? '+' : ''}${padRight}`);
 
   if(padLeft < 0) {
     amount = srcSlots.length + padLeft;
@@ -271,7 +239,6 @@ log(`[adjustSlotBounds] adjust slot (id ${src.id}->${dest.id}) bounds by ${padLe
     destSlots.length += padLeft + padRight;
   }
 
-log(`[adjustSlotBounds] srcIndex: ${srcIndex}, destIndex: ${destIndex}, amount: ${amount}`);
 
   var copySlots = padLeft !== 0 || srcSlots !== destSlots;
   var step = 1;
@@ -281,19 +248,10 @@ log(`[adjustSlotBounds] srcIndex: ${srcIndex}, destIndex: ${destIndex}, amount: 
     step = -1;
   }
 
-log(`[adjustSlotBounds] srcIndex: ${srcIndex}, destIndex: ${destIndex}, amount: ${amount}`);
-var devMode = srcSlots === destSlots;
-
-log(`[adjustSlotBounds] amount: ${amount}, original size: ${src.size}`);
   if(isLeaf) {
     if(copySlots) {
-log(`[adjustSlotBounds] copy ${amount} slots from right to left; ${devMode ? 'internal copy' : 'copy between nodes'}`);
-log('[adjustSlotBounds] from:', srcSlots.slice(0));
-log('[adjustSlotBounds] to:', destSlots.slice(0));
       for(var c = 0; c < amount; srcIndex += step, destIndex += step, c++) {
-log(`[adjustSlotBounds] src value: #${srcIndex}:${srcSlots[srcIndex]}, copying to index ${destIndex}`);
         destSlots[destIndex] = srcSlots[srcIndex];
-// if(devMode) srcSlots[srcIndex] = <any>void 0;
       }
     }
     dest.size = amount + max(0, slotCountDelta);
@@ -307,7 +265,6 @@ log(`[adjustSlotBounds] src value: #${srcIndex}:${srcSlots[srcIndex]}, copying t
         size += slot.size;
         if(copySlots) {
           destSlots[destIndex] = slot;
-  // if(devMode) srcSlots[srcIndex] = <any>void 0;
         }
       }
       dest.size = size;
@@ -322,10 +279,7 @@ log(`[adjustSlotBounds] src value: #${srcIndex}:${srcSlots[srcIndex]}, copying t
   if(srcSlots === destSlots && slotCountDelta < 0) {
     destSlots.length = amount;
   }
-
-log(`[adjustSlotBounds] size updated to: ${dest.size}`);
 }
-
 
 export class ExpansionParameters {
   private static _default = new ExpansionParameters();

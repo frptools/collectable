@@ -1,4 +1,4 @@
-import {CONST, max, min, log, publish} from './common';
+import {CONST, max, min} from './common';
 import {Slot, emptySlot} from './slot';
 
 interface CompactionState<T> {
@@ -36,7 +36,6 @@ interface Position<T> {
 }
 
 function isCompactable<T>(node: Slot<T>): boolean {
-// log(`slot ${node.id} ${node.slots.length < CONST.BRANCH_INDEX_MASK ? 'IS' : 'is NOT'} compactable`);
   return node.slots.length < CONST.BRANCH_INDEX_MASK;
 }
 
@@ -101,6 +100,13 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
   var isRecomputeUpdated = false;
   var isTreeBase = shift === CONST.BRANCH_INDEX_BITCOUNT;
   var finalSlotCount = nodes[0].slots.length + nodes[1].slots.length - reductionTarget;
+
+  // Check if the reduction target can be reduced further to eliminate the additional slots to the right and leave only a single node
+  if(finalSlotCount > CONST.BRANCH_FACTOR && nodes[0].subcount + nodes[1].subcount <= (CONST.BRANCH_FACTOR << CONST.BRANCH_INDEX_BITCOUNT)) {
+    reductionTarget += finalSlotCount - CONST.BRANCH_FACTOR;
+    finalSlotCount = CONST.BRANCH_FACTOR;
+  }
+
   var lastFinalIndex = finalSlotCount - 1;
   var isReductionTargetMet = false;
   var oldLeftCount = nodes[0].slots.length;
@@ -112,22 +118,14 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
   incrementPos(right, nodes);
   var removed = 0;
 
-  // Check if the reduction target can be reduced further to eliminate the additional slots to the right and leave only a single node
-  if(finalSlotCount > CONST.BRANCH_FACTOR && left.upper.subcount + right.upper.subcount <= CONST.BRANCH_FACTOR << CONST.BRANCH_INDEX_BITCOUNT) {
-    // reductionTarget += finalSlotCount - CONST.BRANCH_FACTOR;
-    // finalSlotCount = CONST.BRANCH_FACTOR;
-  }
-
   do {
     // Move the position markers until the left is at a location that is eligible for receiving subslots from the right
     if(isReductionTargetMet || !left.compactable) {
       incrementPos(left, nodes);
-// log(`increment left`);
       if(removed > 0) {
         copySlotLeft(left, right);
       }
       incrementPos(right, nodes);
-// log(`increment right`);
     }
 
     if(!isReductionTargetMet && left.compactable) {
@@ -144,23 +142,24 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
       var rslots = right.lower.slots;
       var startIndex = lslots.length;
       var slotsToMove = min(CONST.BRANCH_FACTOR - startIndex, rslots.length);
-// log(`move ${slotsToMove} slots from slot ${right.lower.id} to slot ${left.lower.id}`);
       var subcountMoved = 0;
       lslots.length = startIndex + slotsToMove;
 
       // Copy slots from right to left until the right node is empty or the left node is full
       var sizeMoved = isTreeBase ? slotsToMove : 0;
-      for(var i = startIndex, j = 0; j < slotsToMove; i++, j++) {
+
+      for(var i = startIndex, j = 0, total = max(rslots.length - slotsToMove, slotsToMove); j < total; i++, j++) {
         var slot = <Slot<T>>rslots[j];
         if(!isTreeBase) {
           sizeMoved += slot.size;
           subcountMoved += slot.slots.length;
         }
-        lslots[i] = slot;
+        if(j < slotsToMove) {
+          lslots[i] = slot;
+        }
         if(j + slotsToMove < rslots.length) {
           rslots[j] = rslots[j + slotsToMove];
         }
-// publish(lists, false, `shifted some slots left!`);
       }
 
       left.lower.size += sizeMoved;
@@ -187,7 +186,6 @@ export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTa
         incrementPos(right, nodes);
       }
     }
-// publish(lists, false, `[compact] one iteration complete`);
   } while(left.absoluteIndex < lastFinalIndex);
 
   nodes[1].slots.length = max(0, finalSlotCount - nodes[0].slots.length);

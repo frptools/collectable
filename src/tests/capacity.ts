@@ -1,16 +1,12 @@
-declare function require(moduleName: string): any;
-
 import {assert} from 'chai';
 import {ListState} from '../collectable/list/state';
-import {append, prepend} from '../collectable/list/values';
+import {append, prepend, createArray} from '../collectable/list/values';
 import {getAtOrdinal} from '../collectable/list/traversal';
 import {concat} from '../collectable/list/concat';
 
 import {
   BRANCH_FACTOR,
-  assertArrayElementsAreEqual,
   slotValues,
-  gatherLeafValues,
   commitToRoot,
   tailSize,
   headSize,
@@ -65,9 +61,8 @@ suite('[List: capacity]', () => {
 
       test('when prepending', () => {
         const list = makeList(values_BFx2_p1, 1, true);
-        commitToRoot(list);
         assert.strictEqual(list.size, values_BFx2_p1.length);
-        assert.deepEqual(gatherLeafValues(list), values_BFx2_p1.slice(1).concat(values_BFx2_p1.slice(0, 1)));
+        assert.deepEqual(createArray(list), values_BFx2_p1.slice(1).concat(values_BFx2_p1.slice(0, 1)));
         assert.strictEqual(headSize(list), 1);
         assert.strictEqual(tailSize(list), BRANCH_FACTOR);
       });
@@ -85,15 +80,10 @@ suite('[List: capacity]', () => {
         assert.strictEqual(listH3.size, values_h2_pBF_p1.length);
         assert.strictEqual(listH4.size, values_h3_pBF_p1.length);
         assert.strictEqual(listH5.size, values_h4_pBF_p1.length);
-        assertArrayElementsAreEqual(gatherLeafValues(listH2, true), values_BFx2_p1, 'listH2 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH3, true), values_h2_pBF_p1, 'listH3 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH4, true), values_h3_pBF_p1, 'listH4 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_h4_pBF_p1, 'listH5 values are not correct');
-
-        commitToRoot(listH2);
-        commitToRoot(listH3);
-        commitToRoot(listH4);
-        commitToRoot(listH5);
+        assert.deepEqual(createArray(listH2), values_BFx2_p1, 'listH2 values are not correct');
+        assert.deepEqual(createArray(listH3), values_h2_pBF_p1, 'listH3 values are not correct');
+        assert.deepEqual(createArray(listH4), values_h3_pBF_p1, 'listH4 values are not correct');
+        assert.deepEqual(createArray(listH5), values_h4_pBF_p1, 'listH5 values are not correct');
         assert.isAbove(rootSlot(listH2).group, 0, `root slot of listH2 should not be reserved`);
         assert.isAbove(rootSlot(listH3).group, 0, `root slot of listH2 should not be reserved`);
         assert.isAbove(rootSlot(listH4).group, 0, `root slot of listH2 should not be reserved`);
@@ -111,15 +101,10 @@ suite('[List: capacity]', () => {
         assert.strictEqual(listH3.size, values_h2_pBF_p1.length);
         assert.strictEqual(listH4.size, values_h3_pBF_p1.length);
         assert.strictEqual(listH5.size, values_h4_pBF_p1.length);
-        assertArrayElementsAreEqual(gatherLeafValues(listH2, true), values_BFx2_p1.slice(1).concat(values_BFx2_p1.slice(0, 1)), 'listH2 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH3, true), values_h2_pBF_p1.slice(1).concat(values_h2_pBF_p1.slice(0, 1)), 'listH3 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH4, true), values_h3_pBF_p1.slice(1).concat(values_h3_pBF_p1.slice(0, 1)), 'listH4 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_h4_pBF_p1.slice(1).concat(values_h4_pBF_p1.slice(0, 1)), 'listH5 values are not correct');
-
-        commitToRoot(listH2);
-        commitToRoot(listH3);
-        commitToRoot(listH4);
-        commitToRoot(listH5);
+        assert.deepEqual(createArray(listH2), values_BFx2_p1.slice(1).concat(values_BFx2_p1.slice(0, 1)), 'listH2 values are not correct');
+        assert.deepEqual(createArray(listH3), values_h2_pBF_p1.slice(1).concat(values_h2_pBF_p1.slice(0, 1)), 'listH3 values are not correct');
+        assert.deepEqual(createArray(listH4), values_h3_pBF_p1.slice(1).concat(values_h3_pBF_p1.slice(0, 1)), 'listH4 values are not correct');
+        assert.deepEqual(createArray(listH5), values_h4_pBF_p1.slice(1).concat(values_h4_pBF_p1.slice(0, 1)), 'listH5 values are not correct');
         assert.isAbove(rootSlot(listH2).group, 0, `root slot of listH2 should not be reserved`);
         assert.isAbove(rootSlot(listH3).group, 0, `root slot of listH2 should not be reserved`);
         assert.isAbove(rootSlot(listH4).group, 0, `root slot of listH2 should not be reserved`);
@@ -138,10 +123,10 @@ suite('[List: capacity]', () => {
         assert.strictEqual(listH3.size, values_BFxBF.length);
         assert.strictEqual(listH4.size, values_BFxBFxBF.length);
         assert.strictEqual(listH5.size, values_BFxBFxBFxBF.length);
-        assertArrayElementsAreEqual(gatherLeafValues(listH2, true), values_BF, 'listH2 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH3, true), values_BFxBF, 'listH3 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH4, true), values_BFxBFxBF, 'listH4 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_BFxBFxBFxBF, 'listH5 values are not correct');
+        assert.deepEqual(createArray(listH2), values_BF, 'listH2 values are not correct');
+        assert.deepEqual(createArray(listH3), values_BFxBF, 'listH3 values are not correct');
+        assert.deepEqual(createArray(listH4), values_BFxBFxBF, 'listH4 values are not correct');
+        assert.deepEqual(createArray(listH5), values_BFxBFxBFxBF, 'listH5 values are not correct');
       });
 
       test('when prepending', function() {
@@ -154,12 +139,12 @@ suite('[List: capacity]', () => {
         assert.strictEqual(listH3.size, values_BFxBF.length);
         assert.strictEqual(listH4.size, values_BFxBFxBF.length);
         assert.strictEqual(listH5.size, values_BFxBFxBFxBF.length);
-        assertArrayElementsAreEqual(gatherLeafValues(listH2, true), values_BF, 'listH2 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH3, true), values_BFxBF, 'listH3 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH4, true), values_BFxBFxBF, 'listH4 values are not correct');
-        assertArrayElementsAreEqual(gatherLeafValues(listH5, true), values_BFxBFxBFxBF, 'listH5 values are not correct');
+        assert.deepEqual(createArray(listH2), values_BF, 'listH2 values are not correct');
+        assert.deepEqual(createArray(listH3), values_BFxBF, 'listH3 values are not correct');
+        assert.deepEqual(createArray(listH4), values_BFxBFxBF, 'listH4 values are not correct');
+        assert.deepEqual(createArray(listH5), values_BFxBFxBFxBF, 'listH5 values are not correct');
       });
-    })
+    });
 
     suite('maintains the recompute property of relaxed nodes', () => {
       test('when appending', () => {
@@ -201,27 +186,25 @@ suite('[List: capacity]', () => {
       var list = ListState.empty<any>(true);
       var values = makeValues(BRANCH_FACTOR);
       append(list, values);
-      assert.deepEqual(gatherLeafValues(list), values);
+      assert.deepEqual(createArray(list), values);
     });
 
     test('two orders of magnitude of values appended to an empty list are all present in the list', () => {
       var list = ListState.empty<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
       append(list, values);
-      commitToRoot(list);
-      assertArrayElementsAreEqual(gatherLeafValues(list), values);
+      assert.deepEqual(createArray(list), values);
     });
 
     test('three orders of magnitude of values appended to an empty list are all present in the list', () => {
       var list = ListState.empty<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       append(list, values);
-      commitToRoot(list);
-      assertArrayElementsAreEqual(gatherLeafValues(list), values);
+      assert.deepEqual(createArray(list), values);
     });
 
     test('values added to a list one-by-one are all present in the list', function() {
-      this.timeout(30000);
+      this.timeout(30000); // tslint:disable-line
       var list = ListState.empty<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       for(var i = 0; i < values.length; i++) {
@@ -244,27 +227,25 @@ suite('[List: capacity]', () => {
       var list = ListState.empty<any>(true);
       var values = makeValues(BRANCH_FACTOR);
       prepend(list, values);
-      assert.deepEqual(gatherLeafValues(list), values);
+      assert.deepEqual(createArray(list), values);
     });
 
     test('two orders of magnitude of values prepended to an empty list are all present in the list', () => {
       var list = ListState.empty<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
       prepend(list, values);
-      commitToRoot(list);
-      assertArrayElementsAreEqual(gatherLeafValues(list), values);
+      assert.deepEqual(createArray(list), values);
     });
 
     test('three orders of magnitude of values prepended to an empty list are all present in the list', () => {
       var list = ListState.empty<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       prepend(list, values);
-      commitToRoot(list);
-      assertArrayElementsAreEqual(gatherLeafValues(list), values);
+      assert.deepEqual(createArray(list), values);
     });
 
     test('values added to a list one-by-one are all present in the list', function() {
-      this.timeout(30000);
+      this.timeout(30000); // tslint:disable-line
       var list = ListState.empty<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       for(var i = 0; i < values.length; i++) {

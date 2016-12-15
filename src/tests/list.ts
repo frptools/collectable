@@ -1,5 +1,3 @@
-declare function require(moduleName: string): any;
-
 import {assert} from 'chai';
 import {List} from '../collectable/list';
 
@@ -257,7 +255,7 @@ suite('[List: public]', () => {
       list.get(BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
       assert.isFalse(list._state.right.slot.isReserved());
       assert.isTrue(list._state.left.slot.isReserved());
-      assert.strictEqual(list._state.right.slot, list._state.right.xparent.slot.slots[list._state.right.xslotIndex]);
+      assert.strictEqual(list._state.right.slot, list._state.right.parent.slot.slots[list._state.right.slotIndex]);
     });
   });
 
@@ -683,29 +681,3 @@ suite('[List: public]', () => {
     });
   });
 });
-
-
-// suite.only('PERF', () => {
-//   var values = makeValues(Math.pow(BRANCH_FACTOR, 4));
-//   test(`speed`, function() {
-//     this.timeout(30000);
-//     var list = List.of(values);
-//   });
-//   test(`speed`, function() {
-//     this.timeout(30000);
-//     var list = List.empty<any>().appendArray(values);
-//   });
-//   test(`speed`, function() {
-//     this.timeout(30000);
-//     var list = List.empty<any>().prependArray(values);
-//     console.log(list.size, list.get(500000));
-//   });
-//   test(`speed`, function() {
-//     this.timeout(30000);
-//     var list = List.empty<any>().asMutable();
-//     for(var i = 0; i < 1000; i++) {
-//       list.append(values[i]);
-//     }
-//     console.log(list.size, list.get(500));
-//   });
-// })

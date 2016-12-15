@@ -1,4 +1,4 @@
-import {CONST, COMMIT_MODE, OFFSET_ANCHOR, nextId, isDefined, concatToNewArray, concatSlotsToNewArray, log, publish} from './common';
+import {CONST, COMMIT_MODE, OFFSET_ANCHOR, nextId, concatToNewArray, concatSlotsToNewArray} from './common';
 import {TreeWorker} from './traversal';
 import {compact} from './compact';
 import {Slot} from './slot';
@@ -21,8 +21,6 @@ export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): Li
     rightState = rightState.clone(leftState.group, true);
   }
 
-log(`left state id: ${leftState.id}, group: ${leftState.group}, right state id: ${rightState.id}, group: ${rightState.group}`);
-
   var left = TreeWorker.defaultPrimary<T>().reset(leftState, TreeWorker.focusTail<T>(leftState, true), leftState.group, COMMIT_MODE.RELEASE);
   var right = TreeWorker.defaultSecondary<T>().reset(rightState, TreeWorker.focusHead(rightState, true), leftState.group, COMMIT_MODE.RELEASE);
 
@@ -39,22 +37,10 @@ log(`left state id: ${leftState.id}, group: ${leftState.group}, right state id: 
   var group = leftState.group,
       leftIsRoot = left.isRoot(),
       rightIsRoot = right.isRoot(),
-      hasLeftOuterView = left.hasOtherView(),
-      hasRightOuterView = right.hasOtherView(),
-      isJoined = false;
+      isJoined = false,
+      nodes: [Slot<T>, Slot<T>] = [left.current.slot, right.current.slot];
 
-publish([leftState, rightState], false, `concatenation initialization start; group: ${leftState.group}, has left outer view: ${hasLeftOuterView}, has right outer view: ${hasRightOuterView}`);
-
-  var nodes: [Slot<T>, Slot<T>] = [left.current.slot, right.current.slot];
-
-  var xx = 0;
   do {
-publish([leftState, rightState], false, `[LOOP START | CONCAT | iteration #${xx}] left is root: ${leftIsRoot}, right is root: ${rightIsRoot}`);
-
-    if(++xx === 10) {
-      throw new Error('Infinite loop (concat)');
-    }
-
     if(left.current.anchor === OFFSET_ANCHOR.RIGHT) {
       left.current.flipAnchor(leftState.size);
     }
@@ -69,8 +55,6 @@ publish([leftState, rightState], false, `[LOOP START | CONCAT | iteration #${xx}
     // right slot in the nodes array has size zero after the operation, then the right slot has been fully merged into
     // the left slot and can be eliminated.
     if(join(nodes, left.shift, leftIsRoot || rightIsRoot, [leftState, rightState])) {
-log(`left seam: ${left.current.id}, right seam: ${right.current.id}`);
-publish([leftState, rightState], false, `joined left and right: ${nodes[1].size === 0 ? 'TOTAL' : 'PARTIAL'}`);
       var slotCountDelta = rightSlotCount - nodes[1].slots.length;
       var slotSizeDelta = rightSize - nodes[1].size;
 
@@ -84,27 +68,23 @@ publish([leftState, rightState], false, `joined left and right: ${nodes[1].size 
 
       if(isJoined) {
         if(!rightIsRoot) {
-log(`right is not root`);
           if(right.current.slot.isReserved()) {
             left.current.slot.group = -group;
           }
-          left.current.xparent = right.current.xparent;
+          left.current.parent = right.current.parent;
           left.current.recalculateDeltas();
         }
         if(!right.otherCommittedChild.isNone()) {
-log(`joined with right committed child; slotCountDelta: ${slotCountDelta}, left.current.slotCount: ${left.current.slotCount()}`);
-          right.otherCommittedChild.xslotIndex += left.current.slotCount() - slotCountDelta;
-          right.otherCommittedChild.xparent = left.current;
+          right.otherCommittedChild.slotIndex += left.current.slotCount() - slotCountDelta;
+          right.otherCommittedChild.parent = left.current;
         }
-        if(left.shift > 0) {
-log(`left is not leaf level`);
-          right.previous.xslotIndex += slotCountDelta;
-          right.previous.xparent = left.current;
+        if(left.shift > 0 && right.current.slot.size > 0) {
+          right.previous.slotIndex += slotCountDelta;
+          right.previous.parent = left.current;
           right.previous.recalculateDeltas();
         }
       }
       else {
-log(`replace left slot of right list`);
         right.current.replaceSlot(nodes[1]);
         right.current.sizeDelta -= slotSizeDelta;
         right.current.slotsDelta -= slotCountDelta;
@@ -112,16 +92,13 @@ log(`replace left slot of right list`);
     }
 
     if(!isJoined) {
-publish([leftState, rightState], false, `ready to ascend views ${left.current.id} and ${right.current.id} to the next level (group: ${leftState.group})`);
       left.ascend(COMMIT_MODE.RELEASE);
-publish([leftState, rightState], false, `left ascended`);
 
       if(left.shift === CONST.BRANCH_INDEX_BITCOUNT) {
         left.previous.flipAnchor(leftState.size + rightState.size);
       }
 
       right.ascend(COMMIT_MODE.RELEASE);
-publish([leftState, rightState], false, `right ascended`);
 
       if(!leftIsRoot) {
         leftIsRoot = left.current.isRoot();
@@ -143,12 +120,8 @@ publish([leftState, rightState], false, `right ascended`);
       }
       leftState.setView(leftState.right);
     }
-log(`right.other.slot.size: ${right.other.slot.size}, anchor: ${right.other.anchor}`);
-log(`left state; left view: ${leftState.left.id}, right view: ${leftState.right.id}`);
-publish([leftState, rightState], false, `concat: pre-assign right view`);
     if(right.other.slot.size > 0) {
       leftState.setView(right.other);
-publish(leftState, false, `concat: post-assign right view`);
     }
     else {
       right.other.disposeIfInGroup(rightState.group, leftState.group);
@@ -157,8 +130,6 @@ publish(leftState, false, `concat: post-assign right view`);
   }
 
   leftState.lastWrite = leftState.right.slot.isReserved() || leftState.left.isNone() ? OFFSET_ANCHOR.RIGHT : OFFSET_ANCHOR.LEFT;
-
-publish(leftState, true, `concat done`);
 
   left.dispose();
   right.dispose();

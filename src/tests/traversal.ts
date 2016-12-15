@@ -1,26 +1,7 @@
-declare function require(moduleName: string): any;
-
 import {assert} from 'chai';
 import {List} from '../collectable/list';
-import {ListState} from '../collectable/list/state';
-import {Slot} from '../collectable/list/slot';
-import {append, prepend} from '../collectable/list/values';
-import {getAtOrdinal} from '../collectable/list/traversal';
-import {concat} from '../collectable/list/concat';
 
-import {text,
-  BRANCH_FACTOR,
-  assertArrayElementsAreEqual,
-  slotValues,
-  gatherLeafValues,
-  commitToRoot,
-  tailSize,
-  headSize,
-  headSlot,
-  tailSlot,
-  rootSlot,
-  makeValues
-} from './test-utils';
+import {text, BRANCH_FACTOR, makeValues} from './test-utils';
 
 suite('[List: traversal]', () => {
   test('activating the left view for the first time', () => {

@@ -1,4 +1,4 @@
-import {isDefined, log, publish} from './common';
+import {isDefined} from './common';
 import {append, prepend, setValue, insertValues, deleteValues, createArray, createIterator, ListIterator} from './values';
 import {getAtOrdinal} from './traversal';
 import {concat} from './concat';
