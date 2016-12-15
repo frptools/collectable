@@ -1,5 +1,5 @@
-import {isDefined} from './common';
-import {append, prepend, setValue, insertValues, deleteValues, createArray, createIterator, ListIterator} from './values';
+import {CONST, OFFSET_ANCHOR, isDefined} from './common';
+import {append, appendOne, prepend, setValue, insertValues, deleteValues, createArray, createIterator, ListIterator} from './values';
 import {getAtOrdinal} from './traversal';
 import {concat} from './concat';
 import {slice} from './slice';
@@ -79,8 +79,36 @@ export class List<T> {
 
   append(...values: T[]): List<T>
   append(): List<T> {
-    return arguments.length === 0 ? this
-      : this._exec(state => append(state, Array.from(arguments)));
+    if(arguments.length === 0) return this;
+    var state = this._state;
+    var immutable = !state.mutable;
+    if(immutable) {
+      state = state.toMutable();
+    }
+    var tail = state.right;
+    var slot = tail.slot;
+    if(arguments.length === 1 && tail.group !== 0 && tail.offset === 0 && slot.group !== 0 && slot.size < CONST.BRANCH_FACTOR) {
+      state.lastWrite = OFFSET_ANCHOR.RIGHT;
+      state.size++;
+      if(slot.group === state.group) {
+        slot.adjustRange(0, 1, true);
+      }
+      else {
+        slot = slot.cloneWithAdjustedRange(state.group, 0, 1, true, true);
+        if(tail.group !== state.group) {
+          tail = tail.cloneToGroup(state.group);
+          state.right = tail;
+        }
+        tail.slot = slot;
+      }
+      tail.sizeDelta++;
+      tail.slotsDelta++;
+      slot.slots[slot.slots.length - 1] = arguments[0];
+    }
+    else {
+      append(state, Array.from(arguments));
+    }
+    return immutable ? new List<T>(state.toImmutable(true)) : this;
   }
 
   appendArray(values: T[]): List<T> {
@@ -90,8 +118,36 @@ export class List<T> {
 
   prepend(...values: T[]): List<T>
   prepend(): List<T> {
-    return arguments.length === 0 ? this
-      : this._exec(state => prepend(state, Array.from(arguments)));
+    if(arguments.length === 0) return this;
+    var state = this._state;
+    var immutable = !state.mutable;
+    if(immutable) {
+      state = state.toMutable();
+    }
+    var head = state.left;
+    var slot = head.slot;
+    if(arguments.length === 1 && head.group !== 0 && head.offset === 0 && slot.group !== 0 && slot.size < CONST.BRANCH_FACTOR) {
+      state.lastWrite = OFFSET_ANCHOR.LEFT;
+      state.size++;
+      if(slot.group === state.group) {
+        slot.adjustRange(1, 0, true);
+      }
+      else {
+        slot = slot.cloneWithAdjustedRange(state.group, 1, 0, true, true);
+        if(head.group !== state.group) {
+          head = head.cloneToGroup(state.group);
+          state.left = head;
+        }
+        head.slot = slot;
+      }
+      head.sizeDelta++;
+      head.slotsDelta++;
+      slot.slots[0] = arguments[0];
+    }
+    else {
+      prepend(state, Array.from(arguments));
+    }
+    return immutable ? new List<T>(state.toImmutable(true)) : this;
   }
 
   prependArray(values: T[]): List<T> {
