@@ -1,7 +1,7 @@
 # Collectable.js
 
-Collectable.js was born out of a need for an immutable data structure that where
-the sorting characteristics are controllable both in advance and in retrospect,
+Collectable.js was born out of a need for an immutable data structure where the
+sorting characteristics are controllable both in advance and in retrospect,
 and which performs well for all common operations that affect the size of the
 collection, including appending, prepending, slicing, concatenation, range
 insertion and range deletion. Access to elements both by key and by index was
