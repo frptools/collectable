@@ -1,0 +1,11 @@
+{
+  "name": "collectable-perf",
+  "version": "1.0.0",
+  "description": "Performance tests for collectable.js",
+  "author": "axefrog@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "benchmark": "github:bestiejs/benchmark.js#master",
+    "immutable": "^3.8.1"
+  }
+}
