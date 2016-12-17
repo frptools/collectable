@@ -1,6 +1,6 @@
 import {assert} from 'chai';
 
-import {CONST, COMMIT_MODE, last} from '../collectable/list/common';
+import {CONST, COMMIT_MODE} from '../collectable/list/common';
 import {List} from '../collectable/list';
 import {ListState} from '../collectable/list/state';
 import {Slot} from '../collectable/list/slot';

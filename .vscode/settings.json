@@ -1,0 +1,12 @@
+{
+    "editor.wrappingColumn": -1,
+    "files.watcherExclude": {
+        "**/.git/objects/**": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "lib/": true
+    },
+    "eslint.enable": false,
+    "typescript.tsdk": "node_modules/typescript/lib"
+}
