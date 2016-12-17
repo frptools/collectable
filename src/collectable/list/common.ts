@@ -8,7 +8,6 @@ export const enum CONST {
   BRANCH_INDEX_BITCOUNT = 5,
   BRANCH_FACTOR = 1 << BRANCH_INDEX_BITCOUNT,
   BRANCH_INDEX_MASK = BRANCH_FACTOR - 1,
-
   MAX_OFFSET_ERROR = (BRANCH_INDEX_BITCOUNT >>> 2) + 1, // `e` in the RRB paper
 }
 
@@ -47,7 +46,6 @@ export function nextId() {
  * @returns {number} The inverted offset value
  */
 export function invertOffset(offset: number, slotSize: number, listSize: number): number {
-// log(`[invertOffset] offset: ${offset}, slotSize: ${slotSize}, listSize: ${listSize}, result: ${listSize - offset - slotSize}`);
   return listSize - offset - slotSize;
 }
 
@@ -99,26 +97,6 @@ export function concatToNewArray<T>(left: T[], right: T[], spaceBetween: number)
   return arr;
 }
 
-export function padLeftToNewArray<T>(values: T[], amount: number): T[] {
-  var arr = new Array(values.length + amount);
-  for(var i = 0; i < values.length; i++) {
-    arr[i + amount] = values[i];
-  }
-  return arr;
-}
-
-export function padRightToNewArray<T>(values: T[], amount: number): T[] {
-  return expandToNewArray(values, values.length + amount);
-}
-
-export function expandToNewArray<T>(values: T[], newSize: number): T[] {
-  var arr = new Array(newSize);
-  for(var i = 0; i < values.length; i++) {
-    arr[i] = values[i];
-  }
-  return arr;
-}
-
 export function copyArray<T>(values: T[]): T[] {
   if(values.length > 7) {
     var arr = new Array(values.length);
@@ -138,17 +116,6 @@ export function copyArray<T>(values: T[]): T[] {
     case 7:  return [values[0], values[1], values[2], values[3], values[4], values[5], values[6]];
     default: return values.slice(); // never reached, but seems to trigger optimization in V8 for some reason
   }
-}
-
-export function truncateFront<T>(values: T[], amount: number): void {
-  if(values.length <= amount) {
-    values.length = 0;
-    return;
-  }
-  for(var i = 0, j = amount; i < amount; i++, j++) {
-    values[i] = values[j];
-  }
-  values.length -= amount;
 }
 
 export function blockCopy<T>(sourceValues: T[], targetValues: T[], sourceIndex: number, targetIndex: number, count: number): void {
@@ -176,10 +143,6 @@ export function max(a: number, b: number): number {
   return a >= b ? a : b;
 }
 
-export function last<T>(array: T[]): T {
-  return array[array.length - 1];
-}
-
 export function isDefined<T>(value: T|undefined): value is T {
   return value !== void 0;
 }
@@ -188,26 +151,25 @@ export function isUndefined<T>(value: T|undefined): value is undefined {
   return value === void 0;
 }
 
-// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// // DEV USE ONLY
+// ## DEBUG START
+export function log(...args: any[])
+export function log() {
+  publish(Array.from(arguments));
+}
 
-// export function log(...args: any[])
-// export function log() {
-//   publish(Array.from(arguments));
-// }
+var __publishCallback: Function;
+export function publish(...args: any[]): void
+export function publish(): void {
+  if(__publishCallback) __publishCallback.apply(null, arguments);
+}
+export function setCallback(callback: Function): void {
+  __publishCallback = callback;
+}
 
-// var __publishCallback: Function;
-// export function publish(...args: any[]): void
-// export function publish(): void {
-//   if(__publishCallback) __publishCallback.apply(null, arguments);
-// }
-// export function setCallback(callback: Function): void {
-//   __publishCallback = callback;
-// }
-
-// declare var window;
-// if(typeof window !== 'undefined') {
-//   window.addEventListener('error', ev => {
-//     log(ev.error);
-//   });
-// }
+declare var window;
+if(typeof window !== 'undefined') {
+  window.addEventListener('error', ev => {
+    log(ev.error);
+  });
+}
+// ## DEBUG END

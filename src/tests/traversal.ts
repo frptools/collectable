@@ -1,5 +1,8 @@
 import {assert} from 'chai';
 import {List} from '../collectable/list';
+import {Slot} from '../collectable/list/slot';
+import {OFFSET_ANCHOR} from '../collectable/list/common';
+import {TreeWorker} from '../collectable/list/traversal';
 
 import {text, BRANCH_FACTOR, makeValues} from './test-utils';
 
@@ -31,5 +34,16 @@ suite('[List: traversal]', () => {
     var index = list.size - BRANCH_FACTOR;
     assert.strictEqual(list.get(index), text(index));
   });
-});
 
+  test('refocusing a reserved tail in a two-node list', () => {
+    var values = makeValues(BRANCH_FACTOR*2);
+    var list = List.of(values)._state;
+    assert.isTrue((<Slot<any>>list.right.parent.slot.slots[1]).isReserved());
+    assert.isFalse((<Slot<any>>list.right.parent.slot.slots[0]).isReserved());
+    var view = TreeWorker.focusView(list, BRANCH_FACTOR - 1, OFFSET_ANCHOR.RIGHT, true);
+    assert.strictEqual(view, list.right);
+    assert.isTrue(list.right.slot.isReserved());
+    assert.isTrue((<Slot<any>>list.right.parent.slot.slots[0]).isReserved());
+    assert.isFalse((<Slot<any>>list.right.parent.slot.slots[1]).isReserved());
+  });
+});

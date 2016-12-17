@@ -1,3 +1,4 @@
+import {log, publish} from './common'; // ## DEBUG ONLY
 import {CONST, COMMIT_MODE, nextId, isDefined, abs, max, copyArray, verifyIndex} from './common';
 
 export type ChildSlotOutParams<T> = {
@@ -7,7 +8,7 @@ export type ChildSlotOutParams<T> = {
 };
 
 export class Slot<T> {
-  // public id = nextId();
+  public id = nextId(); // ## DEBUG ONLY
   constructor(
     public group: number,
     public size: number, // the total number of descendent elements

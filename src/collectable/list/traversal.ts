@@ -1,3 +1,4 @@
+import {log, publish} from './common'; // ## DEBUG ONLY
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, isDefined, isUndefined, invertOffset, invertAnchor, max, verifyIndex} from './common';
 import {View} from './view';
 import {Slot, ExpansionParameters} from './slot';
@@ -211,9 +212,13 @@ export class TreeWorker<T> {
     var parentSlot: Slot<T>;
     var hasChanges: boolean;
 
+    log(`[TreeWorker#ascend] Begin ascent from view (${childView.id}) with commit mode: ${mode === COMMIT_MODE.NO_CHANGE ? 'NO CHANGE' : mode === COMMIT_MODE.RESERVE ? 'RESERVE' : mode === COMMIT_MODE.RELEASE ? 'RELEASE' : 'RELEASE/DISCARD'}`); // ## DEBUG ONLY
+
+    // ## DEBUG START
     if(childSlot.size === 0) {
-      console.warn(`unhandled edge case warning: ascending from child slot that has no elements (group: ${childView.group}, slot index: ${childView.slotIndex})`);
+      console.warn(`unhandled edge case warning: ascending from child slot that has no elements (group: ${childView.group}, slot index: ${childView.slotIndex})`); // ## DEBUG ONLY
     }
+    // ## DEBUG END
 
     if(this.committedOther && !this.otherCommittedChild.isNone()) {
       this.otherCommittedChild = View.none<T>();
@@ -223,6 +228,13 @@ export class TreeWorker<T> {
     var slotIndex = childView.slotIndex;
 
     if(childView.isRoot()) {
+      // ## DEBUG START
+      if(this.shift >= CONST.BRANCH_INDEX_BITCOUNT*12) {
+        throw new Error('Unterminated tree growth');
+      }
+      log(`[TreeWorker#ascend] Current view (${childView.id}) is the root of the tree; a new root will be created to the grow the tree.`); // ## DEBUG ONLY
+      // ## DEBUG END
+
       // Ascending from the root slot causes the tree to grow by one level. Non-zero delta values for the child view can
       // be disregarded, as we're absorbing the child view's final computed values in advance.
       var slotCount = 1, slotSize = childSlot.size;
@@ -243,6 +255,8 @@ export class TreeWorker<T> {
       hasChanges = false;
     }
     else {
+      log(`[TreeWorker#ascend] Current view (${childView.id}) will ascend to parent view (${childView.parent.id})`); // ## DEBUG ONLY
+
       parentView = childView.parent.ensureEditable(group);
       parentSlot = parentView.slot;
       var hasChanges = childView.hasUncommittedChanges();
@@ -393,6 +407,8 @@ export class TreeWorker<T> {
     this.current = parentView;
     this.shift += CONST.BRANCH_INDEX_BITCOUNT;
 
+    publish(this.state, false, `Ascension completed from level ${(this.shift - CONST.BRANCH_INDEX_BITCOUNT)/CONST.BRANCH_INDEX_BITCOUNT} to level ${this.shift/CONST.BRANCH_INDEX_BITCOUNT}`); // ## DEBUG ONLY
+
     return parentView;
   }
 
@@ -428,17 +444,20 @@ export class TreeWorker<T> {
   }
 
   ascendToOrdinal(ordinal: number, mode: COMMIT_MODE, ensureBranchReserved: boolean): View<T> {
+    log(`[TreeWorker#ascendToOrdinal] Begin ascent of view (${this.current.id}) to ordinal ${ordinal}.`); // ## DEBUG ONLY
     var view = this.current, target = view, branchFound = false;
     var shift = this.shift;
 
     do {
-      view = this.ascend(this.isOtherViewUncommitted() || mode === COMMIT_MODE.RESERVE ? mode : COMMIT_MODE.NO_CHANGE);
+      view = this.ascend(!this.hasOtherView() || (this.hasOtherView() && !this.committedOther) || mode === COMMIT_MODE.RESERVE ? mode : COMMIT_MODE.NO_CHANGE);
       if(!branchFound) {
         branchFound = isViewInRange(view, ordinal, this.state.size);
         if(branchFound) {
+          log(`[TreeWorker#ascendToOrdinal] Branch node (view ${view.id}, slot ${view.slot.id}) found for ordinal ${ordinal}.`); // ## DEBUG ONLY
           shift = this.shift;
           target = view;
           if(ensureBranchReserved) {
+            log(`[TreeWorker#ascendToOrdinal] Switching to reservation mode for further ascent, to ensure view reservation continues to the root node.`); // ## DEBUG ONLY
             mode = COMMIT_MODE.RESERVE;
           }
         }
@@ -479,12 +498,14 @@ export class TreeWorker<T> {
   }
 
   refocusView(ordinal: number, asAltView: boolean, asWriteTarget: boolean): View<T> {
+    log(`[TreeWorker#refocusView] View (id: ${this.current.id}, anchor: ${this.current.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}) will be refocused to ordinal ${ordinal} for ${asWriteTarget ? 'WRITING to.' : 'READING from.'}${asAltView ? ` Ascending as alternate view for purposes of activating the ${this.current.anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view.` : ''}`); // ## DEBUG ONLY
     ordinal = verifyIndex(this.state.size, ordinal);
     var anchor = asAltView ? invertAnchor(this.current.anchor) : this.current.anchor;
     this.ascendToOrdinal(ordinal, asAltView ? COMMIT_MODE.NO_CHANGE : COMMIT_MODE.RELEASE_DISCARD, asWriteTarget);
     var view = this.descendToOrdinal(ordinal, asWriteTarget);
 
     if(isUndefined(view)) {
+      log(`[TreeWorker#refocusView] No view was returned, which means the descent path encountered a reserved slot. The other view will be used to locate the target ordinal.`); // ## DEBUG ONLY
       this.reset(this.state, this.state.getOtherView(anchor), this.group, -1);
       this.ascendToOrdinal(ordinal, COMMIT_MODE.NO_CHANGE, false);
       view = <View<T>>this.descendToOrdinal(ordinal, asWriteTarget);

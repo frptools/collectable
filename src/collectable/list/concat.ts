@@ -40,7 +40,9 @@ export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): Li
       isJoined = false,
       nodes: [Slot<T>, Slot<T>] = [left.current.slot, right.current.slot];
 
+  var debugLoopCounter = 0; // ## DEBUG ONLY
   do {
+    if(++debugLoopCounter > 10) throw new Error('Infinite concat loop'); // ## DEBUG ONLY
     if(left.current.anchor === OFFSET_ANCHOR.RIGHT) {
       left.current.flipAnchor(leftState.size);
     }

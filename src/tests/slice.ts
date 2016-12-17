@@ -134,42 +134,81 @@ suite('[List: slicing and splicing]', () => {
       assert.deepEqual(createArray(list), values.slice(start, end));
     });
 
-    test('a slice that is a subset of a central leaf node removes the rest of the tree', () => {
-      var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
-      var halfbf = BRANCH_FACTOR >>> 1;
-      var start = BRANCH_FACTOR + 1;
-      var end = start + halfbf;
+    {
+      const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
+      const list = List.of(values)._state;
+      const halfbf = BRANCH_FACTOR >>> 1;
+      const start = BRANCH_FACTOR + 1;
+      const end = start + halfbf;
 
-      slice(list, start, end);
+      test(`slice(${start}, ${end}) of list[${values.length}]`, () => {
+        slice(list, start, end);
 
-      var view = list.left;
-      if(view.isNone()) view = list.right;
-      var other = list.getOtherView(view.anchor);
-      assert.strictEqual(list.size, halfbf);
-      assert.strictEqual(view.slot.size, halfbf);
-      assert.strictEqual(view.offset, 0);
-      assert.isTrue(other.isNone());
-      assert.isTrue(view.isRoot());
-      assert.deepEqual(createArray(list), values.slice(start, end));
-    });
+        var view = list.left;
+        if(view.isNone()) view = list.right;
+        var other = list.getOtherView(view.anchor);
+        assert.strictEqual(list.size, halfbf);
+        assert.strictEqual(view.slot.size, halfbf);
+        assert.strictEqual(view.offset, 0);
+        assert.isTrue(other.isNone());
+        assert.isTrue(view.isRoot());
+        assert.deepEqual(createArray(list), values.slice(start, end));
+      });
+    }
 
-    test('a slice that is a subset of the head node removes the rest of the tree', () => {
-      var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
-      var halfbf = BRANCH_FACTOR >>> 1;
-      var start = 0;
-      var end = halfbf + 1;
+    {
+      const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
+      const list = List.of(values)._state;
+      const halfbf = BRANCH_FACTOR >>> 1;
+      const start = 0;
+      const end = halfbf + 1;
 
-      slice(list, start, end);
+      test(`slice(${start}, ${end}) of list[${values.length}]`, () => {
+        slice(list, start, end);
+        assert.strictEqual(list.size, halfbf + 1);
+        assert.strictEqual(list.left.slot.size, halfbf + 1);
+        assert.strictEqual(list.left.offset, 0);
+        assert.isTrue(list.left.isRoot());
+        assert.isTrue(list.right.isNone());
+        assert.deepEqual(createArray(list), values.slice(start, end));
+      });
+    }
 
-      assert.strictEqual(list.size, halfbf + 1);
-      assert.strictEqual(list.left.slot.size, halfbf + 1);
-      assert.strictEqual(list.left.offset, 0);
-      assert.isTrue(list.left.isRoot());
-      assert.isTrue(list.right.isNone());
-      assert.deepEqual(createArray(list), values.slice(start, end));
-    });
+    {
+      const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
+      const list = List.of(values)._state;
+      const start = 1;
+      const end = BRANCH_FACTOR;
+
+      test(`slice(${start}, ${end}) of list[${values.length}]`, () => {
+        slice(list, start, end);
+
+        assert.strictEqual(list.size, BRANCH_FACTOR - 1);
+        assert.strictEqual(list.left.slot.size, BRANCH_FACTOR - 1);
+        assert.strictEqual(list.left.offset, 0);
+        assert.isTrue(list.left.isRoot());
+        assert.isTrue(list.right.isNone());
+        assert.deepEqual(createArray(list), values.slice(start, end));
+      });
+    }
+
+    {
+      const values = makeValues(BRANCH_FACTOR*2);
+      const list = List.of(values)._state;
+      const start = BRANCH_FACTOR;
+      const end = BRANCH_FACTOR + 1;
+
+      test(`slice(${start}, ${end}) of list[${values.length}]`, () => {
+        slice(list, start, end);
+
+        assert.strictEqual(list.size, 1);
+        assert.strictEqual(list.right.slot.size, 1);
+        assert.strictEqual(list.right.offset, 0);
+        assert.isTrue(list.right.isRoot());
+        assert.isTrue(list.left.isNone());
+        assert.deepEqual(createArray(list), values.slice(start, end));
+      });
+    }
 
     test('a slice that is a subset of the tail node removes the rest of the tree', () => {
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);

@@ -131,7 +131,9 @@ function increaseUpperCapacity<T>(state: ListState<T>, increaseBy: number, numbe
   // appropriate size and depth, and the value arrays for added leaf nodes are saved to the `nodes` array for population
   // of list element values by the calling function. If the root is reached and additional capacity is still required,
   // additional nodes are added above the root, increasing the depth of the tree.
+  var debugLoopCounter = 0; // ## DEBUG ONLY
   do {
+    if(++debugLoopCounter > 10) throw new Error('Infinite capacity loop'); // ## DEBUG ONLY
     shift += CONST.BRANCH_INDEX_BITCOUNT;
     numberOfAddedSlots = calculateSlotsToAdd(view.isRoot() ? 1 : view.parent.slotCount(), shiftDownRoundUp(remainingSize, shift));
     expand.sizeDelta = min(remainingSize, numberOfAddedSlots << shift);
@@ -210,8 +212,9 @@ function populateSubtrees<T>(state: ListState<T>, collector: Collector<T>, view:
   slotCounts[levelIndex] = slotCount;
   slotPath[levelIndex] = slot;
 
-
+  var debugLoopCounter = 0; // ## DEBUG ONLY
   do {
+    if(++debugLoopCounter > 1000000) throw new Error('Infinite subtree population loop'); // ## DEBUG ONLY
     // If the current subtree is fully populated, ascend to the next tree level to populate the next adjacent subtree.
     // The last slot at each level should be reserved for writing when remaining capacity to add reaches zero.
     if(slotIndex === slotCount) {

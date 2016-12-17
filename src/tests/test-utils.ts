@@ -48,7 +48,7 @@ export function tailSlot<T>(arg: ListOrView<T>): Slot<T> {
   var view = rootView(arg);
   var slot = view.slot;
   var lastSlot: Slot<T>;
-  while((lastSlot = <Slot<T>>last(slot.slots)) instanceof Slot) {
+  while((lastSlot = <Slot<T>>slot.slots[slot.slots.length - 1]) instanceof Slot) {
     slot = lastSlot;
   }
   return slot;
@@ -102,7 +102,7 @@ export function makeStandardSlot(requiredSize: number, level: number, valueOffse
     }
   }
   var slot = new Slot<any>(1, size, 0, -1, subcount, slots);
-  // delete slot.id;
+  delete slot.id; // ## DEBUG ONLY
   return slot;
 }
 
@@ -115,7 +115,7 @@ export function makeRelaxedSlot(slots: Slot<any>[]): Slot<any> {
     slot.sum = sum;
   });
   var slot = new Slot<any>(1, size, 0, 0, subcount, slots);
-  // delete slot.id;
+  delete slot.id; // ## DEBUG ONLY
   return slot;
 }
 

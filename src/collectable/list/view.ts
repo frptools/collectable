@@ -1,3 +1,4 @@
+import {log, publish} from './common'; // ## DEBUG ONLY
 import {COMMIT_MODE, OFFSET_ANCHOR, abs, isDefined, isUndefined, nextId, invertOffset, invertAnchor} from './common';
 import {Slot, emptySlot} from './slot';
 
@@ -14,6 +15,7 @@ export class View<T> {
   }
 
   static pushReusableView(view: View<any>): void {
+    log(`[View.pushReusableView] View ${view.id} is being cleared and cached for reuse by future operations.`); // ## DEBUG ONLY
     view.slot = Slot.empty<any>();
     var next = _nextReusableView;
     if(next.group > 50) return; // group property reused as stack size counter
@@ -36,6 +38,7 @@ export class View<T> {
     if(isUndefined(view)) {
       return new View<T>(group, offset, anchor, slotIndex, sizeDelta, slotsDelta, parent, slot);
     }
+    log(`[View.pushReusableView] View ${view.id} has been retrieved from the reusable view cache, rather than allocating a new view object.`); // ## DEBUG ONLY
     view.group = group;
     view.offset = offset;
     view.anchor = anchor;
@@ -47,7 +50,7 @@ export class View<T> {
     return view;
   }
 
-  // public id = nextId();
+  public id = nextId(); // ## DEBUG ONLY
   constructor(
     public group: number,
     public offset: number,
@@ -250,6 +253,9 @@ export class View<T> {
  * @export
  * */
 var voidView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, <any>void 0, emptySlot);
+voidView.id = 0; // ## DEBUG ONLY
 var emptyLeftView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, voidView, emptySlot);
+emptyLeftView.id = 0; // ## DEBUG ONLY
 var emptyRightView = new View<any>(0, 0, OFFSET_ANCHOR.RIGHT, 0, 0, 0, voidView, emptySlot);
+emptyRightView.id = 0; // ## DEBUG ONLY
 var _nextReusableView = voidView;

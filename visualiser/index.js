@@ -616,7 +616,7 @@ function renderList(model) {
   if(entry.logs.length > 0) {
     entry.logs.forEach(logs => {
       if(typeof logs[0] === 'string') {
-        var match = /^\[([A-Za-z0-9]+)(([#\.])\s*([A-Za-z0-9]+))?\s*(\([^\)]+\))?\]/.exec(logs[0]);
+        var match = /^\[([A-Za-z0-9]+)(([#\.])\s*([_A-Za-z0-9]+)?)?\s*(\([^\)]+\))?\]/.exec(logs[0]);
         if(match) {
           var msg = '%c]' + logs[0].slice(match[0].length);
           logs = [''].concat(logs.slice(1));
@@ -647,7 +647,7 @@ function renderList(model) {
           div('.id', withProps ? ['id: ', ('id' in state ? state.id : state.slot.id).toString()] : '.'),
           div('.size', withProps ? ['size: ', ('size' in state ? state.size : state.slot.size).toString()] : '.'),
           div('.group', withProps ? ['group: ', ('group' in state ? state.group : state.slot.group).toString()] : '.'),
-          div('.view-ids', withProps ? ['views: ', ('left' in state ? `[${state.left.id}, ${state.right.id}]` : '-').toString()] : '.'),
+          div('.view-ids', withProps ? ['views: ', ('left' in state ? `[left id: ${state.left.id}, right id: ${state.right.id}]` : '-').toString()] : '.'),
           div('.last-write', withProps && 'lastWrite' in state ? ['last write: ', (state.lastWrite === 0 ? 'LEFT' : 'RIGHT').toString()] : '.'),
         ]),
         div('.container', [
@@ -825,10 +825,6 @@ function main({DOM, events}) {
       publish(list, true, `list size: ${list.size}`);
       list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
       publish(list, true, `list size: ${list.size}`);
-      // list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 4), list.size));
-      // publish(list, true, `list size: ${list.size}`);
-      // list = list.appendArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
-      // publish(list, true, `list size: ${list.size}`);
     }
 
     function runCapacityTests2() {
@@ -875,16 +871,6 @@ function main({DOM, events}) {
       publish(list, true, `list size: ${list.size}`);
       list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 3), list.size));
       publish(list, true, `list size: ${list.size}`);
-      // list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
-      // publish(list, true, `list size: ${list.size}`);
-      // list = list.appendArray(makeValues(Math.pow(BRANCH_FACTOR, 4), list.size));
-      // publish(list, true, `list size: ${list.size}`);
-      // list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
-      // publish(list, true, `list size: ${list.size}`);
-      // list = list.prependArray(makeValues(BRANCH_FACTOR >>> 2, list.size));
-      // publish(list, true, `list size: ${list.size}`);
-      // list = list.prependArray(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR, list.size));
-      // publish(list, true, `list size: ${list.size}`);
     }
 
     function runCapacityTests4() {
@@ -1044,11 +1030,49 @@ function main({DOM, events}) {
 
       publish(list, true, 'Initial list');
       slice(list, 2, end);
-
-
       publish(list, true, `list.slice(2, ${end})`);
       commitToRoot(list);
       publish(list, true, `committed to root`);
+    }
+
+    function runSliceTests3() {
+      beginCollectingLogs();
+
+      const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
+      const list = List.of(values)._state;
+      const halfbf = BRANCH_FACTOR >>> 1;
+      const start = 0;
+      const end = halfbf + 1;
+
+      publish(list, true, 'Initial list');
+      slice(list, start, end);
+      publish(list, true, `Completed: list.slice(${start}, ${end})`);
+    }
+
+    function runSliceTests4() {
+      beginCollectingLogs();
+
+      const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
+      const list = List.of(values)._state;
+      const start = 1;
+      const end = BRANCH_FACTOR;
+
+      publish(list, true, 'Initial list');
+      slice(list, start, end);
+      publish(list, true, `Completed: list.slice(${start}, ${end})`);
+    }
+
+    function runSliceTests5() {
+      beginCollectingLogs();
+
+      const values = makeValues(BRANCH_FACTOR*2);
+      const list = List.of(values)._state;
+      const start = BRANCH_FACTOR;
+      const end = BRANCH_FACTOR + 1;
+
+      publish(list, true, 'Initial list');
+      slice(list, start, end);
+      publish(list, true, `Completed: list.slice(${start}, ${end})`);
     }
 
     function runInsertionTests() {
@@ -1078,8 +1102,35 @@ function main({DOM, events}) {
       var list0 = List.of(values);
       var list1 = List.empty().prependArray(values);
       var list2 = list0.delete(BRANCH_FACTOR + 2);
-log(`will now delete from list 2 (size: ${list2.size}) at ${list1.size - BRANCH_FACTOR - 2}`);
-      var list3 = list2.delete(list1.size - BRANCH_FACTOR - 2);
+      log(`will now delete from list 2 (size: ${list2.size}) at ${list1.size - BRANCH_FACTOR - 2}`);
+      var list3 = list1.delete(list1.size - BRANCH_FACTOR - 2);
+    }
+
+    function runDeletionTests3() {
+      beginCollectingLogs();
+      var values = makeValues(BRANCH_FACTOR - 1);
+      var list0 = List.of(values);
+      var list1 = list0.delete(0);
+      var list2 = list0.delete(1);
+      var list3 = list0.delete(BRANCH_FACTOR - 2);
+    }
+
+    function runDeletionTests4() {
+      beginCollectingLogs();
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      var list1 = list0.delete(values.length - 1);
+      var list2 = list0.delete(values.length - (BRANCH_FACTOR >>> 1));
+      var list3 = list0.delete(values.length - BRANCH_FACTOR);
+    }
+
+    function runDeletionTests5() {
+      beginCollectingLogs();
+      var values = makeValues(BRANCH_FACTOR*3);
+      var list0 = List.of(values);
+      var list1 = list0.delete(0);
+      var list2 = list0.delete(BRANCH_FACTOR >>> 1);
+      var list3 = list0.delete(BRANCH_FACTOR - 1);
     }
 
     function runUpdateTests() {
@@ -1117,7 +1168,7 @@ log(`will now delete from list 2 (size: ${list2.size}) at ${list1.size - BRANCH_
       publish(list2, true, `updated list`);
     }
 
-    runConcatTests1();
+    runSliceTests5();
 
   }, 100);
 })();

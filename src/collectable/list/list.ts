@@ -1,3 +1,4 @@
+import {log, publish} from './common'; // ## DEBUG ONLY
 import {CONST, OFFSET_ANCHOR, isDefined} from './common';
 import {append, prepend, setValue, insertValues, deleteValues, createArray, createIterator, ListIterator} from './values';
 import {getAtOrdinal} from './traversal';
@@ -23,7 +24,9 @@ export class List<T> {
     return new List<T>(state.toImmutable(true));
   }
 
-  constructor(public _state: ListState<T>) {}
+  constructor(public _state: ListState<T>) {
+    publish(this, true, `List constructed with size: ${this._state.size}`);
+  }
 
   private _exec(fn: (state: ListState<T>) => ListState<T>|void): List<T> {
     var state = this._state;
@@ -31,6 +34,7 @@ export class List<T> {
     if(immutable) {
       state = state.toMutable();
     }
+    log(`[List#_exec] List state ${state.id}${this._state.id === state.id ? '' : ` (cloned from id: ${this._state.id})`} will be used for the subsequent list operation.`); // ## DEBUG ONLY
     var nextState = fn(state);
     if(isDefined(nextState)) {
       if(immutable) {
