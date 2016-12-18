@@ -4,6 +4,7 @@
   "description": "High Performance Immutable Collections",
   "main": "src/index.ts",
   "scripts": {
+    "build": "rollup -c && uglifyjs dist/collectable.js -o dist/collectable.min.js",
     "test": "mocha --opts ./mocha.opts",
     "test-dev": "mocha --opts ./mocha.opts --watch --bail",
     "test-dev-mem": "node --max_old_space_size=8192 ./node_modules/mocha/bin/_mocha --opts ./mocha.opts --watch --bail"
