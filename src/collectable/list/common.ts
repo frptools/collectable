@@ -1,4 +1,5 @@
 import {Slot} from './slot';
+import {min, max} from '../shared/functions';
 
 export const enum CONST {
   // Branch factor means the number of slots (branches) that each node can contain (2^5=32). Each level of the tree
@@ -29,11 +30,6 @@ export const enum COMMIT_MODE {
   RESERVE = 1,
   RELEASE = 2,
   RELEASE_DISCARD = 3,
-}
-
-var _nextId = 0;
-export function nextId() {
-  return ++_nextId;
 }
 
 /**
@@ -84,92 +80,3 @@ export function concatSlotsToNewArray<T>(left: Slot<T>[], right: Slot<T>[]): Slo
   }
   return arr;
 }
-
-export function concatToNewArray<T>(left: T[], right: T[], spaceBetween: number): T[] {
-  var arr = new Array(left.length + right.length + spaceBetween);
-  for(var i = 0; i < left.length; i++) {
-    arr[i] = left[i];
-  }
-  i += spaceBetween;
-  for(var j = 0; j < right.length; i++, j++) {
-    arr[i] = right[j];
-  }
-  return arr;
-}
-
-export function copyArray<T>(values: T[]): T[] {
-  if(values.length > 7) {
-    var arr = new Array(values.length);
-    for(var i = 0; i < values.length; i++) {
-      arr[i] = values[i];
-    }
-    return arr;
-  }
-  switch(values.length) {
-    case 0: return [];
-    case 1:  return [values[0]];
-    case 2:  return [values[0], values[1]];
-    case 3:  return [values[0], values[1], values[2]];
-    case 4:  return [values[0], values[1], values[2], values[3]];
-    case 5:  return [values[0], values[1], values[2], values[3], values[4]];
-    case 6:  return [values[0], values[1], values[2], values[3], values[4], values[5]];
-    case 7:  return [values[0], values[1], values[2], values[3], values[4], values[5], values[6]];
-    default: return values.slice(); // never reached, but seems to trigger optimization in V8 for some reason
-  }
-}
-
-export function blockCopy<T>(sourceValues: T[], targetValues: T[], sourceIndex: number, targetIndex: number, count: number): void {
-  if(sourceValues === targetValues && sourceIndex < targetIndex) {
-    for(var i = sourceIndex + count - 1, j = targetIndex + count - 1, c = 0; c < count; i--, j--, c++) {
-      targetValues[j] = sourceValues[i];
-    }
-  }
-  else {
-    for(var i = sourceIndex, j = targetIndex, c = 0; c < count; i++, j++, c++) {
-      targetValues[j] = sourceValues[i];
-    }
-  }
-}
-
-export function abs(value: number): number {
-  return value < 0 ? -value : value;
-}
-
-export function min(a: number, b: number): number {
-  return a <= b ? a : b;
-}
-
-export function max(a: number, b: number): number {
-  return a >= b ? a : b;
-}
-
-export function isDefined<T>(value: T|undefined): value is T {
-  return value !== void 0;
-}
-
-export function isUndefined<T>(value: T|undefined): value is undefined {
-  return value === void 0;
-}
-
-// ## DEBUG START
-export function log(...args: any[])
-export function log() {
-  publish(Array.from(arguments));
-}
-
-var __publishCallback: Function;
-export function publish(...args: any[]): void
-export function publish(): void {
-  if(__publishCallback) __publishCallback.apply(null, arguments);
-}
-export function setCallback(callback: Function): void {
-  __publishCallback = callback;
-}
-
-declare var window;
-if(typeof window !== 'undefined') {
-  window.addEventListener('error', ev => {
-    log(ev.error);
-  });
-}
-// ## DEBUG END

@@ -1,5 +1,7 @@
-import {log, publish} from './common'; // ## DEBUG ONLY
-import {COMMIT_MODE, OFFSET_ANCHOR, abs, isDefined, isUndefined, nextId, invertOffset, invertAnchor} from './common';
+import {log, publish} from './debug'; // ## DEBUG ONLY
+import {nextId} from '../shared/ownership';
+import {abs, isDefined, isUndefined} from '../shared/functions';
+import {COMMIT_MODE, OFFSET_ANCHOR, invertOffset, invertAnchor} from './common';
 import {Slot, emptySlot} from './slot';
 
 export class View<T> {

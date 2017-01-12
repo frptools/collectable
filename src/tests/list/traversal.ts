@@ -1,15 +1,15 @@
 import {assert} from 'chai';
-import {List} from '../collectable/list';
-import {Slot} from '../collectable/list/slot';
-import {OFFSET_ANCHOR} from '../collectable/list/common';
-import {TreeWorker} from '../collectable/list/traversal';
+import {PList} from '../../collectable/list';
+import {Slot} from '../../collectable/list/slot';
+import {OFFSET_ANCHOR} from '../../collectable/list/common';
+import {TreeWorker} from '../../collectable/list/traversal';
 
 import {text, BRANCH_FACTOR, makeValues} from './test-utils';
 
 suite('[List: traversal]', () => {
   test('activating the left view for the first time', () => {
     var values = makeValues(Math.pow(BRANCH_FACTOR, 3) + 1);
-    var list = List.empty<any>().asMutable();
+    var list = PList.empty<any>().asMutable();
     for(var i = 0; i < values.length; i++) {
       list.append(values[i]);
     }
@@ -20,7 +20,7 @@ suite('[List: traversal]', () => {
 
   test('refocusing a view down a path reserved by the other view', () => {
     var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
-    var list = List.empty<any>().asMutable();
+    var list = PList.empty<any>().asMutable();
     for(var i = 0; i < values.length; i++) {
       list.append(values[i]);
     }
@@ -37,7 +37,7 @@ suite('[List: traversal]', () => {
 
   test('refocusing a reserved tail in a two-node list', () => {
     var values = makeValues(BRANCH_FACTOR*2);
-    var list = List.of(values)._state;
+    var list = PList.fromArray(values)._state;
     assert.isTrue((<Slot<any>>list.right.parent.slot.slots[1]).isReserved());
     assert.isFalse((<Slot<any>>list.right.parent.slot.slots[0]).isReserved());
     var view = TreeWorker.focusView(list, BRANCH_FACTOR - 1, OFFSET_ANCHOR.RIGHT, true);

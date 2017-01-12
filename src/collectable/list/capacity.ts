@@ -1,8 +1,9 @@
-import {CONST, COMMIT_MODE, OFFSET_ANCHOR, min, modulo, shiftDownRoundUp} from './common';
+import {min} from '../shared/functions';
+import {CONST, COMMIT_MODE, OFFSET_ANCHOR, modulo, shiftDownRoundUp} from './common';
 import {TreeWorker} from './traversal';
 import {Slot, ExpansionParameters} from './slot';
 import {View} from './view';
-import {ListState} from './state';
+import {PListState, setView} from './state';
 
 export class Collector<T> {
   private static _default = new Collector<any>();
@@ -63,7 +64,7 @@ export class Collector<T> {
  *     prepending) will be a reference to a pre-existing head or tail leaf node element array if that node was expanded
  *     with additional elements as part of the operation.
  */
-export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, prepend: boolean): Collector<T> {
+export function increaseCapacity<T>(state: PListState<T>, increaseBy: number, prepend: boolean): Collector<T> {
   var view = prepend ? state.left : state.right;
   var slot = view.slot;
   var group = state.group;
@@ -73,7 +74,7 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
 
   if(!view.isEditable(group)) {
     view = view.cloneToGroup(group);
-    state.setView(view);
+    setView(state, view);
   }
 
   // If the leaf node was already full, it does not need to be modified.
@@ -100,7 +101,7 @@ export function increaseCapacity<T>(state: ListState<T>, increaseBy: number, pre
   return increaseUpperCapacity(state, increaseBy, numberOfAddedSlots, prepend);
 }
 
-function increaseUpperCapacity<T>(state: ListState<T>, increaseBy: number, numberOfAddedSlots: number, prepend: boolean): Collector<T> {
+function increaseUpperCapacity<T>(state: PListState<T>, increaseBy: number, numberOfAddedSlots: number, prepend: boolean): Collector<T> {
   var view = prepend ? state.left : state.right;
   var slot = view.slot;
 
@@ -192,7 +193,7 @@ function increaseUpperCapacity<T>(state: ListState<T>, increaseBy: number, numbe
  * @param {number} remaining The total capacity represented by this set of subtrees
  * @returns {number} An updated `nodeIndex` value to be used in subsequent subtree population operations
  */
-function populateSubtrees<T>(state: ListState<T>, collector: Collector<T>, view: View<T>, topLevelIndex: number, slotIndexBoundary: number, capacity: number, isFinalStage: boolean): void {
+function populateSubtrees<T>(state: PListState<T>, collector: Collector<T>, view: View<T>, topLevelIndex: number, slotIndexBoundary: number, capacity: number, isFinalStage: boolean): void {
   var levelIndex = topLevelIndex - 1;
   var remaining = capacity;
   var shift = CONST.BRANCH_INDEX_BITCOUNT * topLevelIndex;
@@ -255,7 +256,7 @@ function populateSubtrees<T>(state: ListState<T>, collector: Collector<T>, view:
           view.slot.slots[slotIndex] = leafSlot.cloneAsPlaceholder(group);
           view = View.create<T>(group, 0, prepend ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT, slotIndex, 0, 0, view, leafSlot);
           view.slot.group = -group;
-          state.setView(view);
+          setView(state, view);
         }
 
         remaining -= elementCount;

@@ -1,8 +1,8 @@
 import {assert} from 'chai';
-import {ListState} from '../collectable/list/state';
-import {append, prepend, createArray} from '../collectable/list/values';
-import {getAtOrdinal} from '../collectable/list/traversal';
-import {concat} from '../collectable/list/concat';
+import {PListState, emptyState} from '../../collectable/list/state';
+import {appendValues, prependValues, createArray} from '../../collectable/list/values';
+import {getAtOrdinal} from '../../collectable/list/traversal';
+import {concatLists} from '../../collectable/list/concat';
 
 import {
   BRANCH_FACTOR,
@@ -30,18 +30,18 @@ const values_h2_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR +
 const values_h3_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1);
 const values_h4_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1);
 
-function makeList(values: any[], initialSize: number, usePrepend: boolean): ListState<any> {
-  const list = ListState.empty<any>(true);
+function makeList(values: any[], initialSize: number, usePrepend: boolean): PListState<any> {
+  const list = emptyState<any>(true);
   if(initialSize > 0) {
-    append(list, values.slice(0, initialSize));
+    appendValues(list, values.slice(0, initialSize));
     commitToRoot(list);
     values = values.slice(initialSize);
   }
   if(usePrepend) {
-    prepend(list, values);
+    prependValues(list, values);
   }
   else {
-    append(list, values);
+    appendValues(list, values);
   }
   commitToRoot(list);
   return list;
@@ -150,9 +150,9 @@ suite('[List: capacity]', () => {
       test('when appending', () => {
         const n0 = BRANCH_FACTOR - 1;
         const n1 = BRANCH_FACTOR - 2;
-        var list0: ListState<any>;
-        concat(list0 = makeList(makeValues(n0), 1, false), makeList(makeValues(n1, n0), 1, false));
-        append(list0, ['X', 'Y', 'Z', 'K']);
+        var list0: PListState<any>;
+        concatLists(list0 = makeList(makeValues(n0), 1, false), makeList(makeValues(n1, n0), 1, false));
+        appendValues(list0, ['X', 'Y', 'Z', 'K']);
         const root = rootSlot(list0);
         assert.strictEqual(root.subcount, n0 + n1 + 4);
         assert.strictEqual(root.size, n0 + n1 + 4);
@@ -164,9 +164,9 @@ suite('[List: capacity]', () => {
       test('when appending', () => {
         const n0 = BRANCH_FACTOR - 1;
         const n1 = Math.pow(BRANCH_FACTOR, 2) - n0 - 1;
-        var list0: ListState<any>;
-        concat(list0 = makeList(makeValues(n0), 1, false), makeList(makeValues(n1, n0), 1, false));
-        append(list0, ['X']);
+        var list0: PListState<any>;
+        concatLists(list0 = makeList(makeValues(n0), 1, false), makeList(makeValues(n1, n0), 1, false));
+        appendValues(list0, ['X']);
         const root = rootSlot(list0);
         assert.strictEqual(root.subcount, BRANCH_FACTOR + 1);
         assert.strictEqual(root.size, n0 + n1 + 1);
@@ -177,38 +177,38 @@ suite('[List: capacity]', () => {
 
   suite('append()', () => {
     test('a single value appended to an empty list is present in the list', () => {
-      var list = ListState.empty<any>(true);
-      append(list, ['X']);
+      var list = emptyState<any>(true);
+      appendValues(list, ['X']);
       assert.strictEqual(getAtOrdinal(list, 0), 'X');
     });
 
     test('one order of magnitude of values appended to an empty list are all present in the list', () => {
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
       var values = makeValues(BRANCH_FACTOR);
-      append(list, values);
+      appendValues(list, values);
       assert.deepEqual(createArray(list), values);
     });
 
     test('two orders of magnitude of values appended to an empty list are all present in the list', () => {
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
-      append(list, values);
+      appendValues(list, values);
       assert.deepEqual(createArray(list), values);
     });
 
     test('three orders of magnitude of values appended to an empty list are all present in the list', () => {
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
-      append(list, values);
+      appendValues(list, values);
       assert.deepEqual(createArray(list), values);
     });
 
     test('values added to a list one-by-one are all present in the list', function() {
       this.timeout(30000); // tslint:disable-line
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       for(var i = 0; i < values.length; i++) {
-        append(list, [values[i]]);
+        appendValues(list, [values[i]]);
       }
       for(var i = 0; i < values.length; i++) {
         assert.strictEqual(getAtOrdinal(list, i), values[i], `incorrect value at index ${i}`);
@@ -218,38 +218,38 @@ suite('[List: capacity]', () => {
 
   suite('prepend()', () => {
     test('a single value prepended to an empty list is present in the list', () => {
-      var list = ListState.empty<any>(true);
-      prepend(list, ['X']);
+      var list = emptyState<any>(true);
+      prependValues(list, ['X']);
       assert.strictEqual(getAtOrdinal(list, 0), 'X');
     });
 
     test('one order of magnitude of values prepended to an empty list are all present in the list', () => {
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
       var values = makeValues(BRANCH_FACTOR);
-      prepend(list, values);
+      prependValues(list, values);
       assert.deepEqual(createArray(list), values);
     });
 
     test('two orders of magnitude of values prepended to an empty list are all present in the list', () => {
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
-      prepend(list, values);
+      prependValues(list, values);
       assert.deepEqual(createArray(list), values);
     });
 
     test('three orders of magnitude of values prepended to an empty list are all present in the list', () => {
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
-      prepend(list, values);
+      prependValues(list, values);
       assert.deepEqual(createArray(list), values);
     });
 
     test('values added to a list one-by-one are all present in the list', function() {
       this.timeout(30000); // tslint:disable-line
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       for(var i = 0; i < values.length; i++) {
-        prepend(list, [values[i]]);
+        prependValues(list, [values[i]]);
       }
       for(var i = 0; i < values.length; i++) {
         assert.strictEqual(getAtOrdinal(list, i), values[values.length - i - 1], `incorrect value at index ${i}`);

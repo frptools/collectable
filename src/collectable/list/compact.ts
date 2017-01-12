@@ -1,4 +1,5 @@
-import {CONST, max, min} from './common';
+import {max, min} from '../shared/functions';
+import {CONST} from './common';
 import {Slot, emptySlot} from './slot';
 
 interface CompactionState<T> {

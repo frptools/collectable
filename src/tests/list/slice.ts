@@ -1,19 +1,19 @@
 import {assert} from 'chai';
 
-import {List} from '../collectable/list';
-import {ListState} from '../collectable/list/state';
-import {Slot} from '../collectable/list/slot';
-import {slice} from '../collectable/list/slice';
-import {createArray} from '../collectable/list/values';
+import {PList} from '../../collectable/list';
+import {emptyState, getOtherView} from '../../collectable/list/state';
+import {Slot} from '../../collectable/list/slot';
+import {sliceList} from '../../collectable/list/slice';
+import {createArray} from '../../collectable/list/values';
 
 import {BRANCH_FACTOR, makeValues} from './test-utils';
 
 suite('[List: slicing and splicing]', () => {
   suite('slice()', () => {
     test('slicing an empty list is a noop', () => {
-      var list = ListState.empty<any>(true);
+      var list = emptyState<any>(true);
 
-      slice(list, 0, 1);
+      sliceList(list, 0, 1);
 
       assert.strictEqual(list.size, 0);
       assert.isTrue(list.left.isDefaultEmpty());
@@ -22,9 +22,9 @@ suite('[List: slicing and splicing]', () => {
 
     test('slicing a superset of a non-empty list is a noop', () => {
       var values = makeValues(BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
 
-      slice(list, 0, values.length);
+      sliceList(list, 0, values.length);
 
       assert.strictEqual(list.size, values.length);
       assert.deepEqual(createArray(list), values);
@@ -32,18 +32,18 @@ suite('[List: slicing and splicing]', () => {
 
     test('slicing a zero-length subset of a list returns an empty list', () => {
       var values = makeValues(BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
 
-      slice(list, 5, 5);
+      sliceList(list, 5, 5);
 
       assert.strictEqual(list.size, 0);
     });
 
     test('slicing away the left side of the head slot leaves the head view in an uncommitted state', () => {
       var values = makeValues(BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
 
-      slice(list, 2, values.length);
+      sliceList(list, 2, values.length);
 
       assert.strictEqual(list.size, values.length - 2);
       assert.strictEqual(list.left.offset, 0);
@@ -56,9 +56,9 @@ suite('[List: slicing and splicing]', () => {
 
     test('slicing away the right side of the tail slot leaves the tail view in an uncommitted state', () => {
       var values = makeValues(BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
 
-      slice(list, 0, values.length - 2);
+      sliceList(list, 0, values.length - 2);
 
       assert.strictEqual(list.size, values.length - 2);
       assert.strictEqual(list.right.offset, 0);
@@ -71,9 +71,9 @@ suite('[List: slicing and splicing]', () => {
 
     test('slicing away the ends of the head and tail slots leaves both respective views in uncommitted states', () => {
       var values = makeValues(BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
 
-      slice(list, 2, values.length - 2);
+      sliceList(list, 2, values.length - 2);
 
       assert.strictEqual(list.size, values.length - 4);
       assert.strictEqual(list.left.offset, 0);
@@ -93,14 +93,14 @@ suite('[List: slicing and splicing]', () => {
 
     test('a left slice that does not include the current root reduces the height of the tree', () => {
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
       var halfbf = BRANCH_FACTOR >>> 1;
       var end = BRANCH_FACTOR*halfbf + halfbf;
 
       assert.isFalse(list.left.parent.isRoot());
       assert.isFalse(list.right.parent.isRoot());
 
-      slice(list, 2, end);
+      sliceList(list, 2, end);
 
       assert.strictEqual(list.size, end - 2);
       assert.strictEqual(list.left.slot.size, BRANCH_FACTOR - 2);
@@ -114,7 +114,7 @@ suite('[List: slicing and splicing]', () => {
 
     test('a right slice that does not include the current root reduces the height of the tree', () => {
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
       var halfbf = BRANCH_FACTOR >>> 1;
       var start = values.length - BRANCH_FACTOR - halfbf;
       var end = values.length - 2;
@@ -122,7 +122,7 @@ suite('[List: slicing and splicing]', () => {
       assert.isFalse(list.left.parent.isRoot());
       assert.isFalse(list.right.parent.isRoot());
 
-      slice(list, start, end);
+      sliceList(list, start, end);
 
       assert.strictEqual(list.size, end - start);
       assert.strictEqual(list.left.slot.size, halfbf);
@@ -136,17 +136,17 @@ suite('[List: slicing and splicing]', () => {
 
     {
       const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      const list = List.of(values)._state;
+      const list = PList.fromArray(values)._state;
       const halfbf = BRANCH_FACTOR >>> 1;
       const start = BRANCH_FACTOR + 1;
       const end = start + halfbf;
 
       test(`slice(${start}, ${end}) of list[${values.length}]`, () => {
-        slice(list, start, end);
+        sliceList(list, start, end);
 
         var view = list.left;
         if(view.isNone()) view = list.right;
-        var other = list.getOtherView(view.anchor);
+        var other = getOtherView(list, view.anchor);
         assert.strictEqual(list.size, halfbf);
         assert.strictEqual(view.slot.size, halfbf);
         assert.strictEqual(view.offset, 0);
@@ -158,13 +158,13 @@ suite('[List: slicing and splicing]', () => {
 
     {
       const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      const list = List.of(values)._state;
+      const list = PList.fromArray(values)._state;
       const halfbf = BRANCH_FACTOR >>> 1;
       const start = 0;
       const end = halfbf + 1;
 
       test(`slice(${start}, ${end}) of list[${values.length}]`, () => {
-        slice(list, start, end);
+        sliceList(list, start, end);
         assert.strictEqual(list.size, halfbf + 1);
         assert.strictEqual(list.left.slot.size, halfbf + 1);
         assert.strictEqual(list.left.offset, 0);
@@ -176,12 +176,12 @@ suite('[List: slicing and splicing]', () => {
 
     {
       const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      const list = List.of(values)._state;
+      const list = PList.fromArray(values)._state;
       const start = 1;
       const end = BRANCH_FACTOR;
 
       test(`slice(${start}, ${end}) of list[${values.length}]`, () => {
-        slice(list, start, end);
+        sliceList(list, start, end);
 
         assert.strictEqual(list.size, BRANCH_FACTOR - 1);
         assert.strictEqual(list.left.slot.size, BRANCH_FACTOR - 1);
@@ -194,12 +194,12 @@ suite('[List: slicing and splicing]', () => {
 
     {
       const values = makeValues(BRANCH_FACTOR*2);
-      const list = List.of(values)._state;
+      const list = PList.fromArray(values)._state;
       const start = BRANCH_FACTOR;
       const end = BRANCH_FACTOR + 1;
 
       test(`slice(${start}, ${end}) of list[${values.length}]`, () => {
-        slice(list, start, end);
+        sliceList(list, start, end);
 
         assert.strictEqual(list.size, 1);
         assert.strictEqual(list.right.slot.size, 1);
@@ -212,12 +212,12 @@ suite('[List: slicing and splicing]', () => {
 
     test('a slice that is a subset of the tail node removes the rest of the tree', () => {
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
       var halfbf = BRANCH_FACTOR >>> 1;
       var start = values.length - halfbf;
       var end = values.length;
 
-      slice(list, start, end);
+      sliceList(list, start, end);
 
       assert.strictEqual(list.size, halfbf);
       assert.strictEqual(list.right.slot.size, halfbf);
@@ -230,11 +230,11 @@ suite('[List: slicing and splicing]', () => {
     test('a slice can occur between node boundaries', function() {
       this.timeout(30000); // tslint:disable-line
       var values = makeValues(Math.pow(BRANCH_FACTOR, 4) - Math.pow(BRANCH_FACTOR, 3)*2);
-      var list = List.of(values)._state;
+      var list = PList.fromArray(values)._state;
       var start = Math.pow(BRANCH_FACTOR, 3);
       var end = values.length - start;
 
-      slice(list, start, end);
+      sliceList(list, start, end);
 
       assert.strictEqual(list.size, end - start);
       assert.strictEqual(list.left.offset, 0);

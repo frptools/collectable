@@ -1,11 +1,11 @@
-import {log, publish} from './common'; // ## DEBUG ONLY
+import {log, publish} from './debug'; // ## DEBUG ONLY
 import {COMMIT_MODE, OFFSET_ANCHOR, invertOffset, normalizeIndex} from './common';
-import {ListState} from './state';
+import {PListState, getView, setView} from './state';
 import {View} from './view';
 import {ExpansionParameters} from './slot';
 import {TreeWorker, isViewInRange} from './traversal';
 
-export function slice<T>(state: ListState<T>, start: number, end: number): void {
+export function sliceList<T>(state: PListState<T>, start: number, end: number): void {
   publish(state, false, `Begin slice (using state id: ${state.id}, size ${state.size}) from indices ${start} to ${end}`); // ## DEBUG ONLY
   start = normalizeIndex(state.size, start);
   end = normalizeIndex(state.size, end);
@@ -32,7 +32,7 @@ export function slice<T>(state: ListState<T>, start: number, end: number): void 
   sliceInternal(state, start, end);
 }
 
-function sliceInternal<T>(state: ListState<T>, start: number, end: number): void {
+function sliceInternal<T>(state: PListState<T>, start: number, end: number): void {
   log(`[sliceInternal] Slice state (of size ${state.size}) from indices ${start} to ${end}`); // ## DEBUG ONLY
   var doneLeft = start === 0,
       doneRight = end === state.size,
@@ -41,10 +41,10 @@ function sliceInternal<T>(state: ListState<T>, start: number, end: number): void
   var left: View<T>, right: View<T>;
   if(state.left.isNone()) {
     log(`[sliceInternal] The left view is empty, so the right view will be range-checked.`); // ## DEBUG ONLY
-    right = state.getView(OFFSET_ANCHOR.RIGHT, true);
+    right = getView(state, OFFSET_ANCHOR.RIGHT, true);
     if(!isViewInRange(right, end - 1, state.size)) {
       log(`[sliceInternal] The right view is not in range of the end position, so the left view will be activated and the right view refocused.`); // ## DEBUG ONLY
-      left = state.getView(OFFSET_ANCHOR.LEFT, true, start);
+      left = getView(state, OFFSET_ANCHOR.LEFT, true, start);
       right = isViewInRange(left, end - 1, state.size) ? left : TreeWorker.refocusView(state, right, end - 1, false, true);
     }
     else if(isViewInRange(right, start, state.size)) {
@@ -53,18 +53,18 @@ function sliceInternal<T>(state: ListState<T>, start: number, end: number): void
     }
     else {
       log(`[sliceInternal] The right view is not in range of the start position, which means a left view will be focused to the start position.`); // ## DEBUG ONLY
-      left = state.getView(OFFSET_ANCHOR.LEFT, true, start);
+      left = getView(state, OFFSET_ANCHOR.LEFT, true, start);
       right = state.right;
     }
     focusedLeft = true;
     focusedRight = true;
   }
   else if(state.right.isNone()) {
-    left = state.getView(OFFSET_ANCHOR.LEFT, true, start);
+    left = getView(state, OFFSET_ANCHOR.LEFT, true, start);
     log(`[sliceInternal] The right view is empty, so the left view will be range-checked.`); // ## DEBUG ONLY
     if(!isViewInRange(left, start, state.size)) {
       log(`[sliceInternal] The left view is not in range of the start position, so the right view will be activated and the left view refocused.`); // ## DEBUG ONLY
-      right = state.getView(OFFSET_ANCHOR.RIGHT, true, end - 1);
+      right = getView(state, OFFSET_ANCHOR.RIGHT, true, end - 1);
       left = isViewInRange(right, start, state.size) ? right : TreeWorker.refocusView(state, left, start, false, true);
     }
     else if(isViewInRange(left, end - 1, state.size)) {
@@ -73,7 +73,7 @@ function sliceInternal<T>(state: ListState<T>, start: number, end: number): void
     }
     else {
       log(`[sliceInternal] The left view is not in range of the end position, which means a right view will be focused to the end position.`); // ## DEBUG ONLY
-      right = state.getView(OFFSET_ANCHOR.RIGHT, true, end - 1);
+      right = getView(state, OFFSET_ANCHOR.RIGHT, true, end - 1);
       left = state.left;
     }
     focusedLeft = true;
@@ -105,11 +105,11 @@ function sliceInternal<T>(state: ListState<T>, start: number, end: number): void
     left = state.left;
   }
   else if(!right.isEditable(state.group)) {
-    state.setView(right = right.cloneToGroup(state.group));
+    setView(state, right = right.cloneToGroup(state.group));
     if(areSame) left = right;
   }
   if(!left.isEditable(state.group)) {
-    state.setView(left = left.cloneToGroup(state.group));
+    setView(state, left = left.cloneToGroup(state.group));
     if(areSame) right = left;
   }
 
@@ -202,7 +202,7 @@ function sliceInternal<T>(state: ListState<T>, start: number, end: number): void
     if(noAscent) {
       var otherView = state.left === left ? state.right : state.left;
       if(!otherView.isNone()) {
-        state.setView(View.empty<T>(otherView.anchor));
+        setView(state, View.empty<T>(otherView.anchor));
       }
     }
   }

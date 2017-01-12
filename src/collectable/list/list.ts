@@ -1,246 +1,205 @@
-import {log, publish} from './common'; // ## DEBUG ONLY
-import {CONST, OFFSET_ANCHOR, isDefined} from './common';
-import {append, prepend, setValue, insertValues, deleteValues, createArray, createIterator, ListIterator} from './values';
+import {log, publish} from './debug'; // ## DEBUG ONLY
+import {batch, isMutable, nextId} from '../shared/ownership';
+import {getDeep, setDeep, hasDeep} from '../shared/deep';
+import {createArray, createIterator} from './values';
 import {getAtOrdinal} from './traversal';
-import {concat} from './concat';
-import {slice} from './slice';
-import {ListState} from './state';
+import {PListState, emptyState, ensureImmutable, ensureMutable} from './state';
+import {Iterable} from '../shared/common';
+import * as List from './index';
 
-export type ListMutationCallback<T> = (list: List<T>) => void;
+export type ListMutationCallback<T> = (list: PList<T>) => void;
+export type UpdateCallback<T> = (value: T|undefined) => T;
 
-export class List<T> {
-  static empty<T>(): List<T> {
+export class PList<T> implements Iterable<T> {
+  static empty<T>(): PList<T> {
     return _emptyList;
   }
 
-  static of<T>(values: T[]): List<T> {
-    if(!Array.isArray(values)) {
-      throw new Error('First argument must be an array of values');
-    }
-    var state = ListState.empty<T>(true);
-    if(values.length > 0) {
-      append(state, values);
-    }
-    return new List<T>(state.toImmutable(true));
+  static fromArray<T>(values: T[]): PList<T> {
+    return new PList<T>(List.fromArray(values));
   }
 
-  constructor(public _state: ListState<T>) {
-    publish(this, true, `List constructed with size: ${this._state.size}`);
-  }
-
-  private _exec(fn: (state: ListState<T>) => ListState<T>|void): List<T> {
-    var state = this._state;
-    var immutable = !state.mutable;
-    if(immutable) {
-      state = state.toMutable();
-    }
-    log(`[List#_exec] List state ${state.id}${this._state.id === state.id ? '' : ` (cloned from id: ${this._state.id})`} will be used for the subsequent list operation.`); // ## DEBUG ONLY
-    var nextState = fn(state);
-    if(isDefined(nextState)) {
-      if(immutable) {
-        state = <ListState<T>>nextState;
-      }
-      else {
-        this._state = <ListState<T>>nextState;
-      }
-    }
-    return immutable ? new List<T>(state.toImmutable(true)) : this;
+  constructor(public _state: PListState<T>) {
+    publish(this, true, `List constructed with size: ${this._state.size}`); // ## DEBUG ONLY
   }
 
   get size(): number {
     return this._state.size;
   }
 
-  batch(callback: ListMutationCallback<T>): List<T> {
-    var state = this._state.toMutable();
-    var list = new List<T>(state);
+  get mutable() {
+    return isMutable(this._state.owner);
+  }
+
+  hasIndex(index: number): boolean {
+    return List.hasIndex(index, this._state);
+  }
+
+  hasIn(path: any[]): boolean {
+    return hasDeep(this, path);
+  }
+
+  batch(callback: ListMutationCallback<T>): PList<T> {
+    batch.start();
+    var list = this.asMutable();
     callback(list);
-    state.toImmutable(true);
+    if(batch.end()) {
+      list._state.owner = 0;
+    }
     return list;
   }
 
-  asMutable(): List<T> {
-    if(this._state.mutable) return this;
-    return new List<T>(this._state.toMutable());
+  asMutable(): PList<T> {
+    return isMutable(this._state.owner) ? this : new PList<T>(ensureMutable(this._state));
   }
 
-  asImmutable(finished: boolean): List<T> {
-    if(!this._state.mutable) return this;
-    if(finished) {
-      this._state.toImmutable(true);
-      return this;
+  asImmutable(): PList<T> {
+    return isMutable(this._state.owner) ? new PList<T>(ensureImmutable(this._state, false)) : this;
+  }
+
+  freeze(): PList<T> {
+    return isMutable(this._state.owner)
+      ? (ensureImmutable(this._state, true), this)
+      : this;
+  }
+
+  thaw(): PList<T> {
+    if(!isMutable(this._state.owner)) {
+      this._state.owner = -1;
     }
-    return new List<T>(this._state.toImmutable(false));
+    return this;
+  }
+
+  update(index: number, callback: UpdateCallback<T>): PList<T> {
+    var state = List.updateIndex(index, callback, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
   get(index: number): T|undefined {
     return getAtOrdinal(this._state, index);
   }
 
-  set(index: number, value: T): List<T> {
-    return this._exec(state => setValue(state, index, value));
+  getIn(path: any[]): any|undefined {
+    return getDeep(this, path);
   }
 
-  append(...values: T[]): List<T>
-  append(): List<T> {
+  set(index: number, value: T): PList<T> {
+    var state = List.set(index, value, this._state);
+    return state === this._state ? this : new PList<T>(state);
+  }
+
+  setIn(path: any[], value: any): PList<T> {
+    return setDeep(this, path, 0, value);
+  }
+
+  append(...values: T[]): PList<T>
+  append(): PList<T> {
     if(arguments.length === 0) return this;
-    var state = this._state;
-    var immutable = !state.mutable;
-    if(immutable) {
-      state = state.toMutable();
-    }
-    var tail = state.right;
-    var slot = tail.slot;
-    if(arguments.length === 1 && tail.group !== 0 && tail.offset === 0 && slot.group !== 0 && slot.size < CONST.BRANCH_FACTOR) {
-      state.lastWrite = OFFSET_ANCHOR.RIGHT;
-      state.size++;
-      if(slot.group === state.group) {
-        slot.adjustRange(0, 1, true);
-      }
-      else {
-        slot = slot.cloneWithAdjustedRange(state.group, 0, 1, true, true);
-        if(tail.group !== state.group) {
-          tail = tail.cloneToGroup(state.group);
-          state.right = tail;
-        }
-        tail.slot = slot;
-      }
-      tail.sizeDelta++;
-      tail.slotsDelta++;
-      slot.slots[slot.slots.length - 1] = arguments[0];
-    }
-    else {
-      append(state, Array.from(arguments));
-    }
-    return immutable ? new List<T>(state.toImmutable(true)) : this;
+    var state = arguments.length === 1
+      ? List.append(arguments[0], this._state)
+      : List.appendArray(Array.from(arguments), this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  appendArray(values: T[]): List<T> {
-    return values.length === 0 ? this
-      : this._exec(state => append(state, values));
+  appendArray(values: T[]): PList<T> {
+    var state = List.appendArray(values, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  prepend(...values: T[]): List<T>
-  prepend(): List<T> {
+  prepend(...values: T[]): PList<T>
+  prepend(): PList<T> {
     if(arguments.length === 0) return this;
-    var state = this._state;
-    var immutable = !state.mutable;
-    if(immutable) {
-      state = state.toMutable();
-    }
-    var head = state.left;
-    var slot = head.slot;
-    if(arguments.length === 1 && head.group !== 0 && head.offset === 0 && slot.group !== 0 && slot.size < CONST.BRANCH_FACTOR) {
-      state.lastWrite = OFFSET_ANCHOR.LEFT;
-      state.size++;
-      if(slot.group === state.group) {
-        slot.adjustRange(1, 0, true);
-      }
-      else {
-        slot = slot.cloneWithAdjustedRange(state.group, 1, 0, true, true);
-        if(head.group !== state.group) {
-          head = head.cloneToGroup(state.group);
-          state.left = head;
-        }
-        head.slot = slot;
-      }
-      head.sizeDelta++;
-      head.slotsDelta++;
-      slot.slots[0] = arguments[0];
-    }
-    else {
-      prepend(state, Array.from(arguments));
-    }
-    return immutable ? new List<T>(state.toImmutable(true)) : this;
+    var state = arguments.length === 1
+      ? List.prepend(arguments[0], this._state)
+      : List.prependArray(Array.from(arguments), this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  prependArray(values: T[]): List<T> {
-    return values.length === 0 ? this
-      : this._exec(state => prepend(state, values));
+  prependArray(values: T[]): PList<T> {
+    var state = List.prependArray(values, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  insert(index: number, ...values: T[]): List<T>
-  insert(index: number): List<T> {
+  insert(index: number, ...values: T[]): PList<T>
+  insert(index: number): PList<T> {
     if(arguments.length <= 1) return this;
     var values = new Array<T>(arguments.length - 1);
     for(var i = 1; i < arguments.length; i++) {
       values[i - 1] = arguments[i];
     }
-    return this._exec(state => insertValues(state, index, values));
+    var state = List.insertArray(index, values, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  insertArray(index: number, values: T[]): List<T> {
+  insertArray(index: number, values: T[]): PList<T> {
     if(values.length === 0) return this;
-    return this._exec(state => insertValues(state, index, values));
+    var state = List.insertArray(index, values, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  delete(index: number): List<T> {
-    return this._state.size === 0 ? this
-      : this._exec(state => deleteValues(state, index, index + 1));
+  delete(index: number): PList<T> {
+    var state = List.remove(index, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  deleteRange(start: number, end: number): List<T> {
-    return this._state.size === 0 ? this
-      : this._exec(state => deleteValues(state, start, end));
+  deleteRange(start: number, end: number): PList<T> {
+    var state = List.removeRange(start, end, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  pop(): List<T> {
-    return this._state.size === 0 ? this
-      : this._exec(state => slice(state, 0, -1));
+  pop(): PList<T> {
+    var state = List.pop(this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  popFront(): List<T> {
-    return this._state.size === 0 ? this
-      : this._exec(state => slice(state, 1, state.size));
+  popFront(): PList<T> {
+    var state = List.popFront(this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  skip(count: number): List<T> {
-    return this._state.size === 0 || count === 0 ? this
-      : this._exec(state => slice(state, count, state.size));
+  skip(count: number): PList<T> {
+    var state = List.skip(count, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  take(count: number): List<T> {
-    return this._state.size === 0 || count >= this._state.size ? this
-      : this._exec(state => slice(state, 0, count));
+  take(count: number): PList<T> {
+    var state = List.take(count, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  slice(start: number, end = 0): List<T> {
-    if(end === 0) end = this._state.size;
-    return this._state.size === 0 ? this
-      : this._exec(state => slice(state, start, end));
+  slice(start: number, end = 0): PList<T> {
+    var state = List.slice(start, end, this._state);
+    return state === this._state ? this : new PList<T>(state);
   }
 
-  concat(...lists: List<T>[]): List<T>
-  concat(list: List<T>): List<T> {
-    switch(arguments.length) {
-      case 0: return this;
-      case 1: this._exec(state => concat(state, list._state.toMutable()));
-      default:
-        var args = Array.from<List<T>>(arguments);
-        return this._exec(function(state) {
-          for(var i = 0; i < args.length; i++) {
-            state = concat(state, args[i]._state.toMutable());
-          }
-          return state;
-        });
-    }
+  concat(...lists: PList<T>[]): PList<T>
+  concat(list: PList<T>): PList<T> {
+    if(arguments.length === 0) return this;
+    var state = arguments.length === 1
+      ? List.concat(this._state, list._state)
+      : List.concatMany([this._state].concat(Array.from<PList<T>>(arguments).map(arg => arg._state)));
+    return state === this._state ? this : new PList<T>(state);
   }
 
   toArray(): T[] {
     return createArray(this._state);
   }
 
-  [Symbol.iterator](): ListIterator<T> {
+  [Symbol.iterator](): IterableIterator<T|undefined> {
     return createIterator(this._state);
   }
 
-  values(): ListIterator<T> {
+  values(): IterableIterator<T|undefined> {
     return createIterator(this._state);
+  }
+
+  toJS(): T[] {
+    return this.toArray();
   }
 }
 
-export function isDefaultEmptyList(list: List<any>): boolean {
+export function isDefaultEmptyList(list: PList<any>): boolean {
   return list === _emptyList;
 }
 
-export var _emptyList = new List<any>(ListState.empty<any>(false));
+export var _emptyList = new PList<any>(emptyState<any>(false));

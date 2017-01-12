@@ -1,16 +1,15 @@
 import {assert} from 'chai';
-
-import {CONST, COMMIT_MODE} from '../collectable/list/common';
-import {List} from '../collectable/list';
-import {ListState} from '../collectable/list/state';
-import {Slot} from '../collectable/list/slot';
-import {View} from '../collectable/list/view';
-import {TreeWorker} from '../collectable/list/traversal';
+import {CONST, COMMIT_MODE} from '../../collectable/list/common';
+import {PList} from '../../collectable/list';
+import {PListState} from '../../collectable/list/state';
+import {Slot} from '../../collectable/list/slot';
+import {View} from '../../collectable/list/view';
+import {TreeWorker} from '../../collectable/list/traversal';
 
 export const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
 export const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
 
-export type ListType<T> = List<T>|ListState<T>;
+export type ListType<T> = PList<T>|PListState<T>;
 export type ListOrView<T> = ListType<T>|View<T>;
 export type ViewOrSlot<T> = View<T>|Slot<T>;
 export type AnyListType<T> = ListType<T>|ViewOrSlot<T>;
@@ -70,12 +69,12 @@ export function slotValues<T>(arg: ViewOrSlot<T>): (T|Slot<T>)[] {
   return (arg instanceof View ? arg.slot : arg).slots;
 }
 
-function getState<T>(arg: ListType<T>): ListState<T> {
-  return arg instanceof List ? arg._state : arg;
+function getState<T>(arg: ListType<T>): PListState<T> {
+  return arg instanceof PList ? arg._state : arg;
 }
 
-export function listOf(size: number, offset = 0): List<string> {
-  return List.of<string>(makeValues(size, offset));
+export function listOf(size: number, offset = 0): PList<string> {
+  return PList.fromArray<string>(makeValues(size, offset));
 }
 
 export function text(i: number) {

@@ -1,13 +1,16 @@
-import {CONST, OFFSET_ANCHOR, blockCopy, copyArray, isUndefined, normalizeIndex, verifyIndex} from './common';
-import {ListState} from './state';
+import {isUndefined} from '../shared/functions';
+import {blockCopy, copyArray} from '../shared/array';
+import {isMutable, nextId} from '../shared/ownership';
+import {CONST, OFFSET_ANCHOR, normalizeIndex, verifyIndex} from './common';
+import {PListState, cloneState, emptyState} from './state';
 import {View} from './view';
 import {Slot} from './slot';
 import {increaseCapacity} from './capacity';
-import {slice} from './slice';
-import {concat} from './concat';
+import {sliceList} from './slice';
+import {concatLists} from './concat';
 import {TreeWorker, getLeafIndex, getAtOrdinal} from './traversal';
 
-export function setValue<T>(state: ListState<T>, ordinal: number, value: T): void {
+export function setValueAtOrdinal<T>(state: PListState<T>, ordinal: number, value: T): void {
   ordinal = verifyIndex(state.size, ordinal);
   if(ordinal === -1) {
     throw new Error(`Index ${ordinal} is out of range`);
@@ -20,7 +23,7 @@ export function setValue<T>(state: ListState<T>, ordinal: number, value: T): voi
   view.slot.slots[index] = value;
 }
 
-export function append<T>(state: ListState<T>, values: T[]): ListState<T> {
+export function appendValues<T>(state: PListState<T>, values: T[]): PListState<T> {
   var tail = TreeWorker.focusTail(state, true);
   var innerIndex = tail.slot.size % CONST.BRANCH_FACTOR;
   increaseCapacity(state, values.length, false).populate(values, innerIndex);
@@ -28,57 +31,52 @@ export function append<T>(state: ListState<T>, values: T[]): ListState<T> {
   return state;
 }
 
-export function prepend<T>(state: ListState<T>, values: T[]): ListState<T> {
+export function prependValues<T>(state: PListState<T>, values: T[]): PListState<T> {
   TreeWorker.focusHead(state, true);
   increaseCapacity(state, values.length, true).populate(values, 0);
   state.lastWrite = OFFSET_ANCHOR.LEFT;
   return state;
 }
 
-export function insertValues<T>(state: ListState<T>, ordinal: number, values: T[]): ListState<T> {
+export function insertValues<T>(state: PListState<T>, ordinal: number, values: T[]): PListState<T> {
   ordinal = normalizeIndex(state.size, ordinal);
-  if(ordinal === 0) return prepend(state, values);
-  if(ordinal >= state.size) return append(state, values);
-  var right = state.toMutable();
-  slice(right, ordinal, right.size);
-  slice(state, 0, ordinal);
-  append(state, values);
-  return concat(state, right);
+  if(ordinal === 0) return prependValues(state, values);
+  if(ordinal >= state.size) return appendValues(state, values);
+  var right = cloneState(state, nextId(), true);
+  sliceList(right, ordinal, right.size);
+  sliceList(state, 0, ordinal);
+  appendValues(state, values);
+  return concatLists(state, right);
 }
 
-export function deleteValues<T>(state: ListState<T>, start: number, end: number): ListState<T> {
+export function deleteValues<T>(state: PListState<T>, start: number, end: number): PListState<T> {
   start = normalizeIndex(state.size, start);
   end = normalizeIndex(state.size, end);
   if(start >= end) return state;
   if(start === 0 || end === state.size) {
     if(end - start === state.size) {
-      return ListState.empty<T>(true);
+      return emptyState<T>(isMutable(state.owner));
     }
     if(start > 0) {
-      slice(state, 0, start);
+      sliceList(state, 0, start);
     }
     else {
-      slice(state, end, state.size);
+      sliceList(state, end, state.size);
     }
     return state;
   }
-  var right = state.toMutable();
-  slice(state, 0, start);
-  slice(right, end, right.size);
-  state = concat(state, right);
+  var right = cloneState(state, nextId(), true);
+  sliceList(state, 0, start);
+  sliceList(right, end, right.size);
+  state = concatLists(state, right);
   return state;
 }
 
-export interface ListIteratorResult<T> {
-  value: T|undefined;
-  done: boolean;
-}
-
-export class ListIterator<T> {
+export class ListIterator<T> implements IterableIterator<T|undefined> {
   private _index = 0;
-  constructor(private _state: ListState<T>) {}
+  constructor(private _state: PListState<T>) {}
 
-  next(): ListIteratorResult<T> {
+  next(): IteratorResult<T|undefined> {
     if(this._index >= this._state.size) {
       return {value: void 0, done: true};
     }
@@ -87,13 +85,17 @@ export class ListIterator<T> {
       done: false
     };
   }
+
+  [Symbol.iterator](): IterableIterator<T|undefined> {
+    return new ListIterator<T>(this._state);
+  }
 }
 
-export function createIterator<T>(state: ListState<T>): ListIterator<T> {
+export function createIterator<T>(state: PListState<T>): IterableIterator<T|undefined> {
   return new ListIterator(state);
 }
 
-export function createArray<T>(state: ListState<T>): T[] {
+export function createArray<T>(state: PListState<T>): T[] {
   var map = new Map<Slot<T>, Map<number, Slot<T>>>();
   var [root, depth] = getRoot(state, map);
   if(depth === 0) {
@@ -104,7 +106,7 @@ export function createArray<T>(state: ListState<T>): T[] {
   return array;
 }
 
-function getRoot<T>(state: ListState<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): [Slot<T>, number] {
+function getRoot<T>(state: PListState<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): [Slot<T>, number] {
   var left = state.left;
   var right = state.right;
   var root: Slot<T> = <any>void 0;
@@ -168,8 +170,4 @@ function populateArray<T>(array: T[], node: Slot<T>, map: Map<Slot<T>, Map<numbe
     }
   }
   return c;
-}
-
-function slotKey(parentSlotId: number, slotIndex: number): number {
-  return (parentSlotId << 8) + slotIndex;
 }

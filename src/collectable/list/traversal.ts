@@ -1,8 +1,9 @@
-import {log, publish} from './common'; // ## DEBUG ONLY
-import {CONST, COMMIT_MODE, OFFSET_ANCHOR, isDefined, isUndefined, invertOffset, invertAnchor, max, verifyIndex} from './common';
+import {log, publish} from './debug'; // ## DEBUG ONLY
+import {max, isDefined, isUndefined} from '../shared/functions';
+import {CONST, COMMIT_MODE, OFFSET_ANCHOR, invertOffset, invertAnchor, verifyIndex} from './common';
 import {View} from './view';
 import {Slot, ExpansionParameters} from './slot';
-import {ListState} from './state';
+import {PListState, emptyState, getView, getOtherView, setView} from './state';
 
 /**
  * Checks whether a list ordinal position lies within the absolute range of a slot within the list
@@ -57,7 +58,7 @@ function isAncestor<T>(upperView: View<T>, lowerView: View<T>, listSize: number)
  *
  * @memberOf ListState
  */
-function selectView<T>(state: ListState<T>, ordinal: number, asWriteTarget: boolean): View<T> {
+function selectView<T>(state: PListState<T>, ordinal: number, asWriteTarget: boolean): View<T> {
   var left = state.left, right = state.right, resolve = asWriteTarget;
   var anchor: OFFSET_ANCHOR;
   if(left.isNone()) {
@@ -78,7 +79,7 @@ function selectView<T>(state: ListState<T>, ordinal: number, asWriteTarget: bool
       : invertAnchor(state.lastWrite);
   }
   return resolve
-    ? state.getView(anchor, asWriteTarget, ordinal)
+    ? getView(state, anchor, asWriteTarget, ordinal)
     : anchor === OFFSET_ANCHOR.LEFT ? left : right;
 }
 
@@ -119,14 +120,14 @@ export class TreeWorker<T> {
     return TreeWorker._getDefaults().defaultTemporary;
   }
 
-  static refocusView<T>(state: ListState<T>, view: View<T>, ordinal: number, asAltView: boolean, asWriteTarget: boolean) {
+  static refocusView<T>(state: PListState<T>, view: View<T>, ordinal: number, asAltView: boolean, asWriteTarget: boolean) {
     var worker = TreeWorker.defaultTemporary<T>().reset(state, view, state.group);
     view = worker.refocusView(ordinal, asAltView, asWriteTarget);
     worker.dispose();
     return view;
   }
 
-  static focusOrdinal<T>(state: ListState<T>, ordinal: number, asWriteTarget: boolean): View<T>|undefined {
+  static focusOrdinal<T>(state: PListState<T>, ordinal: number, asWriteTarget: boolean): View<T>|undefined {
     ordinal = verifyIndex(state.size, ordinal);
     if(ordinal === -1) return void 0;
     var view = selectView(state, ordinal, asWriteTarget);
@@ -134,29 +135,29 @@ export class TreeWorker<T> {
       : TreeWorker.refocusView<T>(state, view, ordinal, false, asWriteTarget);
   }
 
-  static focusEdge<T>(state: ListState<T>, edge: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
-    var view = state.getView(edge, asWriteTarget);
+  static focusEdge<T>(state: PListState<T>, edge: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
+    var view = getView(state, edge, asWriteTarget);
     view = view.offset > 0 || (asWriteTarget && !view.slot.isReserved() && !view.isRoot())
       ? TreeWorker.refocusView<T>(state, view, edge === OFFSET_ANCHOR.LEFT ? 0 : state.size - 1, false, asWriteTarget)
       : view;
     return view;
   }
 
-  static focusHead<T>(state: ListState<T>, asWriteTarget: boolean): View<T> {
+  static focusHead<T>(state: PListState<T>, asWriteTarget: boolean): View<T> {
     return TreeWorker.focusEdge(state, OFFSET_ANCHOR.LEFT, asWriteTarget);
   }
 
-  static focusTail<T>(state: ListState<T>, asWriteTarget: boolean): View<T> {
+  static focusTail<T>(state: PListState<T>, asWriteTarget: boolean): View<T> {
     return TreeWorker.focusEdge(state, OFFSET_ANCHOR.RIGHT, asWriteTarget);
   }
 
-  static focusView<T>(state: ListState<T>, ordinal: number, anchor: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
-    var view = state.getView(anchor, true, ordinal);
+  static focusView<T>(state: PListState<T>, ordinal: number, anchor: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
+    var view = getView(state, anchor, true, ordinal);
     return isViewInRange(view, ordinal, state.size) ? view
       : TreeWorker.refocusView<T>(state, view, ordinal, false, true);
   }
 
-  state = ListState.empty<T>(false);
+  state = emptyState<T>(false);
   previous = View.none<T>();
   current = View.none<T>();
   other = View.none<T>();
@@ -179,7 +180,7 @@ export class TreeWorker<T> {
     return !this.committedOther && !this.other.isNone();
   }
 
-  reset(state: ListState<T>, view: View<T>, group, otherCommitMode = COMMIT_MODE.NO_CHANGE): TreeWorker<T> {
+  reset(state: PListState<T>, view: View<T>, group, otherCommitMode = COMMIT_MODE.NO_CHANGE): TreeWorker<T> {
     this.state = state;
     this.current = view;
     this.group = group;
@@ -188,7 +189,7 @@ export class TreeWorker<T> {
       this.committedOther = true;
     }
     else {
-      this.other = state.getOtherView(view.anchor);
+      this.other = getOtherView(state, view.anchor);
       this.committedOther = this.other.isNone();
       this.otherCommitMode = otherCommitMode;
     }
@@ -196,7 +197,7 @@ export class TreeWorker<T> {
   }
 
   dispose(): void {
-    this.state = ListState.empty<T>(false);
+    this.state = emptyState<T>(false);
     this.previous = View.none<T>();
     this.current = View.none<T>();
     this.other = View.none<T>();
@@ -387,7 +388,7 @@ export class TreeWorker<T> {
       if(!childView.isEditable(group)) {
         childView = childView.cloneToGroup(group);
         if(this.shift === 0) {
-          this.state.setView(childView);
+          setView(this.state, childView);
         }
       }
 
@@ -428,7 +429,7 @@ export class TreeWorker<T> {
     }
 
     var anchor = otherView.anchor;
-    this.state.setView(this.other = this.otherCommitMode === COMMIT_MODE.RELEASE_DISCARD ? View.empty<T>(anchor) : otherView);
+    setView(this.state, this.other = this.otherCommitMode === COMMIT_MODE.RELEASE_DISCARD ? View.empty<T>(anchor) : otherView);
     var worker = TreeWorker.defaultOther<T>().reset(this.state, otherView, this.group, -1);
 
     while(worker.shift < this.shift) {
@@ -506,19 +507,19 @@ export class TreeWorker<T> {
 
     if(isUndefined(view)) {
       log(`[TreeWorker#refocusView] No view was returned, which means the descent path encountered a reserved slot. The other view will be used to locate the target ordinal.`); // ## DEBUG ONLY
-      this.reset(this.state, this.state.getOtherView(anchor), this.group, -1);
+      this.reset(this.state, getOtherView(this.state, anchor), this.group, -1);
       this.ascendToOrdinal(ordinal, COMMIT_MODE.NO_CHANGE, false);
       view = <View<T>>this.descendToOrdinal(ordinal, asWriteTarget);
     }
     if(view.anchor !== anchor) {
       view.flipAnchor(this.state.size);
     }
-    this.state.setView(view);
+    setView(this.state, view);
     return view;
   }
 }
 
-export function getAtOrdinal<T>(state: ListState<T>, ordinal: number): T|undefined {
+export function getAtOrdinal<T>(state: PListState<T>, ordinal: number): T|undefined {
   var view = TreeWorker.focusOrdinal<T>(state, ordinal, false);
   if(view === void 0) return void 0;
   return <T>view.slot.slots[getLeafIndex(view, ordinal, state.size)];

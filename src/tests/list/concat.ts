@@ -1,10 +1,10 @@
 import {assert} from 'chai';
-import {append, createArray} from '../collectable/list/values';
-import {List} from '../collectable/list';
-import {ListState} from '../collectable/list/state';
-import {Slot} from '../collectable/list/slot';
-import {concat, join} from '../collectable/list/concat';
-import {compact} from '../collectable/list/compact';
+import {appendValues, createArray} from '../../collectable/list/values';
+import {PList} from '../../collectable/list';
+import {emptyState} from '../../collectable/list/state';
+import {Slot} from '../../collectable/list/slot';
+import {concatLists, join} from '../../collectable/list/concat';
+import {compact} from '../../collectable/list/compact';
 
 import {
   BRANCH_FACTOR,
@@ -243,10 +243,10 @@ suite('[List: concatenation]', () => {
 
   suite('concat()', () => {
     test('joins two minimal single-node lists', () => {
-      var left = append(ListState.empty<any>(true), makeValues(1));
-      var right = append(ListState.empty<any>(true), makeValues(2, 1));
+      var left = appendValues(emptyState<any>(true), makeValues(1));
+      var right = appendValues(emptyState<any>(true), makeValues(2, 1));
 
-      concat(left, right);
+      concatLists(left, right);
 
       var root = rootSlot(left);
       assert.isFalse(root.isRelaxed());
@@ -257,10 +257,10 @@ suite('[List: concatenation]', () => {
     test('joins two single-level lists into a two-level result if capacity is exceeded', () => {
       var n0 = BRANCH_FACTOR/2 + 1;
       var n1 = n0 + 1;
-      var left = append(ListState.empty<any>(true), makeValues(n0));
-      var right = append(ListState.empty<any>(true), makeValues(n1, n0));
+      var left = appendValues(emptyState<any>(true), makeValues(n0));
+      var right = appendValues(emptyState<any>(true), makeValues(n1, n0));
 
-      concat(left, right);
+      concatLists(left, right);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -272,10 +272,10 @@ suite('[List: concatenation]', () => {
       var m = BRANCH_FACTOR/2;
       var n0 = BRANCH_FACTOR*m + 1;
       var n1 = BRANCH_FACTOR*m + 3;
-      var left = append(ListState.empty<any>(true), makeValues(n0));
-      var right = append(ListState.empty<any>(true), makeValues(n1, n0));
+      var left = appendValues(emptyState<any>(true), makeValues(n0));
+      var right = appendValues(emptyState<any>(true), makeValues(n1, n0));
 
-      concat(left, right);
+      concatLists(left, right);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -286,10 +286,10 @@ suite('[List: concatenation]', () => {
     test('joins a deeper left list to a shallower right list', () => {
       var n0 = Math.pow(BRANCH_FACTOR, 2) + 1;
       var n1 = BRANCH_FACTOR + 1;
-      var left = append(ListState.empty<any>(true), makeValues(n0));
-      var right = append(ListState.empty<any>(true), makeValues(n1, n0));
+      var left = appendValues(emptyState<any>(true), makeValues(n0));
+      var right = appendValues(emptyState<any>(true), makeValues(n1, n0));
 
-      concat(left, right);
+      concatLists(left, right);
 
       assert.isTrue(left.right.parent.hasUncommittedChanges());
       assert.isTrue(left.right.parent.slot.isRelaxed());
@@ -300,10 +300,10 @@ suite('[List: concatenation]', () => {
     test('joins a shallower left list to a deeper right list', () => {
       var n0 = BRANCH_FACTOR + 1;
       var n1 = Math.pow(BRANCH_FACTOR, 2) + 1;
-      var left = append(ListState.empty<any>(true), makeValues(n0));
-      var right = append(ListState.empty<any>(true), makeValues(n1, n0));
+      var left = appendValues(emptyState<any>(true), makeValues(n0));
+      var right = appendValues(emptyState<any>(true), makeValues(n1, n0));
 
-      concat(left, right);
+      concatLists(left, right);
 
       var root = rootSlot(left);
       assert.isTrue(root.isRelaxed());
@@ -315,8 +315,8 @@ suite('[List: concatenation]', () => {
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2) - (BRANCH_FACTOR >>> 2));
       var leftValues = values.slice(0, BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
       var rightValues = values.slice(leftValues.length);
-      var list1 = List.of<any>(leftValues).prepend('X');
-      var list2 = List.of<any>(rightValues).prepend('Y');
+      var list1 = PList.fromArray<any>(leftValues).prepend('X');
+      var list2 = PList.fromArray<any>(rightValues).prepend('Y');
       leftValues.unshift('X');
       rightValues.unshift('Y');
 

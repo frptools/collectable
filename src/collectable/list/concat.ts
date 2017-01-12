@@ -1,11 +1,13 @@
-import {CONST, COMMIT_MODE, OFFSET_ANCHOR, nextId, concatToNewArray, concatSlotsToNewArray} from './common';
+import {nextId} from '../shared/ownership';
+import {concatToNewArray} from '../shared/array';
+import {CONST, COMMIT_MODE, OFFSET_ANCHOR, concatSlotsToNewArray} from './common';
 import {TreeWorker} from './traversal';
 import {compact} from './compact';
 import {Slot} from './slot';
 import {View} from './view';
-import {ListState} from './state';
+import {PListState, cloneState, setView} from './state';
 
-export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): ListState<T> {
+export function concatLists<T>(leftState: PListState<T>, rightState: PListState<T>): PListState<T> {
   if(leftState.size === 0) {
     return rightState;
   }
@@ -18,7 +20,7 @@ export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): Li
   // that the right list is first cloned to avoid ghosted changes between different nodes, and that both lists are
   // working within the same group context.
   if((leftState === rightState && (leftState.group = nextId())) || rightState.group !== leftState.group) {
-    rightState = rightState.clone(leftState.group, true);
+    rightState = cloneState(rightState, leftState.group, true);
   }
 
   var left = TreeWorker.defaultPrimary<T>().reset(leftState, TreeWorker.focusTail<T>(leftState, true), leftState.group, COMMIT_MODE.RELEASE);
@@ -26,12 +28,12 @@ export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): Li
 
   if(left.current.slot.group !== left.group) {
     left.current = left.current.ensureEditable(leftState.group, true);
-    leftState.setView(left.current);
+    setView(leftState, left.current);
   }
 
   if(right.current.slot.group !== right.group) {
     right.current = right.current.ensureEditable(rightState.group, true);
-    rightState.setView(right.current);
+    setView(rightState, right.current);
   }
 
   var group = leftState.group,
@@ -120,14 +122,14 @@ export function concat<T>(leftState: ListState<T>, rightState: ListState<T>): Li
       if(leftState.right.anchor !== OFFSET_ANCHOR.LEFT) {
         leftState.right.flipAnchor(leftState.size);
       }
-      leftState.setView(leftState.right);
+      setView(leftState, leftState.right);
     }
     if(right.other.slot.size > 0) {
-      leftState.setView(right.other);
+      setView(leftState, right.other);
     }
     else {
       right.other.disposeIfInGroup(rightState.group, leftState.group);
-      leftState.setView(View.empty<T>(OFFSET_ANCHOR.RIGHT));
+      setView(leftState, View.empty<T>(OFFSET_ANCHOR.RIGHT));
     }
   }
 

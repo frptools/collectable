@@ -1,5 +1,8 @@
-import {log, publish} from './common'; // ## DEBUG ONLY
-import {CONST, COMMIT_MODE, nextId, isDefined, abs, max, copyArray, verifyIndex} from './common';
+import {log, publish} from './debug'; // ## DEBUG ONLY
+import {nextId} from '../shared/ownership';
+import {isDefined, abs, max} from '../shared/functions';
+import {copyArray} from '../shared/array';
+import {CONST, COMMIT_MODE, verifyIndex} from './common';
 
 export type ChildSlotOutParams<T> = {
   slot: T|Slot<T>,
