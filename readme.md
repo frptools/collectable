@@ -4,6 +4,7 @@
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/collectable.svg)](http://badge.fury.io/js/collectable)
+[![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
 
 **The library is currently a work in progress**, with additional features and capabilities to be
 released as they are developed, with the ultimate goal to be a one-stop shop for your immutable data

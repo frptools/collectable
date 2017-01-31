@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "High Performance Immutable Collections",
   "main": "lib/es2015/index.js",
   "module": "lib/es2015/index.js",
@@ -16,6 +16,8 @@
   ],
   "author": "Nathan Ridley",
   "license": "MIT",
+  "bugs": "https://github.com/frptools/collectable.js/issues",
+  "repository": "git@github.com:frptools/collectable.js.git",
   "devDependencies": {
     "@types/chai": "^3.4.34",
     "@types/chalk": "^0.4.31",
