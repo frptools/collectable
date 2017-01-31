@@ -2,14 +2,15 @@ import Cycle from '@cycle/most-run';
 import {fromEvent} from 'most';
 import {create} from '@most/create'
 import {a, h, div, span, thunk, makeDOMDriver} from '@motorcycle/dom';
-import {List, setCallback} from '../lib/collectable/list';
-import {nextId as nextInternalId, log, publish} from '../lib/collectable/list/common';
-import {TreeWorker, tryCommitOtherView, getAtOrdinal} from '../lib/collectable/list/traversal';
-import {append} from '../lib/collectable/list/values';
-import {slice} from '../lib/collectable/list/slice';
-import {ListState} from '../lib/collectable/list/state';
-import {Slot} from '../lib/collectable/list/slot';
-import {View} from '../lib/collectable/list/view';
+import {PList} from '../lib/es2015/list';
+import {nextId as nextInternalId} from '../lib/es2015/shared/ownership';
+import {log, publish, setCallback} from '../lib/es2015/list/debug';
+import {TreeWorker, tryCommitOtherView, getAtOrdinal} from '../lib/es2015/list/traversal';
+import {append} from '../lib/es2015/list/values';
+import {slice} from '../lib/es2015/list/slice';
+import {PListState} from '../lib/es2015/list/state';
+import {Slot} from '../lib/es2015/list/slot';
+import {View} from '../lib/es2015/list/view';
 import Immutable from 'immutable';
 import CJ from 'circular-json';
 
@@ -767,7 +768,7 @@ function main({DOM, events}) {
 
   setTimeout(() => {
     function getState(arg) {
-      return arg instanceof List ? arg._state : arg;
+      return arg instanceof PList ? arg._state : arg;
     }
     function firstView(arg) {
       return arg instanceof View ? arg : firstActiveView(arg);
@@ -784,7 +785,7 @@ function main({DOM, events}) {
       }
     }
     function makeList(values, initialSize, usePrepend) {
-      const list = List.empty().asMutable();
+      const list = PList.empty().asMutable();
       if(initialSize > 0) {
         list.appendArray(values.slice(0, initialSize));
         commitToRoot(list);
@@ -801,11 +802,11 @@ function main({DOM, events}) {
     }
 
     var BRANCH_FACTOR = 8;
-    publish(List.empty(), true, 'START');
+    publish(PList.empty(), true, 'START');
 
     function runCapacityTests1() {
       beginCollectingLogs();
-      var list = List.empty()/*.asMutable()*/.appendArray(makeValues(BRANCH_FACTOR >>> 2));
+      var list = PList.empty()/*.asMutable()*/.appendArray(makeValues(BRANCH_FACTOR >>> 2));
       publish(list, true, `list size: ${list.size}`);
       list = list.appendArray(makeValues(BRANCH_FACTOR >>> 1, list.size));
       publish(list, true, `list size: ${list.size}`);
@@ -829,7 +830,7 @@ function main({DOM, events}) {
 
     function runCapacityTests2() {
       beginCollectingLogs();
-      var list = List.empty()/*.asMutable()*/.prependArray(makeValues(BRANCH_FACTOR >>> 2));
+      var list = PList.empty()/*.asMutable()*/.prependArray(makeValues(BRANCH_FACTOR >>> 2));
       publish(list, true, `list size: ${list.size}`);
       list = list.prependArray(makeValues(BRANCH_FACTOR >>> 1, list.size));
       publish(list, true, `list size: ${list.size}`);
@@ -857,7 +858,7 @@ function main({DOM, events}) {
 
     function runCapacityTests3() {
       beginCollectingLogs();
-      var list = List.empty()/*.asMutable()*/.appendArray(makeValues(BRANCH_FACTOR >>> 2));
+      var list = PList.empty()/*.asMutable()*/.appendArray(makeValues(BRANCH_FACTOR >>> 2));
       publish(list, true, `list size: ${list.size}`);
       list = list.prependArray(makeValues(BRANCH_FACTOR >>> 1, list.size));
       publish(list, true, `list size: ${list.size}`);
@@ -875,7 +876,7 @@ function main({DOM, events}) {
 
     function runCapacityTests4() {
       beginCollectingLogs();
-      var list = List.empty()/*.asMutable()*/.prependArray(makeValues(BRANCH_FACTOR >>> 2));
+      var list = PList.empty()/*.asMutable()*/.prependArray(makeValues(BRANCH_FACTOR >>> 2));
       publish(list, true, `list size: ${list.size}`);
       list = list.appendArray(makeValues(BRANCH_FACTOR >>> 1, list.size));
       publish(list, true, `list size: ${list.size}`);
@@ -900,7 +901,7 @@ function main({DOM, events}) {
     }
 
     function runAppendTests() {
-      var list = ListState.empty(true);
+      var list = PListState.empty(true);
       var values = makeValues(Math.pow(BRANCH_FACTOR, 3));
       for(var i = 0; i < values.length; i++) {
         append(list, [values[i]]);
@@ -922,18 +923,18 @@ function main({DOM, events}) {
       var leftValues = values.slice(0, BRANCH_FACTOR + (BRANCH_FACTOR >>> 1));
       var rightValues = values.slice(leftValues.length);
 
-      var list1 = List.of(leftValues).prepend('X');
+      var list1 = PList.of(leftValues).prepend('X');
       publish(list1, true, `list #1 size: ${list1.size}`);
 
-      var list2 = List.of(rightValues).prepend('Y');
+      var list2 = PList.of(rightValues).prepend('Y');
       publish(list2, true, `list #2 size: ${list2.size}`);
 
       var list3 = list1.concat(list2);
       publish(list3, true, `list #3 size: ${list3.size}`);
 
-      commitToRoot(list1);
-      commitToRoot(list2);
-      commitToRoot(list3);
+      // commitToRoot(list1);
+      // commitToRoot(list2);
+      // commitToRoot(list3);
 
       publish(list1, true, 'list1: X + leftValues');
       publish(list2, true, 'list2: Y + rightValues');
@@ -969,7 +970,7 @@ function main({DOM, events}) {
     }
 
     function runTraversalTests() {
-      var list = List.empty().prependArray(makeValues(Math.pow(BRANCH_FACTOR, 2) + (BRANCH_FACTOR>>>2)));
+      var list = PList.empty().prependArray(makeValues(Math.pow(BRANCH_FACTOR, 2) + (BRANCH_FACTOR>>>2)));
       beginCollectingLogs();
       publish(list, true, `Initial list size: ${list.size}`);
       list = list.appendArray(makeValues(BRANCH_FACTOR*3, list.size));
@@ -1004,9 +1005,9 @@ function main({DOM, events}) {
 
     function runSliceTests1() {
       beginCollectingLogs();
-      var list1 = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) - (BRANCH_FACTOR >>> 2)))
+      var list1 = PList.of(makeValues(Math.pow(BRANCH_FACTOR, 2) - (BRANCH_FACTOR >>> 2)))
       publish(list1, true, 'Left initial list');
-      var list2 = List.of(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR - (BRANCH_FACTOR >>> 1), list1.size));
+      var list2 = PList.of(makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR - (BRANCH_FACTOR >>> 1), list1.size));
       publish(list2, true, 'Right initial list');
       var list3 = list1.concat(list2);
       publish(list3, true, 'Initial concatenated list');
@@ -1024,7 +1025,7 @@ function main({DOM, events}) {
       beginCollectingLogs();
 
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      var list = List.of(values)._state;
+      var list = PList.of(values)._state;
       var halfbf = BRANCH_FACTOR >>> 1;
       var end = BRANCH_FACTOR*halfbf + halfbf;
 
@@ -1039,7 +1040,7 @@ function main({DOM, events}) {
       beginCollectingLogs();
 
       const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      const list = List.of(values)._state;
+      const list = PList.of(values)._state;
       const halfbf = BRANCH_FACTOR >>> 1;
       const start = 0;
       const end = halfbf + 1;
@@ -1053,7 +1054,7 @@ function main({DOM, events}) {
       beginCollectingLogs();
 
       const values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR*2);
-      const list = List.of(values)._state;
+      const list = PList.of(values)._state;
       const start = 1;
       const end = BRANCH_FACTOR;
 
@@ -1066,7 +1067,7 @@ function main({DOM, events}) {
       beginCollectingLogs();
 
       const values = makeValues(BRANCH_FACTOR*2);
-      const list = List.of(values)._state;
+      const list = PList.of(values)._state;
       const start = BRANCH_FACTOR;
       const end = BRANCH_FACTOR + 1;
 
@@ -1078,14 +1079,18 @@ function main({DOM, events}) {
     function runInsertionTests() {
       beginCollectingLogs();
       var values = makeValues(Math.pow(BRANCH_FACTOR, 2));
-      var list1 = List.of(values);
+      var list1 = PList.of(values);
       var index = BRANCH_FACTOR + (BRANCH_FACTOR >>> 1);
+      var list1a = list1.slice(index);
+      publish(list1a, true, `sliced list [${index}:end]`);
+      var list1b = list1.slice(0, index);
+      publish(list1b, true, `sliced list [0:${index}]`);
       var list2 = list1.insert(index, 'J', 'K');
     }
 
     function runDeletionTests1() {
       var values = makeValues(BRANCH_FACTOR*3);
-      var list0 = List.of(values);
+      var list0 = PList.of(values);
       beginCollectingLogs();
       publish(list0, true, `initial list`);
       var list2 = list0.delete(BRANCH_FACTOR >>> 1);
@@ -1099,8 +1104,8 @@ function main({DOM, events}) {
     function runDeletionTests2() {
       beginCollectingLogs();
       var values = makeValues(BRANCH_FACTOR*4);
-      var list0 = List.of(values);
-      var list1 = List.empty().prependArray(values);
+      var list0 = PList.of(values);
+      var list1 = PList.empty().prependArray(values);
       var list2 = list0.delete(BRANCH_FACTOR + 2);
       log(`will now delete from list 2 (size: ${list2.size}) at ${list1.size - BRANCH_FACTOR - 2}`);
       var list3 = list1.delete(list1.size - BRANCH_FACTOR - 2);
@@ -1109,7 +1114,7 @@ function main({DOM, events}) {
     function runDeletionTests3() {
       beginCollectingLogs();
       var values = makeValues(BRANCH_FACTOR - 1);
-      var list0 = List.of(values);
+      var list0 = PList.of(values);
       var list1 = list0.delete(0);
       var list2 = list0.delete(1);
       var list3 = list0.delete(BRANCH_FACTOR - 2);
@@ -1118,7 +1123,7 @@ function main({DOM, events}) {
     function runDeletionTests4() {
       beginCollectingLogs();
       var values = makeValues(BRANCH_FACTOR*3);
-      var list0 = List.of(values);
+      var list0 = PList.of(values);
       var list1 = list0.delete(values.length - 1);
       var list2 = list0.delete(values.length - (BRANCH_FACTOR >>> 1));
       var list3 = list0.delete(values.length - BRANCH_FACTOR);
@@ -1127,7 +1132,7 @@ function main({DOM, events}) {
     function runDeletionTests5() {
       beginCollectingLogs();
       var values = makeValues(BRANCH_FACTOR*3);
-      var list0 = List.of(values);
+      var list0 = PList.of(values);
       var list1 = list0.delete(0);
       var list2 = list0.delete(BRANCH_FACTOR >>> 1);
       var list3 = list0.delete(BRANCH_FACTOR - 1);
@@ -1137,7 +1142,7 @@ function main({DOM, events}) {
       beginCollectingLogs();
 
       var values = ['A', 'B', 'C', 'X', 'Y', 'Z'];
-      var list1 = List.of(values);
+      var list1 = PList.of(values);
       var list2 = list1.set(0, 'J');
       list2 = list2.set(2, 'K');
       list2 = list2.set(5, 'L');
@@ -1145,21 +1150,21 @@ function main({DOM, events}) {
       publish(list2, true, `updated list should be: [J,B,K,X,Y,L]`);
 
       values = makeValues(Math.pow(BRANCH_FACTOR, 3));
-      list1 = List.of(values);
+      list1 = PList.of(values);
       list2 = list1.set(0, 'J');
       list2 = list2.set(BRANCH_FACTOR*2, 'K');
       list2 = list2.set(values.length - 1, 'L');
       publish(list1, true, `original list`);
       publish(list2, true, `updated list`);
 
-      list1 = List.of(values);
+      list1 = PList.of(values);
       list2 = list1.set(values.length - 1, 'L');
       list2 = list2.set(BRANCH_FACTOR*2, 'K');
       list2 = list2.set(0, 'J');
       publish(list1, true, `original list`);
       publish(list2, true, `updated list`);
 
-      list1 = List.of(values);
+      list1 = PList.of(values);
       list2 = list1.set(BRANCH_FACTOR*2, 'K');
       list2 = list2.set(values.length - 1, 'L');
       list2 = list2.set(0, 'J');
@@ -1168,7 +1173,7 @@ function main({DOM, events}) {
       publish(list2, true, `updated list`);
     }
 
-    runSliceTests5();
+    runInsertionTests();
 
   }, 100);
 })();

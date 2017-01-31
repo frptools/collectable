@@ -6,12 +6,15 @@
     "strictNullChecks": true,
     "target": "es6",
     "sourceMap": true,
+    "preserveConstEnums": false,
     "allowSyntheticDefaultImports": true,
     "removeComments": true,
-    "outDir": "./lib",
-    "lib": ["es5", "es6"]
+    "noUnusedLocals": true,
+    "outDir": "./.build",
+    "lib": ["dom", "es5", "es6"]
   },
   "include": [
-    "./src/**/*.ts"
+    "./src/**/*.ts",
+    "./tests/**/*.ts"
   ]
 }

@@ -1,0 +1,20 @@
+export { PersistentSet } from './set';
+export { SetState } from './state';
+import { SetState } from './state';
+export declare type PSetCallback<T> = (set: SetState<T>) => SetState<T> | void;
+export declare function emptySet<T>(): SetState<T>;
+export declare function fromArray<T>(values: T[]): SetState<T>;
+export declare function getSize<T>(set: SetState<T>): number;
+export declare function isEmpty<T>(set: SetState<T>): boolean;
+export declare function isMutable<T>(set: SetState<T>): boolean;
+export declare function updateSet<T>(callback: PSetCallback<T>, set: SetState<T>): SetState<T>;
+export declare function asMutable<T>(set: SetState<T>): SetState<T>;
+export declare function asImmutable<T>(set: SetState<T>): SetState<T>;
+export declare function add<T>(value: T, set: SetState<T>): SetState<T>;
+export declare function has<T>(value: T, set: SetState<T>): boolean;
+export declare function remove<T>(value: T, set: SetState<T>): SetState<T>;
+export declare function values<T>(set: SetState<T>): IterableIterator<T>;
+export declare function toIterable<T>(set: SetState<T>): IterableIterator<T>;
+export declare function toJS<T>(set: SetState<T>): {
+    [key: string]: any;
+};

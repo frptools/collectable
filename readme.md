@@ -1,28 +1,117 @@
 # Collectable.js
 
-Collectable.js was born out of a need for an immutable data structure where the
-sorting characteristics are controllable both in advance and in retrospect,
-and which performs well for all common operations that affect the size of the
-collection, including appending, prepending, slicing, concatenation, range
-insertion and range deletion. Access to elements both by key and by index was
-required, and while this is achievable by combining a map and a list under the
-hood, no good immutable data structure implementation existed for handling the
-latter.
+> A buffet of high-performance immutable data structures
 
-**The first release of Collectable.js provides a custom [RRB tree](https://www.google.com.au/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwjf-IOtrffQAhVTPrwKHXXpBU8QFggcMAA&url=https%3A%2F%2Finfoscience.epfl.ch%2Frecord%2F169879%2Ffiles%2FRMTrees.pdf&usg=AFQjCNGcuAE3g-18EywBnn2R_Sg7GdQlvw&sig2=554zEyOBJXJwgc5CEtOpxg)
-implementation as the first piece of the puzzle.** There is some low-hanging
-fruit for improving the performance of different operations, but out of the box
-it already performs significantly better than [Immutable.List](http://facebook.github.io/immutable-js/docs/#/List)
-for most operations.
+[![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
+[![NPM version](https://badge.fury.io/js/collectable.svg)](http://badge.fury.io/js/collectable)
 
-In the next release, both data structures will be wrapped for internal use by an
-outer collection structure which will provide the reactive projection features
-that the library was designed to provide. [HAMT+](https://github.com/mattbierner/hamt_plus)
-is the most likely candidate for covering the key-based indexing functionality,
-but may be replaced later, if it becomes necessary to do so.
+**The library is currently a work in progress**, with additional features and capabilities to be
+released as they are developed, with the ultimate goal to be a one-stop shop for your immutable data
+needs. See [the roadmap](https://github.com/frptools/collectable/wiki) for a better idea of what's
+planned.
 
-- [x] Immutable RRB tree implementation (Collectable.List)
-- [ ] Reactive outer collection API (Collectable.Collection)
-- [ ] Projections for sorting, filtering, mapping, etc.
+## Usage
 
-See [the project board](https://github.com/frptools/collectable/projects/1) for current status and progress.
+### Bundling and Distributable Packages
+
+Collectable.js does *not* provide a prebundled, minified distributable, as has been common practice
+for many years. In the latter part of the 21st century's second decade, we're now pretty much all
+building web applications using bundlers and loaders such as Gulp, Webpack and so forth. As the new
+generation of bundlers coming onto the market in the past year or so employ tree-shaking and dead
+code elimination techniques when combined with ES2015+ modules and import statements, a new paradigm
+for library development presents itself. By offering functionality as a set of import-what-you-want
+modules and functions, the library can offer a large array of features while not bloating your
+application's file size. Any features and internal code paths that remain unused by your application
+are discarded from the final build, keeping the file size as small as possible, depending on what
+you decide to import into your application.
+
+The following build variations are provided for you to reference directly, depending on your needs:
+
+- **ES5:** `/lib/es5` (transpiled without any ES2015 features)
+- **ES2015:** `/lib/es2015` (imported by default)
+- **TypeScript:** `/lib/ts` (pure TypeScript source)
+
+TypeScript typings are included by default with the ES builds.
+
+### Functional vs Object-Oriented
+
+A functional approach is favoured if you really want to keep your file size down. Simply import the
+functions relevant to the data structures you care about and ignore the rest. The collection reference
+argument passed to each function always comes last, making it easy to build lenses and create curried
+version of functions if you choose.
+
+If you are more comfortable working with classes, a class-based version of each structure is also
+provided as an opt-in feature. These are ultimately intended to be drop-in replacements for
+Immutable.js classes, but it's recommended that you use the functional options if you can, as the
+class implementations must reference every code path by design, which will make it harder to keep
+your applications bundle size to a minimum.
+
+### Installation
+
+```
+npm install --save collectable
+```
+
+or
+
+```
+yarn add collectable
+```
+
+### Importing Features
+
+Classes can be imported from the default package:
+
+```js
+import {PersistentList, PersistentMap, PersistentSet} from 'collectable';
+
+// or as a default import, if you prefer Immutable.js style:
+
+import Collectable from 'collectable';
+
+const list = Collectable.List.empty();
+const map = Collectable.Map.empty();
+const set = Collectable.Set.empty();
+```
+
+Pure functions for a given data structure can be imported from that structure's folder:
+
+```js
+import {emptyList, get, append} from 'collectable/lib/es2015/list';
+
+const empty = emptyList();
+const one = append(123, empty);
+assert(get(0, empty) === 123);
+```
+
+TypeScript generics are provided via type declarations or the TypeScript source itself:
+
+```js
+import {emptyMap, get, set} from 'collectable/lib/ts/map';
+
+const empty = emptyMap<string, number>();
+const one = set('a', 123, empty);
+assert(get('a', empty) === 123);
+```
+
+## Features
+
+- **Persistent List:** based on an enhanced [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf)
+  implementation, with very fast concatenation, insertion and deletion of ranges of values, etc. Most features are much
+  faster than Immutable.js, some by one or more orders of magnitude.
+
+**StopGaps:**
+
+These exist because they're needed now, but are backed by ES2015 Maps and Sets, and so copying of these is currently
+O(1). They will be replaced by proper persistent implementations soon. [TylorS](https://github.com/TylorS) has been
+putting together a [TypeScript adaptation](https://github.com/TylorS/typed-hashmap) of
+[Matt Bierner's HAMT](https://github.com/mattbierner/hamt_plus) implementation, a strong candidate for use in
+Collectable.js.
+
+- **Persistent Map:** follows the conventions of a typical Clojure-style persistent map
+- **Persistent Set:** backed by a persistent map
+
+## Ongoing Progress
+
+- See [the project board](https://github.com/frptools/collectable/projects/1) for current status and progress.
+- See [the roadmap](https://github.com/frptools/collectable/wiki) for plans for future development.

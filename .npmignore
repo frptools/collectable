@@ -1,1 +1,7 @@
+.devnotes/
 src/
+tests/
+docs/
+.build/
+visualiser/
+.vscode/

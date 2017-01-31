@@ -1,0 +1,37 @@
+import { COMMIT_MODE, OFFSET_ANCHOR } from './common';
+import { Slot } from './slot';
+export declare class View<T> {
+    group: number;
+    offset: number;
+    anchor: OFFSET_ANCHOR;
+    slotIndex: number;
+    sizeDelta: number;
+    slotsDelta: number;
+    parent: View<T>;
+    slot: Slot<T>;
+    static popReusableView<T>(group: number): View<T> | undefined;
+    static pushReusableView(view: View<any>): void;
+    static create<T>(group: number, offset: number, anchor: OFFSET_ANCHOR, slotIndex: number, sizeDelta: number, slotsDelta: number, parent: View<T>, slot: Slot<T>): View<T>;
+    constructor(group: number, offset: number, anchor: OFFSET_ANCHOR, slotIndex: number, sizeDelta: number, slotsDelta: number, parent: View<T>, slot: Slot<T>);
+    static empty<T>(anchor: OFFSET_ANCHOR): View<T>;
+    static none<T>(): View<T>;
+    isNone(): boolean;
+    isDefaultEmpty(): boolean;
+    isRoot(): boolean;
+    isEditable(group: number): boolean;
+    hasUncommittedChanges(): boolean;
+    bound(): number;
+    slotCount(): number;
+    recalculateDeltas(): void;
+    cloneToGroup(group: number): View<T>;
+    flipAnchor(listSize: number): void;
+    setCommitted(parent?: View<T>): void;
+    ensureEditable(group: number, ensureSlotEditable?: boolean): View<T>;
+    ensureSlotEditable(shallow?: boolean): Slot<T>;
+    ensureStatus(mode: COMMIT_MODE, enforceGroup: boolean): Slot<T>;
+    ensureChildReferenceStatus(childSlot: Slot<T>, index: number, mode: COMMIT_MODE): void;
+    setAsRoot(): void;
+    replaceSlot(slot: Slot<T>): void;
+    adjustSlotRange(padLeft: number, padRight: number, isLeaf: boolean): void;
+    disposeIfInGroup(...group: number[]): void;
+}
