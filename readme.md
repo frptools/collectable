@@ -45,7 +45,7 @@ If you are more comfortable working with classes, a class-based version of each 
 provided as an opt-in feature. These are ultimately intended to be drop-in replacements for
 Immutable.js classes, but it's recommended that you use the functional options if you can, as the
 class implementations must reference every code path by design, which will make it harder to keep
-your applications bundle size to a minimum.
+your application's bundle size to a minimum.
 
 ### Installation
 
