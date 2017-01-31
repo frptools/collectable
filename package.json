@@ -16,8 +16,8 @@
   ],
   "author": "Nathan Ridley",
   "license": "MIT",
-  "bugs": "https://github.com/frptools/collectable.js/issues",
-  "repository": "git@github.com:frptools/collectable.js.git",
+  "bugs": "https://github.com/frptools/collectable/issues",
+  "repository": "git@github.com:frptools/collectable.git",
   "devDependencies": {
     "@types/chai": "^3.4.34",
     "@types/chalk": "^0.4.31",
