@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "High Performance Immutable Collections",
   "main": "lib/es2015/index.js",
   "module": "lib/es2015/index.js",
