@@ -3,7 +3,7 @@
 > An persistent set data structure, backed by an immutable hash map
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
-[![NPM version](https://badge.fury.io/js/@collectable/set.svg)](http://badge.fury.io/js/@collectable/set)
+[![NPM version](https://badge.fury.io/js/%40collectable%2Fset.svg)](http://badge.fury.io/js/%40collectable%2Fset)
 [![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
 
 *This documentation is under construction. The list of functions, descriptions and examples are pending.*

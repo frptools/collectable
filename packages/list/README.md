@@ -3,7 +3,7 @@
 > A persistent vector structure based on a modified RRB Tree
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
-[![NPM version](https://badge.fury.io/js/@collectable/list.svg)](http://badge.fury.io/js/@collectable/list)
+[![NPM version](https://badge.fury.io/js/%40collectable%2Flist.svg)](http://badge.fury.io/js/%40collectable%2Flist)
 [![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
 
 Collectable's List structure is a Clojure-style persistent vector based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc. Most features are much faster than Immutable.js, some by one or more orders of magnitude.

@@ -8,10 +8,10 @@
 
 ## Available Data Structures
 
-- [ **[List](/packages/list)** ] A persistent vector structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc. Most features are much faster than Immutable.js, some by one or more orders of magnitude.
-- [ **[Map](/packages/map)** ] A Clojure-style hash-array-mapped trie, adapted by [TylorS](https://github.com/TylorS) from [Matt Bierner's HAMT](https://github.com/mattbierner/hamt_plus) implementation.  
+- [ **[List](/packages/list#collectablejs-immutable-list)** ] A persistent vector structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc. Most features are much faster than Immutable.js, some by one or more orders of magnitude.
+- [ **[Map](/packages/map#collectablejs-immutable-map)** ] A Clojure-style hash-array-mapped trie, adapted by [TylorS](https://github.com/TylorS) from [Matt Bierner's HAMT](https://github.com/mattbierner/hamt_plus) implementation.  
   *Note: stopgap ES6 Map-backed implementation currently in place, to be replaced shortly.*
-- [ **[Set](/packages/set)** ] A persistent set implementation, backed by our own immutable map structure.  
+- [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent set implementation, backed by our own immutable map structure.  
   *Note: stopgap ES6 Set-backed implementation currently in place, to be replaced shortly.*
 - [More to come...](/wiki)
 
@@ -30,10 +30,10 @@ TypeScript type definitions are included by default.
 ## Usage
 
 **API Reference:**
-[ [General](/docs/index.md)
-| [List](/packages/list/README.md)
-| [Map](/packages/map/README.md)
-| [Set](/packages/set/README.md)
+[ [General](/docs/index.md#collectablejs-general-api)
+| [List](/packages/list/README.md#collectablejs-immutable-list)
+| [Map](/packages/map/README.md#collectablejs-immutable-map)
+| [Set](/packages/set/README.md#collectablejs-immutable-set)
 | [Others...](/wiki) ]
 
 Individual data structures are pulled in automatically as dependencies of the main package. By having your project take a dependency on `collectable` itself, all data structures are made available implicitly as scoped imports, and operations on deeply-nested data structures are available via the main package.

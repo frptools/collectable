@@ -3,7 +3,7 @@
 > An persistent hash map (dictionary) data structure
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
-[![NPM version](https://badge.fury.io/js/@collectable/map.svg)](http://badge.fury.io/js/@collectable/map)
+[![NPM version](https://badge.fury.io/js/%40collectable%2Fmap.svg)](http://badge.fury.io/js/%40collectable%2Fmap)
 [![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
 
  A Clojure-style hash-array-mapped trie, adapted by [TylorS](https://github.com/TylorS) from [Matt Bierner's HAMT](https://github.com/mattbierner/hamt_plus) implementation.
