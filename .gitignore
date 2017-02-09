@@ -1,6 +1,5 @@
-node_modules/
 .build/
 .devnotes/
-.node_modules/
-lib/tests/
+node_modules/
+lib/
 *.log

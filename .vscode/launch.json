@@ -6,7 +6,7 @@
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceRoot}",
-      "outFiles": ["${workspaceRoot}/lib/**/*.js"],
+      "outFiles": ["${workspaceRoot}/.build/**/*.js"],
       "runtimeExecutable": "mocha",
       "windows": {
         "runtimeExecutable": "mocha.cmd"

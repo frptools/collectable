@@ -1,118 +1,80 @@
 # Collectable.js
 
-> A buffet of high-performance immutable data structures
+> An all-you-can-eat buffet of high-performance immutable/persistent data structures
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/collectable.svg)](http://badge.fury.io/js/collectable)
 [![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
 
-**The library is currently a work in progress**, with additional features and capabilities to be
-released as they are developed, with the ultimate goal to be a one-stop shop for your immutable data
-needs. See [the roadmap](https://github.com/frptools/collectable/wiki) for a better idea of what's
-planned.
+## Available Data Structures
 
-## Usage
+- [ **[List](/packages/list)** ] A persistent vector structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc. Most features are much faster than Immutable.js, some by one or more orders of magnitude.
+- [ **[Map](/packages/map)** ] A Clojure-style hash-array-mapped trie, adapted by [TylorS](https://github.com/TylorS) from [Matt Bierner's HAMT](https://github.com/mattbierner/hamt_plus) implementation.  
+  *Note: stopgap ES6 Map-backed implementation currently in place, to be replaced shortly.*
+- [ **[Set](/packages/set)** ] A persistent set implementation, backed by our own immutable map structure.  
+  *Note: stopgap ES6 Set-backed implementation currently in place, to be replaced shortly.*
+- [More to come...](/wiki)
 
-### Bundling and Distributable Packages
-
-Collectable.js does *not* provide a prebundled, minified distributable, as has been common practice
-for many years. In the latter part of the 21st century's second decade, we're now pretty much all
-building web applications using bundlers and loaders such as Gulp, Webpack and so forth. As the new
-generation of bundlers coming onto the market in the past year or so employ tree-shaking and dead
-code elimination techniques when combined with ES2015+ modules and import statements, a new paradigm
-for library development presents itself. By offering functionality as a set of import-what-you-want
-modules and functions, the library can offer a large array of features while not bloating your
-application's file size. Any features and internal code paths that remain unused by your application
-are discarded from the final build, keeping the file size as small as possible, depending on what
-you decide to import into your application.
-
-The following build variations are provided for you to reference directly, depending on your needs:
-
-- **ES5:** `/lib/es5` (transpiled without any ES2015 features)
-- **ES2015:** `/lib/es2015` (imported by default)
-- **TypeScript:** `/lib/ts` (pure TypeScript source)
-
-TypeScript typings are included by default with the ES builds.
-
-### Functional vs Object-Oriented
-
-A functional approach is favoured if you really want to keep your file size down. Simply import the
-functions relevant to the data structures you care about and ignore the rest. The collection reference
-argument passed to each function always comes last, making it easy to build lenses and create curried
-version of functions if you choose.
-
-If you are more comfortable working with classes, a class-based version of each structure is also
-provided as an opt-in feature. These are ultimately intended to be drop-in replacements for
-Immutable.js classes, but it's recommended that you use the functional options if you can, as the
-class implementations must reference every code path by design, which will make it harder to keep
-your application's bundle size to a minimum.
-
-### Installation
+## Installation
 
 ```
+# via NPM
 npm install --save collectable
-```
 
-or
-
-```
+# or Yarn
 yarn add collectable
 ```
 
-### Importing Features
+TypeScript type definitions are included by default.
 
-Classes can be imported from the default package:
+## Usage
 
-```js
-import {PersistentList, PersistentMap, PersistentSet} from 'collectable';
+**API Reference:**
+[ [General](/docs/index.md)
+| [List](/packages/list/README.md)
+| [Map](/packages/map/README.md)
+| [Set](/packages/set/README.md)
+| [Others...](/wiki) ]
 
-// or as a default import, if you prefer Immutable.js style:
+Individual data structures are pulled in automatically as dependencies of the main package. By having your project take a dependency on `collectable` itself, all data structures are made available implicitly as scoped imports, and operations on deeply-nested data structures are available via the main package.
 
-import Collectable from 'collectable';
-
-const list = Collectable.List.empty();
-const map = Collectable.Map.empty();
-const set = Collectable.Set.empty();
-```
-
-Pure functions for a given data structure can be imported from that structure's folder:
+For example, to use an immutable list:
 
 ```js
-import {emptyList, get, append} from 'collectable/lib/es2015/list';
+import {fromArray, arrayFrom} from '@collectable/list';
 
-const empty = emptyList();
-const one = append(123, empty);
-assert(get(0, empty) === 123);
+const list = fromArray(['X', 'Y']);
+const array = arrayFrom(list);
 ```
 
-TypeScript generics are provided via type declarations or the TypeScript source itself:
+Pre-curried versions of functions for a given data structure are available by appending `/curried` to the import path, like so:
+
+```ts
+import {fromArray, append} from '@collectable/list/curried';
+
+const two = fromArray(['X', 'Y']); // => [X, Y]
+const addZ = append('Z');
+const three = addZ(two); // => [X, Y, Z]
+```
+
+To combine multiple data structures effectively, import [universal methods](/docs/index.md) from the main package and collection-specific methods from other relevant packages as needed:
 
 ```js
-import {emptyMap, get, set} from 'collectable/lib/ts/map';
+import {fromObject, updateIn, setIn} from 'collectable';
+import {append} from '@collectable/list/curried';
 
-const empty = emptyMap<string, number>();
-const one = set('a', 123, empty);
-assert(get('a', empty) === 123);
+const input = {
+  foo: 'abc',
+  xyz: [3, [5, 6], 7, 9]
+};
+const map0 = fromObject(input); // <{foo: 'abc', xyz: <[3, [5, 6], 7, 9]>}>
+const map1 = updateIn(['xyz', 1, 0], n => 4, map0); // <{foo: 'abc', xyz: <[3, [4, 6], 7, 9]>}>
+const map2 = setIn(['foo', 'bar'], x => 'baz', map1); // <{foo: <{bar: 'baz'}>, xyz: ...>
+const map3 = updateIn(['xyz', 1], append(42)); // <{..., xyz: <[3, [5, 6, 42], 7, 9]>}>
 ```
 
-## Features
+Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to take the whole package as a dependency while excluding anything you don't use from the final build.
 
-- **Persistent List:** based on an enhanced [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf)
-  implementation, with very fast concatenation, insertion and deletion of ranges of values, etc. Most features are much
-  faster than Immutable.js, some by one or more orders of magnitude.
+----
 
-**StopGaps:**
-
-These exist because they're needed now, but are backed by ES2015 Maps and Sets, and so copying of these is currently
-O(1). They will be replaced by proper persistent implementations soon. [TylorS](https://github.com/TylorS) has been
-putting together a [TypeScript adaptation](https://github.com/TylorS/typed-hashmap) of
-[Matt Bierner's HAMT](https://github.com/mattbierner/hamt_plus) implementation, a strong candidate for use in
-Collectable.js.
-
-- **Persistent Map:** follows the conventions of a typical Clojure-style persistent map
-- **Persistent Set:** backed by a persistent map
-
-## Ongoing Progress
-
-- See [the project board](https://github.com/frptools/collectable/projects/1) for current status and progress.
-- See [the roadmap](https://github.com/frptools/collectable/wiki) for plans for future development.
+Issues should be reported 

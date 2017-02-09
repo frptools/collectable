@@ -1,7 +1,7 @@
+.build/
 .devnotes/
+.vscode/
 src/
 tests/
 docs/
-.build/
-visualiser/
-.vscode/
+packages/

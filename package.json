@@ -1,11 +1,11 @@
 {
   "name": "collectable",
-  "version": "0.1.2",
-  "description": "High Performance Immutable Collections",
-  "main": "lib/es2015/index.js",
-  "module": "lib/es2015/index.js",
-  "jsnext:main": "lib/es2015/index.js",
-  "typings": "lib/es2015/index.d.ts",
+  "version": "0.2.0",
+  "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
+  "main": "lib/index.js",
+  "module": "lib/index.js",
+  "jsnext:main": "lib/index.js",
+  "typings": "lib/index.d.ts",
   "scripts": {
     "test": "mocha --opts ./mocha.opts",
     "test-dev": "mocha --opts ./mocha.opts --watch --bail",
@@ -14,22 +14,25 @@
   "files": [
     "lib"
   ],
-  "author": "Nathan Ridley",
+  "contributors": [
+    "Nathan Ridley <axefrog@gmail.com> (https://github.com/axefrog)",
+    "Tylor Steinberger <tlsteinberger167@gmail.com> (https://github.com/TylorS)"
+  ],
   "license": "MIT",
   "bugs": "https://github.com/frptools/collectable/issues",
   "repository": "git@github.com:frptools/collectable.git",
   "devDependencies": {
     "@types/chai": "^3.4.34",
     "@types/chalk": "^0.4.31",
-    "@types/mocha": "^2.2.38",
-    "@types/node": "^6.0.46",
+    "@types/mocha": "^2.2.39",
+    "@types/node": "^7.0.5",
     "chai": "^3.5.0",
     "gulp": "^3.9.1",
     "gulp-mocha": "^3.0.1",
     "gulp-plumber": "^1.1.0",
-    "gulp-sourcemaps": "^2.4.0",
+    "gulp-sourcemaps": "^2.4.1",
     "gulp-transform": "^1.1.0",
-    "gulp-tslint": "^7.0.1",
+    "gulp-tslint": "^7.1.0",
     "gulp-typedoc": "^2.0.2",
     "gulp-typescript": "^3.1.4",
     "merge2": "^1.0.3",
@@ -38,6 +41,15 @@
     "source-map-support": "^0.4.11",
     "tslint": "^4.4.2",
     "typedoc": "^0.5.5",
-    "typescript": "^2.1.5"
+    "typedoc-plugin-external-module-map": "^0.0.6",
+    "typescript": "^2.1.5",
+    "yargs": "^6.6.0"
+  },
+  "dependencies": {
+    "@typed/curry": "latest",
+    "@collectable/core": "latest",
+    "@collectable/list": "latest",
+    "@collectable/map": "latest",
+    "@collectable/set": "latest"
   }
 }

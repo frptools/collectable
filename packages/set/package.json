@@ -1,0 +1,22 @@
+{
+  "name": "@collectable/set",
+  "version": "0.1.0",
+  "description": "[Collectable.js] Immutable Set",
+  "main": "lib/commonjs/index.js",
+  "module": "lib/module/index.js",
+  "jsnext:main": "lib/module/index.js",
+  "typings": "lib/typings/index.d.ts",
+  "scripts": {
+    "test-dev": "cd ../.. && mocha --require source-map-support/register --ui tdd --watch --bail .build/packages/list/tests/**/*.js"
+  },
+  "files": ["lib"],
+  "contributors": [
+    "Nathan Ridley <axefrog@gmail.com>"
+  ],
+  "license": "MIT",
+  "bugs": "https://github.com/frptools/collectable/issues",
+  "repository": "git@github.com:frptools/collectable.git",
+  "dependencies": {
+    "@collectable/core": "latest"
+  }
+}

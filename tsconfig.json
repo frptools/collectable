@@ -11,10 +11,12 @@
     "removeComments": true,
     "noUnusedLocals": true,
     "outDir": "./.build",
-    "lib": ["dom", "es5", "es6"]
+    "lib": ["dom", "es5", "es6", "es2015"]
   },
   "include": [
     "./src/**/*.ts",
-    "./tests/**/*.ts"
+    "./tests/**/*.ts",
+    "./packages/*/src/**/*.ts",
+    "./packages/*/tests/**/*.ts"
   ]
 }
