@@ -7,6 +7,7 @@
   "jsnext:main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
+    "build": "gulp build",
     "test": "mocha --opts ./mocha.opts",
     "test-dev": "mocha --opts ./mocha.opts --watch --bail",
     "test-dev-mem": "node --max_old_space_size=8192 ./node_modules/mocha/bin/_mocha --opts ./mocha.opts --watch --bail"
