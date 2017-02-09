@@ -35,28 +35,20 @@ function hashObject(o: Object): number {
   return n;
 }
 
-function hashNumber(n): number {
+function hashNumber(n: number): number {
   if(n !== n || n === Infinity) return 0;
   var h = n | 0;
-  if (h !== n) {
-    h ^= n * 0xFFFFFFFF;
-  }
-  while (n > 0xFFFFFFFF) {
-    n /= 0xFFFFFFFF;
-    h ^= n;
-  }
+  if(h !== n) h ^= n * 0xFFFFFFFF;
+  while(n > 0xFFFFFFFF) h ^= (n /= 0xFFFFFFFF);
   return opt(n);
 }
 
 function hashString(str: string): number {
-  var h = 5381;
-  for(var i = 0; i < str.length; i++) {
-    var c = str.charCodeAt(i);
-    h = ((h << 5) + h) + c;
-  }
+  var h = 5381, i = str.length;
+  while(i) h = (h * 33) ^ str.charCodeAt(--i);
   return opt(h);
 }
 
 function opt(n: number) {
-  return (n & 0xbfffffff) & ((n >>> 1) & 0x40000000);
+  return (n & 0xbfffffff) | ((n >>> 1) & 0x40000000);
 }
