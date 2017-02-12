@@ -10,6 +10,10 @@ const LIST_TYPE: IndexableCollectionTypeInfo = {
   type: Symbol('Collectable.List'),
   indexable: true,
 
+  equals(other: List<any>, list: List<any>): boolean {
+    return isEqual(other, list);
+  },
+
   unwrap(list: List<any>): any {
     return unwrap(true, list);
   },
@@ -42,7 +46,7 @@ export class List<T> implements Collection<T> {
 
   constructor(
     public _group: number, // Constructs of this tree can only be written to if they are members of this group
-    public _owner: number, // The structure is freely mutable if owner === batch.current || owner === -1
+    public _owner: number, // The structure is freely mutable if isMutable(owner)
     public _size: number,
     public _lastWrite: OFFSET_ANCHOR,
     public _left: View<T>,
@@ -51,10 +55,6 @@ export class List<T> implements Collection<T> {
 
   [Symbol.iterator](): IterableIterator<T|undefined> {
     return createIterator(this);
-  }
-
-  equals(other: List<T>): boolean {
-    return isEqual(this, other);
   }
 }
 

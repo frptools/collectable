@@ -5,6 +5,10 @@ const SET_TYPE: CollectionTypeInfo = {
   type: Symbol('Collectable.Set'),
   indexable: false,
 
+  equals(other: any, collection: any): boolean {
+    return isEqual(other, collection);
+  },
+
   unwrap(set: HashSet<any>): any {
     return unwrap(true, set);
   }
@@ -21,10 +25,6 @@ export class HashSet<T> implements Collection<T> {
 
   [Symbol.iterator](): IterableIterator<T> {
     return iterate<T>(this);
-  }
-
-  equals(other: HashSet<T>): boolean {
-    return isEqual(this, other);
   }
 }
 

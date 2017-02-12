@@ -5,6 +5,10 @@ const MAP_TYPE: IndexableCollectionTypeInfo = {
   type: Symbol('Collectable.List'),
   indexable: true,
 
+  equals(other: any, collection: any): boolean {
+    return isEqual(other, collection);
+  },
+
   unwrap(collection: any): any {
     return unwrap(true, collection);
   },
@@ -41,10 +45,6 @@ export class HashMap<K, V> implements Collection<[K, V]> {
 
   [Symbol.iterator](): IterableIterator<[K, V]|undefined> {
     return iterate<K, V>(this);
-  }
-
-  equals(other: HashMap<K, V>): boolean {
-    return isEqual(this, other);
   }
 }
 
