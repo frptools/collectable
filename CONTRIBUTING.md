@@ -55,10 +55,6 @@ class Foo<T> implements Collection<T> {
   [Symbol.iterator](): IterableIterator<T|undefined> {
     return createIterator(this); // you'll need to implement this yourself
   }
-
-  equals(other: Foo<T>): boolean {
-    return isEqual(this, other); // as above, implement this yourself
-  }
 }
 ```
 
@@ -90,7 +86,11 @@ There are two main interfaces you can implement:
 ```ts
 const FOO_TYPE: CollectionTypeInfo = {
   type: Symbol('Collectable.Foo'), // provide a unique symbol for this
-  indexable: false,                 // indicates that your structure matches keys to values in some way
+  indexable: false,                // indicates that your structure matches keys to values in some way
+
+  equals(other: any, collection: any): boolean {
+    return equals(this, other);    // determine if two instances of your structure have the same data
+  }
 
   unwrap(collection: any): any {   // converts the instance back into a native JavaScript object or array
     return unwrap(true, list);     // you'll need to implement this yourself
