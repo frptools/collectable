@@ -15,6 +15,8 @@
   *Note: stopgap ES6 Set-backed implementation currently in place, to be replaced shortly.*
 - [More to come...](/wiki)
 
+What to help out? See [the guide for contributors](CONTRIBUTING.md).
+
 ## Installation
 
 ```
