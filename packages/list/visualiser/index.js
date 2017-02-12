@@ -430,7 +430,7 @@ function renderNode(listIndex, {slot, hasChildren, isLeaf, isPlaceholder, views,
   var recompute = slot.recompute;
   var isRelaxed = slot.recompute !== -1;
   var slots = isLeaf || hasChildren
-    ? slot.slots.map((value, i) => !value
+    ? slot.slots.map((value, i) => value === void 0 || value === null
       ? div('.slot.void', {class: {leaf: isLeaf}}, [span('.slot-index', i.toString())])
       : isLeaf
         ? div('.slot.leaf', value === void 0 || value === null ? '-' : value.toString())
@@ -930,11 +930,6 @@ function main({DOM, events}) {
 
       var list3 = L.concat(list1, list2);
       publish(list3, true, `list #3 size: ${list3.size}`);
-
-      // commitToRoot(list1);
-      // commitToRoot(list2);
-      // commitToRoot(list3);
-
       publish(list1, true, 'list1: X + leftValues');
       publish(list2, true, 'list2: Y + rightValues');
       publish(list3, true, 'list3');
@@ -1154,6 +1149,53 @@ function main({DOM, events}) {
       var list3 = list0.delete(BRANCH_FACTOR - 1);
     }
 
+    function runCompositeTests() {
+      beginCollectingLogs();
+      var list = L.empty();
+      for(var i = 0, m = BRANCH_FACTOR*(BRANCH_FACTOR + 2); i < m; i++) {
+        list = L.append(`+${i+1}`, list);
+        publish(list, true, `appended "+${i+1}" --> list size: ` + list._size);
+        i++;
+        list = L.prepend(`-${i+1}`, list);
+        publish(list, true, `prepended "-${i+1}" --> list size: ` + list._size);
+      }
+    }
+
+    function runCompositeTests2() {
+      beginCollectingLogs();
+      var list = L.empty();
+      var offset = BRANCH_FACTOR + (BRANCH_FACTOR >>> 2);
+      var values = [];
+      for(var i = 0, m = BRANCH_FACTOR*BRANCH_FACTOR*(BRANCH_FACTOR + 2); i < m; i++) {
+        var value = `+${i+1}`;
+        list = L.append(value, list);
+        publish(list, true, `appended "${value}" --> list size: ` + list._size);
+        values.push(value);
+        value = `-${(++i)+1}`;
+        list = L.prepend(value, list);
+        values.unshift(value);
+        publish(list, true, `prepended "-${i+1}" --> list size: ` + list._size);
+        if(offset + 1 < list._size) {
+          var a = L.get(offset, list);
+          publish(list, true, `get at ${offset}: "${a}", should be: "${values[offset]}"`);
+          var b = L.get(-offset, list);
+          publish(list, true, `get at ${-offset}: "${b}", should be: "${values[values.length - offset]}"`);
+        }
+      }
+    }
+
+    function runCompositeTests3() {
+      beginCollectingLogs();
+      var list = L.empty();
+      for(var i = 0; i < 1100; i++) {
+        list = L.append(i, list);
+        publish(list, true, `appended "${i}" --> list size: ` + list._size);
+        var index = L.size(list) >>> 1;
+        var value = L.get(index, list);
+        publish(list, true, `get at ${index}: "${value}"`);
+      }
+    }
+
     function runUpdateTests() {
       beginCollectingLogs();
 
@@ -1189,7 +1231,7 @@ function main({DOM, events}) {
       publish(list2, true, `updated list`);
     }
 
-    runConcatTests4();
+    runCompositeTests3();
 
   }, 100);
 })();

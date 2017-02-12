@@ -47,10 +47,10 @@
     "yargs": "^6.6.0"
   },
   "dependencies": {
-    "@typed/curry": "latest",
     "@collectable/core": "latest",
     "@collectable/list": "latest",
     "@collectable/map": "latest",
-    "@collectable/set": "latest"
+    "@collectable/set": "latest",
+    "@typed/curry": "latest"
   }
 }

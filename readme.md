@@ -41,10 +41,10 @@ Individual data structures are pulled in automatically as dependencies of the ma
 For example, to use an immutable list:
 
 ```js
-import {fromArray, arrayFrom} from '@collectable/list';
+import {fromArray, unwrap} from '@collectable/list';
 
 const list = fromArray(['X', 'Y']);
-const array = arrayFrom(list);
+const array = unwrap(list);
 ```
 
 Pre-curried versions of functions for a given data structure are available by appending `/curried` to the import path, like so:
@@ -74,7 +74,3 @@ const map3 = updateIn(['xyz', 1], append(42)); // <{..., xyz: <[3, [5, 6, 42], 7
 ```
 
 Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to take the whole package as a dependency while excluding anything you don't use from the final build.
-
-----
-
-Issues should be reported 

@@ -18,17 +18,55 @@ const tsproj = {
   tests: ts.createProject(`./tsconfig.json`, {rootDir: `${path}/`, noUnusedLocals: false})
 };
 
-function removeDebugLines(buffer) {
+/*
+  Preprocessor Directives
+  =======================
+
+  // --- OMIT A SINGLE LINE ----------------------------------------------------
+
+  log("This line will be excluded from the build"); // ## DEBUG ONLY
+
+  // --- OMIT A WHOLE BLOCK ----------------------------------------------------
+
+  // ## DEBUG START
+  console.warn('This line will be excluded.');
+  write('This line too.');
+  // ## DEBUG END
+
+  // --- USE A DIFFERENT VALUE IN PRODUCTION -----------------------------------
+
+  var value = ⁄* ## DEBUG USE: *⁄ 3 ⁄* ## PRODUCTION USE: [[27]] *⁄;
+  // The production build for the above line will render as:
+  var value = 27;
+
+  ⁄* ## DEBUG USE: *⁄
+  trace.silent(status1);
+  trace.silent(status2);
+  ⁄* ## PRODUCTION USE: [[
+  trace.verbose(status1);
+  trace.verbose(status2);
+  ]] *⁄
+
+  // The production build for the above lines will render as:
+  trace.verbose(status1);
+  trace.verbose(status2);
+*/
+
+function preprocessSourceText(buffer) {
   const src = buffer.toString();
   return src
     .replace(/.*\/\/ ## DEBUG ONLY\s*(\n|$)/g, ``)
     .replace(/^.*\/\/ ## DEBUG START\s*(\n|$)[\s\S]*?\/\/ ## DEBUG END\s*(\n|$)/gm, ``)
+    .replace(/\/\* ## DEBUG USE: \*\/*[\s\S]*?\/\* ## PRODUCTION USE: \[\[\n*([^\)]+?)\n*\]\] \*\//gm, `$1`)
+    .replace(/\/\* ## DEBUG ONLY [[\s*\*\/*[\s\S]*?\/\*\s*?\]\] ## \*\//gm, ``)
     .replace(/^(\r\n){2,}/mg, `$1`);
 }
 
-function replaceTestSrcPaths(buffer) {
-  const src = buffer.toString();
-  return src.replace(/..\/src/g, `../../lib/commonjs`);
+function replace(a, b) {
+  return function(buffer) {
+    const src = buffer.toString();
+    return src.replace(a, b);
+  }
 }
 
 function compile() {
@@ -49,21 +87,29 @@ function compile() {
     ts_module.dts
       .pipe(gulp.dest(`${path}/lib/typings`)),
 
-    gulp.src(`${path}/tests/**/*.ts`)
+    gulp.src(`${path}/.build/tests.ts/**/*.ts`)
       .pipe(plumber())
       .pipe(sourcemaps.init())
       .pipe(tsproj.tests()).js
-      .pipe(transform(replaceTestSrcPaths))
+      .pipe(transform(replace(/\.\.\/ts/g, `../../lib/commonjs`)))
       .pipe(sourcemaps.write(`./`))
       .pipe(gulp.dest(`${path}/.build/tests`))
   ]);
 }
 
 function preprocess() {
-  return gulp.src(`${path}/src/**/*.ts`)
-    .pipe(plumber())
-    .pipe(transform(removeDebugLines))
-    .pipe(gulp.dest(`${path}/.build/ts`));
+  return merge([
+    gulp.src(`${path}/src/**/*.ts`)
+      .pipe(plumber())
+      .pipe(transform(preprocessSourceText))
+      .pipe(gulp.dest(`${path}/.build/ts`)),
+
+    gulp.src(`${path}/tests/**/*.ts`)
+      .pipe(plumber())
+      .pipe(transform(preprocessSourceText))
+      .pipe(transform(replace(/\.\.\/src/g, `../ts`)))
+      .pipe(gulp.dest(`${path}/.build/tests.ts`)),
+  ]);
 }
 
 function lint() {

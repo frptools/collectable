@@ -1,3 +1,5 @@
+import {log, publish} from './debug'; // ## DEBUG ONLY
+import {List} from './list'; // ## DEBUG ONLY
 import {nextId, abs, max, copyArray} from '@collectable/core';
 import {CONST, COMMIT_MODE} from './common';
 
@@ -90,7 +92,8 @@ export class Slot<T> {
     this.slots.length = actual.slots.length;
   }
 
-  resolveChild(ordinal: number, shift: number, out: ChildSlotOutParams<T>): boolean {
+  resolveChild(ordinal: number, shift: number, out: ChildSlotOutParams<T>/* ## DEBUG ONLY [[ */, list: List<T>/* ]] ## */): boolean {
+    log(`[Slot#resolveChild (slot:${this.id})] ordinal: ${ordinal}, shift: ${shift}, recompute: ${this.recompute}`); // ## DEBUG ONLY
     if(shift === 0) {
       if(ordinal >= this.slots.length) return false;
       out.slot = this.slots[ordinal];
@@ -100,6 +103,7 @@ export class Slot<T> {
     }
 
     var slotIndex = (ordinal >>> shift) & CONST.BRANCH_INDEX_MASK;
+    log(`[Slot#resolveChild (slot:${this.id})] slot index is: ${slotIndex}`); // ## DEBUG ONLY
     if(slotIndex >= this.slots.length) return false;
 
     if(this.recompute === -1) {
@@ -108,9 +112,9 @@ export class Slot<T> {
       out.offset = slotIndex << shift;
       return true;
     }
-
     var invalidFromIndex = this.slots.length - this.recompute;
     var slot: Slot<T>, i: number;
+    log(`[Slot#resolveChild (slot:${this.id})] slot index is: ${slotIndex}`); // ## DEBUG ONLY
     if(slotIndex < invalidFromIndex) {
       do {
         slot = <Slot<T>>this.slots[slotIndex];
@@ -128,17 +132,21 @@ export class Slot<T> {
     var sum = invalidFromIndex === 0 ? 0 : (<Slot<T>>this.slots[invalidFromIndex - 1]).sum;
     var lastIndex = this.slots.length - 1;
     var found = false;
+    publish(list, false, `State of list prior to slot recomputation`); // ## DEBUG ONLY
     this.recompute = 0;
 
     for(i = invalidFromIndex; i <= lastIndex; i++) {
+      log(`[Slot#resolveChild (slot:${this.id})] recomputing. current slot index is ${i}, sum is ${sum}.`); // ## DEBUG ONLY
       if(i === lastIndex && sum === maxSum && !(<Slot<T>>this.slots[i]).isRelaxed()) {
         this.recompute = -1;
+        log(`[Slot#resolveChild (slot:${this.id})] no relaxed slots; converting back to standard slot`); // ## DEBUG ONLY
         if(!found) {
           slot = <Slot<T>>this.slots[i];
           if(sum + slot.size > ordinal) {
             out.slot = slot;
             out.index = i;
-            out.offset = sum - slot.size;
+            out.offset = sum;
+            log(`[Slot#resolveChild (slot:${this.id})] at last slot; target not found yet, so the last slot is it. size: ${slot.size}, index: ${out.index}`); // ## DEBUG ONLY
             found = true;
           }
         }
@@ -153,9 +161,11 @@ export class Slot<T> {
             this.slots[i] = slot = slot.shallowClone(COMMIT_MODE.NO_CHANGE);
           }
           slot.sum = sum;
+          log(`[Slot#resolveChild (slot:${this.id})] sum of slot at index ${i} updated to ${sum}`); // ## DEBUG ONLY
         }
 
         if(!found && sum > ordinal) {
+          log(`[Slot#resolveChild (slot:${this.id})] found slot at index: ${out.index}`); // ## DEBUG ONLY
           out.slot = slot;
           out.index = i;
           out.offset = sum - slot.size;
@@ -163,6 +173,9 @@ export class Slot<T> {
         }
       }
     }
+
+    log(`[Slot#resolveChild (slot:${this.id})] out.index: ${out.index}, out.offset: ${out.offset}`); // ## DEBUG ONLY
+    publish(list, false, `Slot recomputation completed`); // ## DEBUG ONLY
 
     return found;
   }

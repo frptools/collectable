@@ -1,3 +1,4 @@
+import {log, publish} from './debug'; // ## DEBUG ONLY
 import {min} from '@collectable/core';
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, modulo, shiftDownRoundUp} from './common';
 import {TreeWorker} from './traversal';
@@ -136,7 +137,8 @@ function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAdd
   do {
     if(++debugLoopCounter > 10) throw new Error('Infinite capacity loop'); // ## DEBUG ONLY
     shift += CONST.BRANCH_INDEX_BITCOUNT;
-    numberOfAddedSlots = calculateSlotsToAdd(view.isRoot() ? 1 : view.parent.slotCount(), shiftDownRoundUp(remainingSize, shift));
+    var isRoot = view.isRoot();
+    numberOfAddedSlots = calculateSlotsToAdd(isRoot ? 1 : view.parent.slotCount(), shiftDownRoundUp(remainingSize, shift));
     expand.sizeDelta = min(remainingSize, numberOfAddedSlots << shift);
     remainingSize -= expand.sizeDelta;
     if(prepend) {
@@ -146,12 +148,13 @@ function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAdd
       expand.padRight = numberOfAddedSlots;
     }
 
-    var ascendMode = worker.hasOtherView() && worker.other.slot.isReserved() && view.isRoot() ? COMMIT_MODE.RESERVE : COMMIT_MODE.RELEASE_DISCARD;
+    var ascendMode = worker.hasOtherView() && ((worker.other.slot.isReserved() && isRoot) || worker.committedOther)
+      ? COMMIT_MODE.RESERVE : COMMIT_MODE.RELEASE_DISCARD;
     view = worker.ascend(ascendMode, expand);
+    log(`[increaseUpperCapacity] ascended tree to view ${view.id}`); // ## DEBUG ONLY
 
-    if(numberOfAddedSlots && (prepend && view.anchor === OFFSET_ANCHOR.LEFT) || (!prepend && view.anchor === OFFSET_ANCHOR.RIGHT)) {
-      view.flipAnchor(list._size);
-    }
+    var wasFlipped = numberOfAddedSlots && (prepend && view.anchor === OFFSET_ANCHOR.LEFT) || (!prepend && view.anchor === OFFSET_ANCHOR.RIGHT);
+    if(wasFlipped) view.flipAnchor(list._size);
 
     if(prepend) {
       collector.index -= shiftDownRoundUp(expand.sizeDelta, CONST.BRANCH_INDEX_BITCOUNT);
@@ -166,6 +169,7 @@ function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAdd
       if(prepend) {
         collector.restore();
       }
+      if(wasFlipped) view.flipAnchor(list._size);
     }
 
   } while(remainingSize > 0);
@@ -194,6 +198,7 @@ function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAdd
  * @returns {number} An updated `nodeIndex` value to be used in subsequent subtree population operations
  */
 function populateSubtrees<T>(list: List<T>, collector: Collector<T>, view: View<T>, topLevelIndex: number, slotIndexBoundary: number, capacity: number, isFinalStage: boolean): void {
+  publish(list, false, `Subtrees are about to be populated`); // ## DEBUG ONLY
   var levelIndex = topLevelIndex - 1;
   var remaining = capacity;
   var shift = CONST.BRANCH_INDEX_BITCOUNT * topLevelIndex;
@@ -293,6 +298,7 @@ function populateSubtrees<T>(list: List<T>, collector: Collector<T>, view: View<
         slotIndices[levelIndex] = slotIndex;
       }
     }
+    publish(list, false, `One cycle of subtree population has been completed`); // ## DEBUG ONLY
   } while(levelIndex < topLevelIndex);
 }
 

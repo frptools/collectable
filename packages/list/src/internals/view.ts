@@ -65,6 +65,7 @@ export class View<T> {
   ) {
     this.parent = parent;
     this.slotIndex = slotIndex;
+    log(`[View#construct] ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view ${this.id} constructed with parent view ${parent ? parent.id : '(void)'}, offset ${offset}, and slot index ${slotIndex}.`); // ## DEBUG ONLY
   }
 
   static empty<T>(anchor: OFFSET_ANCHOR): View<T> {
@@ -77,6 +78,10 @@ export class View<T> {
 
   isNone(): boolean {
     return this.group === 0;
+  }
+
+  isAnchoredIncorrectly(prepend: boolean|number): boolean {
+    return this.anchor === (prepend ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT);
   }
 
   isDefaultEmpty(): boolean {
@@ -111,11 +116,13 @@ export class View<T> {
   }
 
   cloneToGroup(group: number): View<T> {
+    log(`[View#cloneToGroup (id:${this.id})] Cloning to group ${group}.`); // ## DEBUG ONLY
     return View.create<T>(group, this.offset, this.anchor, this.slotIndex, this.sizeDelta, this.slotsDelta, this.parent, this.slot);
   }
 
   flipAnchor(listSize: number): void {
     this.anchor = invertAnchor(this.anchor);
+    log(`[View#flipAnchor (id:${this.id})] Flipped anchor ${this.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} (based on list size: ${listSize})`); // ## DEBUG ONLY
     if(!this.isRoot()) {
       this.offset = invertOffset(this.offset, this.slot.size, listSize);
     }
