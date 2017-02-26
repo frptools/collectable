@@ -1,5 +1,5 @@
-import {log} from './debug'; // ## DEBUG ONLY
-import {nextId} from '@collectable/core'; // ## DEBUG ONLY
+import {log} from './debug'; // ## DEV ##
+import {nextId} from '@collectable/core'; // ## DEV ##
 import {abs, isUndefined} from '@collectable/core';
 import {OFFSET_ANCHOR, invertOffset, invertAnchor} from './common';
 import {Slot, emptySlot} from './slot';
@@ -17,7 +17,7 @@ export class View<T> {
   }
 
   static pushReusableView(view: View<any>): void {
-    log(`[View.pushReusableView] View ${view.id} is being cleared and cached for reuse by future operations.`); // ## DEBUG ONLY
+    log(`[View.pushReusableView] View ${view.id} is being cleared and cached for reuse by future operations.`); // ## DEV ##
     view.slot = Slot.empty<any>();
     var next = _nextReusableView;
     if(next.group > 50) return; // group property reused as stack size counter
@@ -40,7 +40,7 @@ export class View<T> {
     if(isUndefined(view)) {
       return new View<T>(group, offset, anchor, slotIndex, sizeDelta, slotsDelta, parent, slot);
     }
-    log(`[View.pushReusableView] View ${view.id} has been retrieved from the reusable view cache, rather than allocating a new view object.`); // ## DEBUG ONLY
+    log(`[View.pushReusableView] View ${view.id} has been retrieved from the reusable view cache, rather than allocating a new view object.`); // ## DEV ##
     view.group = group;
     view.offset = offset;
     view.anchor = anchor;
@@ -52,7 +52,7 @@ export class View<T> {
     return view;
   }
 
-  public id = nextId(); // ## DEBUG ONLY
+  public id = nextId(); // ## DEV ##
   constructor(
     public group: number,
     public offset: number,
@@ -65,7 +65,7 @@ export class View<T> {
   ) {
     this.parent = parent;
     this.slotIndex = slotIndex;
-    log(`[View#construct] ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view ${this.id} constructed with parent view ${parent ? parent.id : '(void)'}, offset ${offset}, and slot index ${slotIndex}.`); // ## DEBUG ONLY
+    log(`[View#construct] ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view ${this.id} constructed with parent view ${parent ? parent.id : '(void)'}, offset ${offset}, and slot index ${slotIndex}.`); // ## DEV ##
   }
 
   static empty<T>(anchor: OFFSET_ANCHOR): View<T> {
@@ -116,13 +116,13 @@ export class View<T> {
   }
 
   cloneToGroup(group: number): View<T> {
-    log(`[View#cloneToGroup (id:${this.id})] Cloning to group ${group}.`); // ## DEBUG ONLY
+    log(`[View#cloneToGroup (id:${this.id})] Cloning to group ${group}.`); // ## DEV ##
     return View.create<T>(group, this.offset, this.anchor, this.slotIndex, this.sizeDelta, this.slotsDelta, this.parent, this.slot);
   }
 
   flipAnchor(listSize: number): void {
     this.anchor = invertAnchor(this.anchor);
-    log(`[View#flipAnchor (id:${this.id})] Flipped anchor ${this.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} (based on list size: ${listSize})`); // ## DEBUG ONLY
+    log(`[View#flipAnchor (id:${this.id})] Flipped anchor ${this.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} (based on list size: ${listSize})`); // ## DEV ##
     if(!this.isRoot()) {
       this.offset = invertOffset(this.offset, this.slot.size, listSize);
     }
@@ -196,9 +196,9 @@ export class View<T> {
  * @export
  * */
 var voidView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, <any>void 0, emptySlot);
-voidView.id = 0; // ## DEBUG ONLY
+voidView.id = 0; // ## DEV ##
 var emptyLeftView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, voidView, emptySlot);
-emptyLeftView.id = 0; // ## DEBUG ONLY
+emptyLeftView.id = 0; // ## DEV ##
 var emptyRightView = new View<any>(0, 0, OFFSET_ANCHOR.RIGHT, 0, 0, 0, voidView, emptySlot);
-emptyRightView.id = 0; // ## DEBUG ONLY
+emptyRightView.id = 0; // ## DEV ##
 var _nextReusableView = voidView;

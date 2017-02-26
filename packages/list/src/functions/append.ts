@@ -1,5 +1,5 @@
 import {isImmutable} from '@collectable/core';
-import {log} from '../internals/debug'; // ## DEBUG ONLY
+import {log} from '../internals/debug'; // ## DEV ##
 import {CONST, OFFSET_ANCHOR, List, cloneAsMutable, appendValues, ensureImmutable} from '../internals';
 
 /**
@@ -14,7 +14,7 @@ export function append<T>(value: T, list: List<T>): List<T> {
   var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
   var tail = list._right;
   var slot = tail.slot;
-  log(`Begin append of value "${value}" to list of size ${list._size}`); // ## DEBUG ONLY
+  log(`Begin append of value "${value}" to list of size ${list._size}`); // ## DEV ##
   if(tail.group !== 0 && tail.offset === 0 && slot.group !== 0 && slot.size < CONST.BRANCH_FACTOR) {
     list._lastWrite = OFFSET_ANCHOR.RIGHT;
     list._size++;

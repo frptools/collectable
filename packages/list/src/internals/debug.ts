@@ -1,11 +1,11 @@
-// ## DEBUG START
+// ## DEV [[
 export function log(...args: any[])
 export function log() {
   publish(Array.from(arguments));
 }
 
 var __publishCallback: Function;
-export function publish(...args: any[]): void
+export function publish(...args: any[]): void;
 export function publish(): void {
   if(__publishCallback) __publishCallback.apply(null, arguments);
 }
@@ -19,4 +19,4 @@ if(typeof window !== 'undefined') {
     log(ev.error);
   });
 }
-// ## DEBUG END
+// ]] ##

@@ -91,7 +91,7 @@ export function makeStandardSlot(requiredSize: number, level: number, valueOffse
     }
   }
   var slot = new Slot<any>(1, size, 0, -1, subcount, slots);
-  delete slot.id; // ## DEBUG ONLY
+  delete slot.id; // ## DEV ##
   return slot;
 }
 
@@ -104,7 +104,7 @@ export function makeRelaxedSlot(slots: Slot<any>[]): Slot<any> {
     slot.sum = sum;
   });
   var slot = new Slot<any>(1, size, 0, 0, subcount, slots);
-  delete slot.id; // ## DEBUG ONLY
+  delete slot.id; // ## DEV ##
   return slot;
 }
 

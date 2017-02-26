@@ -24,28 +24,39 @@ const tsproj = {
 
   // --- OMIT A SINGLE LINE ----------------------------------------------------
 
-  log("This line will be excluded from the build"); // ## DEBUG ONLY
+  log("This line will be excluded from the build"); // ## DEV ##
 
   // --- OMIT A WHOLE BLOCK ----------------------------------------------------
 
-  // ## DEBUG START
+  // ## DEV [[
   console.warn('This line will be excluded.');
   write('This line too.');
-  // ## DEBUG END
+  // ]] ##
 
   // --- USE A DIFFERENT VALUE IN PRODUCTION -----------------------------------
 
-  var value = ⁄* ## DEBUG USE: *⁄ 3 ⁄* ## PRODUCTION USE: [[27]] *⁄;
+  var value = ⁄* ## DEV [[ *⁄ 3 ⁄* ]] ELSE [[ 27 ]] ## *⁄;
   // The production build for the above line will render as:
   var value = 27;
 
-  ⁄* ## DEBUG USE: *⁄
+  // ## DEV [[
   trace.silent(status1);
   trace.silent(status2);
-  ⁄* ## PRODUCTION USE: [[
+  /* ]] ELSE [[
   trace.verbose(status1);
   trace.verbose(status2);
-  ]] *⁄
+  ]] ## *⁄
+
+  // The production build for the above lines will render as:
+  trace.verbose(status1);
+  trace.verbose(status2);
+
+  // --- PRODUCTION-ONLY CODE --------------------------------------------------
+
+  ⁄* ## PROD [[
+  trace.verbose(status1);
+  trace.verbose(status2);
+  ]] ## *⁄
 
   // The production build for the above lines will render as:
   trace.verbose(status1);
@@ -54,12 +65,49 @@ const tsproj = {
 
 function preprocessSourceText(buffer) {
   const src = buffer.toString();
-  return src
-    .replace(/.*\/\/ ## DEBUG ONLY\s*(\n|$)/g, ``)
-    .replace(/^.*\/\/ ## DEBUG START\s*(\n|$)[\s\S]*?\/\/ ## DEBUG END\s*(\n|$)/gm, ``)
-    .replace(/\/\* ## DEBUG USE: \*\/*[\s\S]*?\/\* ## PRODUCTION USE: \[\[\n*([^\)]+?)\n*\]\] \*\//gm, `$1`)
-    .replace(/\/\* ## DEBUG ONLY [[\s*\*\/*[\s\S]*?\/\*\s*?\]\] ## \*\//gm, ``)
-    .replace(/^(\r\n){2,}/mg, `$1`);
+  let next = 'start', type = '';
+  const rxStart = /(?:\/\*|(.*)\/\/) ## (DEV|PROD) (##|\[\[) *(?:\*\/)?/g;
+  const rxElse = /(?:\/\*|\/\/ )? *\]\] (?:(ELSE) \[\[|##) *(?:\*\/)?/g;
+  const rxEnd = /(?:\/\*|\/\/ )? *\]\] ##(?: \*\/)?/g;
+  let rx = rxStart, out = '', i = 0;
+  for(let match = rx.exec(src); match; match = rx.exec(src)) {
+    switch(next) {
+      case 'start': {
+        type = match[2];
+        out += src.substring(i, match.index);
+        next = match[3] === '[[' ? 'else' : 'start';
+        break;
+      }
+      case 'else': {
+        if(type === 'PROD') {
+          out += src.substring(i, match.index);
+        }
+        if(match[1] === 'ELSE') {
+          type = type === 'PROD' ? 'DEV' : 'PROD';
+          next = 'end';
+        }
+        else {
+          next = 'start';
+        }
+        break;
+      }
+      case 'end':
+        if(type === 'PROD') {
+          out += src.substring(i, match.index);
+        }
+        next = 'start';
+        break;
+    }
+    switch(next) {
+      case 'start': rx = rxStart; break;
+      case 'else': rx = rxElse; break;
+      case 'end': rx = rxEnd; break;
+    }
+    rx.lastIndex = i = match.index + match[0].length;
+  };
+  out += src.substr(i);
+  out = out.replace(/^(\r?\n){2,}/mg, `$1`);
+  return out;
 }
 
 function replace(a, b) {

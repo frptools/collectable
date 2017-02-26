@@ -1,9 +1,9 @@
-import {publish} from '../internals/debug'; // ## DEBUG ONLY
+import {publish} from '../internals/debug'; // ## DEV ##
 import {isImmutable} from '@collectable/core';
 import {List, cloneAsMutable, concatLists, ensureImmutable} from '../internals';
 
 export function concat<T>(left: List<T>, right: List<T>): List<T> {
-  publish([left, right], true, 'pre-concat'); // ## DEBUG ONLY
+  publish([left, right], true, 'pre-concat'); // ## DEV ##
   if(left._size === 0) return right;
   if(right._size === 0) return left;
   var immutable = isImmutable(left._owner) && (left = cloneAsMutable(left), true);

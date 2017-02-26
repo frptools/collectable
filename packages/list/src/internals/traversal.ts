@@ -1,4 +1,4 @@
-import {log, publish} from './debug'; // ## DEBUG ONLY
+import {log, publish} from './debug'; // ## DEV ##
 import {max, isDefined, isUndefined} from '@collectable/core';
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, invertOffset, invertAnchor, normalizeIndex, verifyIndex} from './common';
 import {View} from './view';
@@ -45,7 +45,7 @@ function isAncestor<T>(upperView: View<T>, lowerView: View<T>, listSize: number)
   if(upperView.isRoot()) return true;
   var upperOffset = lowerView.anchor === upperView.anchor ? upperView.offset
                   : invertOffset(upperView.offset, upperView.slot.size + lowerView.sizeDelta, listSize);
-  log(`[isAncestor] upper view ${upperView.id} ${upperOffset <= lowerView.offset && upperOffset + upperView.slot.size + lowerView.sizeDelta >= lowerView.offset + lowerView.slot.size ? 'IS' : 'is NOT'} an ancestor of lower view ${lowerView.id} (list size: ${listSize})`); // ## DEBUG ONLY
+  log(`[isAncestor] upper view ${upperView.id} ${upperOffset <= lowerView.offset && upperOffset + upperView.slot.size + lowerView.sizeDelta >= lowerView.offset + lowerView.slot.size ? 'IS' : 'is NOT'} an ancestor of lower view ${lowerView.id} (list size: ${listSize})`); // ## DEV ##
   return upperOffset <= lowerView.offset && upperOffset + upperView.slot.size + lowerView.sizeDelta >= lowerView.offset + lowerView.slot.size;
 }
 
@@ -179,7 +179,7 @@ export class TreeWorker<T> {
   }
 
   reset(list: List<T>, view: View<T>, group, otherCommitMode = COMMIT_MODE.NO_CHANGE): TreeWorker<T> {
-    log(`[TreeWorker#reset] RESET WORKER for view: ${view.id} (other view: ${getOtherView(list, view.anchor).isNone() ? 'NONE' : getOtherView(list, view.anchor).id})`); // ## DEBUG ONLY
+    log(`[TreeWorker#reset] RESET WORKER for view: ${view.id} (other view: ${getOtherView(list, view.anchor).isNone() ? 'NONE' : getOtherView(list, view.anchor).id})`); // ## DEV ##
     this.list = list;
     this.current = view;
     this.group = group;
@@ -226,13 +226,13 @@ export class TreeWorker<T> {
     var prepend = 0, append = 0;
 
 
-    // ## DEBUG START
+    // ## DEV [[
     log(`[TreeWorker#ascend] Begin ascent from view (${childView.id}) with commit mode: ${mode === COMMIT_MODE.NO_CHANGE ? 'NO CHANGE' : mode === COMMIT_MODE.RESERVE ? 'RESERVE' : mode === COMMIT_MODE.RELEASE ? 'RELEASE' : mode === -1 ? 'DISREGARD' : 'RELEASE/DISCARD'}${!expandParent ? '' : `, expand [${expandParent.padLeft}:${expandParent.sizeDelta}:${expandParent.padRight}]`}`);
     log(`[TreeWorker#ascend] Other view is ${this.hasOtherView() ? this.other.id + ` (parent: ${this.other.parent.id})` : 'VOID'}, with commit mode: ${this.otherCommitMode === COMMIT_MODE.NO_CHANGE ? 'NO CHANGE' : this.otherCommitMode === COMMIT_MODE.RESERVE ? 'RESERVE' : this.otherCommitMode === COMMIT_MODE.RELEASE ? 'RELEASE' : this.otherCommitMode === -1 ? 'DISREGARD' : 'RELEASE/DISCARD'}`);
     if(childSlot.size === 0) {
-      console.warn(`unhandled edge case warning: ascending from child slot that has no elements (group: ${childView.group}, slot index: ${childView.slotIndex})`); // ## DEBUG ONLY
+      console.warn(`unhandled edge case warning: ascending from child slot that has no elements (group: ${childView.group}, slot index: ${childView.slotIndex})`); // ## DEV ##
     }
-    // ## DEBUG END
+    // ]] ##
 
     if(this.committedOther && !this.otherCommittedChild.isNone()) {
       this.otherCommittedChild = View.none<T>();
@@ -241,17 +241,17 @@ export class TreeWorker<T> {
     var persistChild = mode === COMMIT_MODE.RELEASE_DISCARD
       ? (mode = COMMIT_MODE.RELEASE, false/*this.hasOtherView() && this.other.parent === childView*/)
       : true;
-    log(`[TreeWorker#ascend] child ${childView.id} ${persistChild ? 'WILL' : 'will NOT'} be persisted.`); // ## DEBUG ONLY
+    log(`[TreeWorker#ascend] child ${childView.id} ${persistChild ? 'WILL' : 'will NOT'} be persisted.`); // ## DEV ##
     var slotIndex = childView.slotIndex;
     var childWasRoot = childView.isRoot();
 
     if(childWasRoot) {
-      // ## DEBUG START
+      // ## DEV [[
       if(this.shift >= CONST.BRANCH_INDEX_BITCOUNT*12) {
         throw new Error('Unterminated tree growth');
       }
-      log(`[TreeWorker#ascend] Current view (${childView.id}) is the root of the tree; a new root will be created to the grow the tree.`); // ## DEBUG ONLY
-      // ## DEBUG END
+      log(`[TreeWorker#ascend] Current view (${childView.id}) is the root of the tree; a new root will be created to the grow the tree.`); // ## DEV ##
+      // ]] ##
 
       // Ascending from the root slot causes the tree to grow by one level. Non-zero delta values for the child view can
       // be disregarded, as we're absorbing the child view's final computed values in advance.
@@ -280,12 +280,12 @@ export class TreeWorker<T> {
       hasChanges = false;
     }
     else {
-      log(`[TreeWorker#ascend] Current view (${childView.id}) will ascend to parent view (${childView.parent.id})`); // ## DEBUG ONLY
+      log(`[TreeWorker#ascend] Current view (${childView.id}) will ascend to parent view (${childView.parent.id})`); // ## DEV ##
 
       parentView = childView.parent.ensureEditable(group);
       parentSlot = parentView.slot;
       var hasChanges = childView.hasUncommittedChanges();
-      log(`[TreeWorker#ascend] Child view (${childView.id}) ${hasChanges ? 'DOES have' : 'has NO'} uncommitted changes`); // ## DEBUG ONLY
+      log(`[TreeWorker#ascend] Child view (${childView.id}) ${hasChanges ? 'DOES have' : 'has NO'} uncommitted changes`); // ## DEV ##
 
       // If the child wasn't already reserved with a placeholder slot, and no reservation has been requested, then there is
       // nothing further that we need to do.
@@ -313,7 +313,7 @@ export class TreeWorker<T> {
         }
 
         if(!this.committedOther && isAncestor(parentView, this.other, this.list._size)) {
-          log(`The other view ${this.other.id} is not yet committed, and is a descendant of parent view ${parentView.id}`); // ## DEBUG ONLY
+          log(`The other view ${this.other.id} is not yet committed, and is a descendant of parent view ${parentView.id}`); // ## DEV ##
           this.commitOther(parentView, prepend);
         }
 
@@ -394,7 +394,7 @@ export class TreeWorker<T> {
     }
 
     if(!this.committedOther && isAncestor(parentView, this.other, this.list._size)) {
-      log(`The other view ${this.other.id} is STILL uncommitted, and is a descendant of parent view ${parentView.id}`); // ## DEBUG ONLY
+      log(`The other view ${this.other.id} is STILL uncommitted, and is a descendant of parent view ${parentView.id}`); // ## DEV ##
       this.commitOther(parentView, isDefined(expandParent) ? expandParent.padLeft : 0);
     }
 
@@ -409,15 +409,15 @@ export class TreeWorker<T> {
       }
 
       if(!childView.isEditable(group)) {
-        log(`child view ${childView.id} will now be cloned so that it can be mutated`); // ## DEBUG ONLY
+        log(`child view ${childView.id} will now be cloned so that it can be mutated`); // ## DEV ##
         childView = childView.cloneToGroup(group);
         if(this.shift === 0) {
-          log(`writing child view back to list state ${childView.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEBUG ONLY
+          log(`writing child view back to list state ${childView.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEV ##
           setView(this.list, childView);
         }
       }
 
-      log(`child view ${childView.id} ${childWasRoot ? 'WAS' : 'was NOT'} root. New parent ${parentView.id} is anchored ${parentView.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEBUG ONLY
+      log(`child view ${childView.id} ${childWasRoot ? 'WAS' : 'was NOT'} root. New parent ${parentView.id} is anchored ${parentView.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEV ##
 
       if(hasChanges || childSlot !== childView.slot || childView.parent !== parentView || this.otherCommitMode === -1) {
         childView.slot = childSlot;
@@ -429,25 +429,25 @@ export class TreeWorker<T> {
       this.previous = childView;
     }
     else if(childView.isEditable(group)) {
-      // // ## DEBUG START
+      // // ## DEV [[
       if(this.shift === 0) {
         setView(this.list, View.empty(childView.anchor));
       }
-      // // ## DEBUG END
+      // // ]] ##
       View.pushReusableView(childView);
     }
 
     this.current = parentView;
     this.shift += CONST.BRANCH_INDEX_BITCOUNT;
 
-    publish(this.list, false, `Ascension completed from level ${(this.shift - CONST.BRANCH_INDEX_BITCOUNT)/CONST.BRANCH_INDEX_BITCOUNT} to ${this.shift/CONST.BRANCH_INDEX_BITCOUNT} (view ${childView.id}->${parentView.id})`); // ## DEBUG ONLY
+    publish(this.list, false, `Ascension completed from level ${(this.shift - CONST.BRANCH_INDEX_BITCOUNT)/CONST.BRANCH_INDEX_BITCOUNT} to ${this.shift/CONST.BRANCH_INDEX_BITCOUNT} (view ${childView.id}->${parentView.id})`); // ## DEV ##
 
     return parentView;
   }
 
   commitOther(replacementParent: View<T>, slotIndexOffset: number): void {
     var otherView = this.other;
-    log(`[TreeWorker#commitOther] other view ${otherView.id} now being inspected for possible commit (slot index offset: ${slotIndexOffset})`); // ## DEBUG ONLY
+    log(`[TreeWorker#commitOther] other view ${otherView.id} now being inspected for possible commit (slot index offset: ${slotIndexOffset})`); // ## DEV ##
     if(slotIndexOffset === 0
       && this.shift === 0
       && !otherView.hasUncommittedChanges()
@@ -460,12 +460,12 @@ export class TreeWorker<T> {
     }
 
     if(!otherView.isEditable(this.group)) {
-      log(`[TreeWorker#commitOther] other view ${otherView.id} will now be cloned so that it can be mutated`); // ## DEBUG ONLY
+      log(`[TreeWorker#commitOther] other view ${otherView.id} will now be cloned so that it can be mutated`); // ## DEV ##
       otherView = otherView.cloneToGroup(this.group);
     }
 
     var anchor = otherView.anchor;
-    log(`[TreeWorker#commitOther] writing OTHER view back to list state ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEBUG ONLY
+    log(`[TreeWorker#commitOther] writing OTHER view back to list state ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEV ##
     setView(this.list, this.other = this.otherCommitMode === COMMIT_MODE.RELEASE_DISCARD ? View.empty<T>(anchor) : otherView);
     var worker = TreeWorker.defaultOther<T>().reset(this.list, otherView, this.group, -1);
 
@@ -482,7 +482,7 @@ export class TreeWorker<T> {
   }
 
   ascendToOrdinal(ordinal: number, mode: COMMIT_MODE, ensureBranchReserved: boolean): View<T> {
-    log(`[TreeWorker#ascendToOrdinal] Begin ascent of view (${this.current.id}) to ordinal ${ordinal}.`); // ## DEBUG ONLY
+    log(`[TreeWorker#ascendToOrdinal] Begin ascent of view (${this.current.id}) to ordinal ${ordinal}.`); // ## DEV ##
     var view = this.current, target = view, branchFound = false;
     var shift = this.shift;
 
@@ -491,11 +491,11 @@ export class TreeWorker<T> {
       if(!branchFound) {
         branchFound = isViewInRange(view, ordinal, this.list._size);
         if(branchFound) {
-          log(`[TreeWorker#ascendToOrdinal] Branch node (view ${view.id}, slot ${view.slot.id}) found for ordinal ${ordinal}.`); // ## DEBUG ONLY
+          log(`[TreeWorker#ascendToOrdinal] Branch node (view ${view.id}, slot ${view.slot.id}) found for ordinal ${ordinal}.`); // ## DEV ##
           shift = this.shift;
           target = view;
           if(ensureBranchReserved) {
-            log(`[TreeWorker#ascendToOrdinal] Switching to reservation mode for further ascent, to ensure view reservation continues to the root node.`); // ## DEBUG ONLY
+            log(`[TreeWorker#ascendToOrdinal] Switching to reservation mode for further ascent, to ensure view reservation continues to the root node.`); // ## DEV ##
             mode = COMMIT_MODE.RESERVE;
           }
         }
@@ -511,9 +511,9 @@ export class TreeWorker<T> {
     var view = this.current, shift = this.shift, out = this.slotResult;
     var offset = view.anchor === OFFSET_ANCHOR.RIGHT ? invertOffset(view.offset, view.slot.size, this.list._size) : view.offset;
     var flip = this.hasOtherView() && this.other.anchor === OFFSET_ANCHOR.LEFT;
-    log(`[TreeWorker#descendToOrdinal] The initial offset for view ${view.id} is ${view.offset}`); // ## DEBUG ONLY
+    log(`[TreeWorker#descendToOrdinal] The initial offset for view ${view.id} is ${view.offset}`); // ## DEV ##
     do {
-      view.slot.resolveChild(ordinal - offset, shift, out/* ## DEBUG ONLY [[ */, this.list/* ]] ## */);
+      view.slot.resolveChild(ordinal - offset, shift, out /* ## DEV [[ */, this.list /* ]] ## */);
       if(out.slot.isReserved()) {
         while(view !== this.current) {
           var discarded = view, view = discarded.parent;
@@ -521,17 +521,17 @@ export class TreeWorker<T> {
         }
         return void 0;
       }
-      log(`[TreeWorker#descendToOrdinal] view ${view.id}, slot ${view.slot.id}; resolved slot #${ordinal - offset}: child slot: ${out.slot.id}, slot index: ${out.index}, slot offset: ${out.offset}`); // ## DEBUG ONLY
+      log(`[TreeWorker#descendToOrdinal] view ${view.id}, slot ${view.slot.id}; resolved slot #${ordinal - offset}: child slot: ${out.slot.id}, slot index: ${out.index}, slot offset: ${out.offset}`); // ## DEV ##
       shift -= CONST.BRANCH_INDEX_BITCOUNT;
       offset += out.offset;
       if(asWriteTarget) {
         view.ensureSlotEditable().slots[out.index] = out.slot.cloneAsPlaceholder(this.group);
         out.slot = out.slot.toReservedNode(this.group);
       }
-      log(`[TreeWorker#descendToOrdinal] A new view will now be constructed around slot ${out.slot.id}`); // ## DEBUG ONLY
+      log(`[TreeWorker#descendToOrdinal] A new view will now be constructed around slot ${out.slot.id}`); // ## DEV ##
       view = View.create<T>(this.group, offset, OFFSET_ANCHOR.LEFT, out.index, 0, 0, view, <Slot<T>>out.slot);
       if(flip) view.flipAnchor(this.list._size);
-      log(`[TreeWorker#descendToOrdinal] The new view (${view.id}) is offset ${view.offset} from the ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEBUG ONLY
+      log(`[TreeWorker#descendToOrdinal] The new view (${view.id}) is offset ${view.offset} from the ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEV ##
     } while(shift > 0);
 
     this.previous = this.current;
@@ -542,23 +542,23 @@ export class TreeWorker<T> {
   }
 
   refocusView(ordinal: number, asAltView: boolean, asWriteTarget: boolean): View<T> {
-    log(`[TreeWorker#refocusView] View (id: ${this.current.id}, anchor: ${this.current.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}) will be refocused to ordinal ${ordinal} for ${asWriteTarget ? 'WRITING to.' : 'READING from.'}${asAltView ? ` Ascending as alternate view for purposes of activating the ${this.current.anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view.` : ''}`); // ## DEBUG ONLY
+    log(`[TreeWorker#refocusView] View (id: ${this.current.id}, anchor: ${this.current.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}) will be refocused to ordinal ${ordinal} for ${asWriteTarget ? 'WRITING to.' : 'READING from.'}${asAltView ? ` Ascending as alternate view for purposes of activating the ${this.current.anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view.` : ''}`); // ## DEV ##
     ordinal = verifyIndex(this.list._size, ordinal);
     var anchor = asAltView ? invertAnchor(this.current.anchor) : this.current.anchor;
     this.ascendToOrdinal(ordinal, asAltView ? COMMIT_MODE.NO_CHANGE : COMMIT_MODE.RELEASE_DISCARD, asWriteTarget);
     var view = this.descendToOrdinal(ordinal, asWriteTarget);
 
     if(isUndefined(view)) {
-      log(`[TreeWorker#refocusView] No view was returned, which means the descent path encountered a reserved slot. The other view will be used to locate the target ordinal.`); // ## DEBUG ONLY
+      log(`[TreeWorker#refocusView] No view was returned, which means the descent path encountered a reserved slot. The other view will be used to locate the target ordinal.`); // ## DEV ##
       this.reset(this.list, getOtherView(this.list, anchor), this.group, -1);
       this.ascendToOrdinal(ordinal, COMMIT_MODE.NO_CHANGE, false);
       view = <View<T>>this.descendToOrdinal(ordinal, asWriteTarget);
     }
     if(view.anchor !== anchor) {
-      log(`[TreeWorker#refocusView] The view (${view.id}) needs to be flipped ${view.anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} (view offset: ${view.offset}, list size: ${this.list._size})`); // ## DEBUG ONLY
+      log(`[TreeWorker#refocusView] The view (${view.id}) needs to be flipped ${view.anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} (view offset: ${view.offset}, list size: ${this.list._size})`); // ## DEV ##
       view.flipAnchor(this.list._size);
     }
-    log(`[TreeWorker#refocusView] Writing refocused view back to list state ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEBUG ONLY
+    log(`[TreeWorker#refocusView] Writing refocused view back to list state ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}`); // ## DEV ##
     setView(this.list, view);
     return view;
   }

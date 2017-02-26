@@ -1,4 +1,4 @@
-import {log} from './debug'; // ## DEBUG ONLY
+import {log} from './debug'; // ## DEV ##
 import {Collection, IndexableCollectionTypeInfo, nextId, batch, isMutable} from '@collectable/core';
 import {OFFSET_ANCHOR} from './common';
 import {TreeWorker} from './traversal';
@@ -40,7 +40,7 @@ const LIST_TYPE: IndexableCollectionTypeInfo = {
 };
 
 export class List<T> implements Collection<T> {
-  id = nextId(); // ## DEBUG ONLY
+  id = nextId(); // ## DEV ##
 
   get '@@type'() { return LIST_TYPE; }
 
@@ -75,7 +75,7 @@ export function ensureImmutable<T>(list: List<T>, doneMutating: boolean): List<T
     return list;
   }
   if(doneMutating) {
-    list._owner = 0;
+    if(list._owner === -1) list._owner = 0;
     list._group = nextId(); // Ensure that subsequent read operations don't cause mutations to existing nodes
     return list;
   }
@@ -86,34 +86,34 @@ export function ensureImmutable<T>(list: List<T>, doneMutating: boolean): List<T
 
 export function getView<T>(list: List<T>, anchor: OFFSET_ANCHOR, asWriteTarget: boolean, preferredOrdinal: number = -1): View<T> {
   var view = anchor === OFFSET_ANCHOR.LEFT ? list._left : list._right;
-  log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] Attempting to retrieve the ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view from the state object.`); // ## DEBUG ONLY
+  log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] Attempting to retrieve the ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view from the state object.`); // ## DEV ##
   if(view.isNone()) {
-    log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The requested view (id: ${view.id}) is default empty.`); // ## DEBUG ONLY
+    log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The requested view (id: ${view.id}) is default empty.`); // ## DEV ##
     var otherView = anchor === OFFSET_ANCHOR.RIGHT ? list._left : list._right;
     if(!otherView.isNone()) {
-      log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The ${anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view (${otherView.id}) is currently active.`); // ## DEBUG ONLY
+      log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The ${anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view (${otherView.id}) is currently active.`); // ## DEV ##
       if(otherView.parent.isNone() || otherView.slot.size + otherView.offset === list._size) {
-        log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The ${anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view (${otherView.id}) has no parent or is already aligned to its opposite edge, so it will be flipped and used as the requested view.`); // ## DEBUG ONLY
+        log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The ${anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view (${otherView.id}) has no parent or is already aligned to its opposite edge, so it will be flipped and used as the requested view.`); // ## DEV ##
         setView(list, View.empty<T>(otherView.anchor));
         otherView = otherView.cloneToGroup(list._group);
         otherView.flipAnchor(list._size);
         setView(list, view = otherView);
       }
       else {
-        log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The ${anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view (${otherView.id}) has a parent (id: ${otherView.parent.id}), so it's time to activate the second view.`); // ## DEBUG ONLY
+        log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The ${anchor === OFFSET_ANCHOR.LEFT ? 'RIGHT' : 'LEFT'} view (${otherView.id}) has a parent (id: ${otherView.parent.id}), so it's time to activate the second view.`); // ## DEV ##
         view = TreeWorker.refocusView<T>(list, otherView, preferredOrdinal !== -1 ? preferredOrdinal : anchor === OFFSET_ANCHOR.LEFT ? 0 : -1, true, true);
-        log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The refocusing operation is complete and has returned view (${view.id}, group: ${view.group}) (anchor: ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}) as the result.`); // ## DEBUG ONLY
+        log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The refocusing operation is complete and has returned view (${view.id}, group: ${view.group}) (anchor: ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'}) as the result.`); // ## DEV ##
       }
     }
   }
-  else log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The requested view is active and can be used.`); // ## DEBUG ONLY
+  else log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The requested view is active and can be used.`); // ## DEV ##
   if(asWriteTarget && !view.isEditable(list._group)) {
-    log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The view (${view.id}, group: ${view.group}) is not of the correct group (${list._group}) and needs to be cloned and reassigned to the state object.`); // ## DEBUG ONLY
+    log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The view (${view.id}, group: ${view.group}) is not of the correct group (${list._group}) and needs to be cloned and reassigned to the state object.`); // ## DEV ##
     view = view.cloneToGroup(list._group);
     if(view.anchor !== anchor) view.flipAnchor(list._size);
     setView(list, view);
   }
-  log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The view (${view.id}) has been retrieved and is ready for use.`); // ## DEBUG ONLY
+  log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] The view (${view.id}) has been retrieved and is ready for use.`); // ## DEV ##
   return view;
 }
 
@@ -122,7 +122,7 @@ export function getOtherView<T>(list: List<T>, anchor: OFFSET_ANCHOR): View<T> {
 }
 
 export function setView<T>(list: List<T>, view: View<T>): void {
-  log(`[ListState#setView (id:${list.id} a:L g:${list._group})] Assign ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view (id: ${view.id}, slot: ${view.slot.id})`); // ## DEBUG ONLY
+  log(`[ListState#setView (id:${list.id} a:L g:${list._group})] Assign ${view.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view (id: ${view.id}, slot: ${view.slot.id})`); // ## DEV ##
   if(view.anchor === OFFSET_ANCHOR.LEFT) {
     list._left = view;
   }

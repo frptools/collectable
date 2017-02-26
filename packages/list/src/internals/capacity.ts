@@ -1,4 +1,4 @@
-import {log, publish} from './debug'; // ## DEBUG ONLY
+import {log, publish} from './debug'; // ## DEV ##
 import {min} from '@collectable/core';
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, modulo, shiftDownRoundUp} from './common';
 import {TreeWorker} from './traversal';
@@ -133,9 +133,9 @@ function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAdd
   // appropriate size and depth, and the value arrays for added leaf nodes are saved to the `nodes` array for population
   // of list element values by the calling function. If the root is reached and additional capacity is still required,
   // additional nodes are added above the root, increasing the depth of the tree.
-  var debugLoopCounter = 0; // ## DEBUG ONLY
+  var debugLoopCounter = 0; // ## DEV ##
   do {
-    if(++debugLoopCounter > 10) throw new Error('Infinite capacity loop'); // ## DEBUG ONLY
+    if(++debugLoopCounter > 10) throw new Error('Infinite capacity loop'); // ## DEV ##
     shift += CONST.BRANCH_INDEX_BITCOUNT;
     var isRoot = view.isRoot();
     numberOfAddedSlots = calculateSlotsToAdd(isRoot ? 1 : view.parent.slotCount(), shiftDownRoundUp(remainingSize, shift));
@@ -151,7 +151,7 @@ function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAdd
     var ascendMode = worker.hasOtherView() && ((worker.other.slot.isReserved() && isRoot) || worker.committedOther)
       ? COMMIT_MODE.RESERVE : COMMIT_MODE.RELEASE_DISCARD;
     view = worker.ascend(ascendMode, expand);
-    log(`[increaseUpperCapacity] ascended tree to view ${view.id}`); // ## DEBUG ONLY
+    log(`[increaseUpperCapacity] ascended tree to view ${view.id}`); // ## DEV ##
 
     var wasFlipped = numberOfAddedSlots && (prepend && view.anchor === OFFSET_ANCHOR.LEFT) || (!prepend && view.anchor === OFFSET_ANCHOR.RIGHT);
     if(wasFlipped) view.flipAnchor(list._size);
@@ -198,7 +198,7 @@ function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAdd
  * @returns {number} An updated `nodeIndex` value to be used in subsequent subtree population operations
  */
 function populateSubtrees<T>(list: List<T>, collector: Collector<T>, view: View<T>, topLevelIndex: number, slotIndexBoundary: number, capacity: number, isFinalStage: boolean): void {
-  publish(list, false, `Subtrees are about to be populated`); // ## DEBUG ONLY
+  publish(list, false, `Subtrees are about to be populated`); // ## DEV ##
   var levelIndex = topLevelIndex - 1;
   var remaining = capacity;
   var shift = CONST.BRANCH_INDEX_BITCOUNT * topLevelIndex;
@@ -218,9 +218,9 @@ function populateSubtrees<T>(list: List<T>, collector: Collector<T>, view: View<
   slotCounts[levelIndex] = slotCount;
   slotPath[levelIndex] = slot;
 
-  var debugLoopCounter = 0; // ## DEBUG ONLY
+  var debugLoopCounter = 0; // ## DEV ##
   do {
-    if(++debugLoopCounter > 1000000) throw new Error('Infinite subtree population loop'); // ## DEBUG ONLY
+    if(++debugLoopCounter > 1000000) throw new Error('Infinite subtree population loop'); // ## DEV ##
     // If the current subtree is fully populated, ascend to the next tree level to populate the next adjacent subtree.
     // The last slot at each level should be reserved for writing when remaining capacity to add reaches zero.
     if(slotIndex === slotCount) {
@@ -298,7 +298,7 @@ function populateSubtrees<T>(list: List<T>, collector: Collector<T>, view: View<
         slotIndices[levelIndex] = slotIndex;
       }
     }
-    publish(list, false, `One cycle of subtree population has been completed`); // ## DEBUG ONLY
+    publish(list, false, `One cycle of subtree population has been completed`); // ## DEV ##
   } while(levelIndex < topLevelIndex);
 }
 
