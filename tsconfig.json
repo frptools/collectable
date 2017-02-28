@@ -18,5 +18,9 @@
     "./tests/**/*.ts",
     "./packages/*/src/**/*.ts",
     "./packages/*/tests/**/*.ts"
+  ],
+  "exclude": [
+    "./node_modules/lodash/**/*",
+    "./packages/*/visualiser/node_modules/**/*"
   ]
 }

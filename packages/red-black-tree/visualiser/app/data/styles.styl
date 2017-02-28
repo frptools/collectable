@@ -1,0 +1,38 @@
+@import '../core/palette.styl';
+
+.diagram
+  .node
+    circle
+      animation: 1s ease-in-out 1
+    text
+      font-family: 'Lato', sans-serif
+      font-size: 10px
+      fill: white
+      text-anchor: middle
+      alignment-baseline: middle
+    &.red
+      fill: $palette-1
+    &.black
+      fill: #333
+    &.none
+      fill: #666
+    &.dummy
+      fill: transparent
+      stroke: #c7c7c7
+      stroke-width: 2
+      stroke-dasharray: 4, 2
+
+  .edge
+    animation: 1s ease-in-out 1
+    fill: none
+    stroke: #ccc
+    stroke-width: 2
+    stroke-dasharray: 4, 2
+    &.lr
+      marker-end: url(#right-arrow)
+    &.rl
+      marker-end: url(#left-arrow)
+    &.tb
+      marker-end: url(#down-arrow)
+  .arrow
+    fill: grey

@@ -40,6 +40,7 @@
     "mocha": "^3.2.0",
     "rimraf": "^2.5.4",
     "source-map-support": "^0.4.11",
+    "tiny-preprocessor": "^1.0.0",
     "tslint": "^4.4.2",
     "typedoc": "^0.5.5",
     "typedoc-plugin-external-module-map": "^0.0.6",

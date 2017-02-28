@@ -1,5 +1,9 @@
-import {Collection, IndexableCollectionTypeInfo, nextId, batch, isMutable} from '@collectable/core';
+import {Collection, IndexableCollectionTypeInfo, nextId, batch} from '@collectable/core';
 import {Node, NONE} from './node';
+
+export const DEFAULT_COMPARATOR: Comparator<any> = function(a: any, b: any): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+};
 
 export type Comparator<K> = (a: K, b: K) => number;
 
@@ -64,13 +68,9 @@ export function cloneAsMutable<K, V>(tree: RedBlackTree<K, V>): RedBlackTree<K, 
   return cloneTree(tree, nextId(), true);
 }
 
-export function doneMutating<K, V>(list: RedBlackTree<K, V>): RedBlackTree<K, V> {
-  if(list._owner === -1) {
-    list._owner = 0;
+export function doneMutating<K, V>(tree: RedBlackTree<K, V>): RedBlackTree<K, V> {
+  if(tree._owner === -1) {
+    tree._owner = 0;
   }
-  return list;
+  return tree;
 }
-
-export const DEFAULT_COMPARATOR: Comparator<any> = function(a: any, b: any): number {
-  return a < b ? -1 : a > b ? 1 : 0;
-};

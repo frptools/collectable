@@ -1,0 +1,110 @@
+@import './palette.styl'
+
+html, body
+  height: 100%
+body
+  font-family: 'Lato', sans-serif
+  font-size: 12px
+  margin: 0
+  color: #333
+
+.header
+  position: sticky
+  background-color: white
+  top: 0
+  left: 0
+  right: 350px
+  display: flex
+  flex-direction: column
+  border-bottom: 1px solid #e7e7e7
+
+.title
+  font-size: 24px
+  font-weight: bold
+  white-space: nowrap
+  padding 10px 20px
+  color: $palette-4
+
+.info
+  border-top: 1px solid #e7e7e7
+  background-color: #f9f9f9
+  padding 0 20px
+  color: #999
+
+.instructions
+  margin: 0
+  padding: 0
+  li
+    list-style-type: none
+    display: inline-flex
+    align-items: center
+    margin: 5px 20px 5px 0
+    .ctl
+      margin-right: 10px
+      code
+        color: #333
+        display: inline-block
+        text-align: center
+        box-sizing: border-box
+        box-sizing: border-box
+        background-color: #e7e7e7
+        padding: 2px 6px
+        margin: 0 2px
+
+.main
+  position: fixed
+  right: 350px
+  left: 0
+  top: 0
+  overflow-x: auto
+  box-sizing: border-box
+  height: 100vh
+  background-image: url(http://cdn.backgroundhost.com/backgrounds/subtlepatterns/dust.png)
+  background-attachment: local
+
+.diagram
+  padding: 20px
+  svg
+    margin-right: 20px
+
+.nav
+  position: relative
+  z-index: 2
+  float: right
+  box-shadow: 0 0 20px rgba(black, 0.15)
+  .versions
+    width: 350px
+    background-color: white
+  .list-item
+    .link
+      display: block
+      padding: 4px 10px 5px;
+      text-decoration: none
+      color: #333
+    + .list-item
+      .link
+        border-top: 1px dotted #ccc
+      &.active
+        .link
+          border-top: 1px solid $palette-5
+    &.active
+      .link
+        cursor: default
+        pointer-events: none
+        background-color: $palette-5
+        color: $palette-2
+      + .list-item
+        .link
+          border-top: 1px solid $palette-5
+    &.done
+      .link
+        font-weight: 600
+    &.done:not(.active)
+      .link
+        color: $palette-4
+        background-color: $palette-3t
+    &:not(.active):hover
+    &.done:not(.active):hover
+      .link
+        background-color: $palette-2
+        color: $palette-5

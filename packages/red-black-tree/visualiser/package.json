@@ -1,0 +1,33 @@
+{
+  "name": "rbtree-visualiser",
+  "version": "1.0.0",
+  "description": "Visualiser for Collectable.js' persistent red/black tree",
+  "main": "app/index.js",
+  "scripts": {
+    "start": "webpack-dev-server --port 9000 --hot --inline --progress --content-base dist/"
+  },
+  "repository": {},
+  "license": "MIT",
+  "dependencies": {
+    "@most/create": "^2.0.1",
+    "@motorcycle/dom": "^8.0.0",
+    "@motorcycle/run": "^1.2.5",
+    "@typed/curry": "^1.0.1",
+    "css-loader": "^0.26.1",
+    "file-loader": "^0.10.0",
+    "immutable": "^3.8.1",
+    "style-loader": "^0.13.1",
+    "stylus": "^0.54.5",
+    "stylus-loader": "^2.5.0",
+    "url-loader": "^0.5.7"
+  },
+  "devDependencies": {
+    "babel-core": "^6.23.1",
+    "babel-loader": "^6.3.2",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.23.0",
+    "circular-json": "^0.3.1",
+    "html-webpack-plugin": "^2.28.0",
+    "webpack": "^2.2.1",
+    "webpack-dev-server": "^2.4.1"
+  }
+}
