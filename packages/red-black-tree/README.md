@@ -5,6 +5,7 @@
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/%40collectable%2Fred-black-tree.svg)](http://badge.fury.io/js/%40collectable%2Fset)
 [![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
+[![Gitter](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/FRPTools/Lobby)
 
 *This documentation is under construction. The list of functions, descriptions and examples are pending.*
 

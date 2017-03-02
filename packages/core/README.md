@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/%40collectable%2Fcore.svg)](http://badge.fury.io/js/%40collectable%2Fcore)
 [![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
+[![Gitter](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/FRPTools/Lobby)
 
 **This module provides functionality that is internal to Collectable.js data structures. You do not need to take it as a dependency directly.**
 
