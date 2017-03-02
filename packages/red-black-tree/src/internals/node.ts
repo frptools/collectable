@@ -24,11 +24,18 @@ export const NONE: Node<any, any> = {
 NONE.left = NONE;
 NONE.right = NONE;
 
+// ## DEV [[
+export function checkInvalidNilAssignment() {
+  if(NONE.left !== NONE) throw new Error(`Invalid assignment of ${NONE.left.key} to left child of NIL node`); // ## DEV
+  if(NONE.right !== NONE) throw new Error(`Invalid assignment of ${NONE.right.key} to right child of NIL node`); // ## DEV
+}
+// ]] ##
+
 export function createNode<K, V>(group: number, red: boolean, key: K, value: V): Node<K, V> {
   return {group, key, value, red, left: NONE, right: NONE};
 }
 
-function cloneNode<K, V>(group: number, node: Node<K, V>): Node<K, V> {
+export function cloneNode<K, V>(group: number, node: Node<K, V>): Node<K, V> {
   return {
     group,
     key: node.key,

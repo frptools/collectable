@@ -1,9 +1,22 @@
 import {log} from '../internals/debug'; // ## DEV ##
 import {batch, nextId, isImmutable} from '@collectable/core';
-import {RedBlackTree, findPath, BRANCH, Node, createNode, editable, replace, rebalance, setChild, cloneAsMutable, doneMutating} from '../internals';
+import {
+  RedBlackTree,
+  findPath,
+  BRANCH,
+  Node,
+  createNode,
+  editable,
+  replace,
+  rebalance,
+  setChild,
+  cloneAsMutable,
+  doneMutating,
+  checkInvalidNilAssignment // ## DEV ##
+} from '../internals';
 
 export function set<K, V>(key: K, value: V, tree: RedBlackTree<K, V>): RedBlackTree<K, V> {
-  log(`insert: ${key}`);
+  log(`[set (#${key})] insert: ${key}`); // ## DEV ##
   var root: Node<K, V>, size = tree._size;
   var immutable = isImmutable(tree._owner);
 
@@ -15,6 +28,7 @@ export function set<K, V>(key: K, value: V, tree: RedBlackTree<K, V>): RedBlackT
     else {
       tree._root = root;
     }
+    checkInvalidNilAssignment(); // ## DEV ##
     return tree;
   }
 
@@ -23,6 +37,8 @@ export function set<K, V>(key: K, value: V, tree: RedBlackTree<K, V>): RedBlackT
   // ## DEV [[
   var group = tree._group;
   root = tree._root = editable(group, tree._root);
+  checkInvalidNilAssignment(); // ## DEV ##
+
   // ]]
   var p = findPath(key, tree._root, tree._compare /* ## DEV [[ */, group /* ]] ## */);
 
@@ -30,7 +46,11 @@ export function set<K, V>(key: K, value: V, tree: RedBlackTree<K, V>): RedBlackT
     if(immutable) {
       var group = nextId();
       root = replace(group, p, value);
-      if(root === tree._root) return tree;
+      if(root === tree._root) {
+        checkInvalidNilAssignment(); // ## DEV ##
+        return tree;
+      }
+      checkInvalidNilAssignment(); // ## DEV ##
       return new RedBlackTree(batch.owner(false), group, tree._compare, root, size);
     }
     tree._root = replace(tree._group, p, value);
@@ -48,17 +68,19 @@ export function set<K, V>(key: K, value: V, tree: RedBlackTree<K, V>): RedBlackT
     }
     // ]]
     setChild(p.next, parent, node /* ## DEV [[ */, tree /* ]] ## */);
-    log(`[set] ${key}: ${node.red ? 'red' : 'black'}`);
+    log(`[set (#${key})] ${node.red ? 'red' : 'black'}`); // ## DEV ##
 
-    log(tree, false, `Pre-insert: #${key}`); // ## DEV ##
+    log(tree, false, `[set (#${key})] Pre-insert`); // ## DEV ##
 
     if(immutable) {
       root = rebalance(group, p, node, parent, tree);
+      checkInvalidNilAssignment(); // ## DEV ##
       return new RedBlackTree(batch.owner(false), group, tree._compare, root, ++size);
     }
     tree._root = rebalance(group, p, node, parent);
     tree._size++;
   }
+  checkInvalidNilAssignment(); // ## DEV ##
 
   return immutable ? doneMutating(tree) : tree;
 }

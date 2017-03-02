@@ -29,123 +29,14 @@ export function getValues(node: Node<number, string>, array: string[] = []): str
 }
 
 export function getKeys(node: Node<number, string>, array: number[] = []): number[] {
-  if(!isNone(node.left)) getKeys(node.left, array);
+  if(!isNone(node.left)) {
+    getKeys(node.left, array);
+  }
   array.push(node.key);
-  if(!isNone(node.right)) getKeys(node.right, array);
+  if(!isNone(node.right)) {
+    getKeys(node.right, array);
+  }
   return array;
-}
-
-const fs = require('fs');
-export function writeGraph(src: string): void {
-  console.log('writing graph...');
-  var text = `
-digraph G {
-  ${src}
-}`;
-  fs.writeFileSync('D:/dropbox/work/Dev/collectable.js/.devnotes/red-black.gv', text);
-}
-
-var weight = 1, nextId = 0;
-export function nodeGraph<K, V>(tree: RedBlackTree<K, V>): string {
-  var nodes: string[] = [];
-  var blacks: number[] = [];
-  var reds: number[] = [];
-  var leaves: number[] = [];
-  var edges: string[] = [];
-  var set = new Set();
-  function descend<K, V>(node: Node<K, V>, prefix: string = '') {
-    var id = ++nextId;
-    if(isNone(node)) {
-      leaves.push(id);
-    }
-    else {
-      nodes.push(`${id} [label="${prefix}${node.key}"];`);
-      if(node.red) reds.push(id); else blacks.push(id);
-      if(!set.has(node)) {
-        set.add(node);
-        var a = descend(node.left, 'L:');
-        edges.push(`${id} -> ${a} [label=" LT " weight=${weight++} style=dashed];`);
-        var b = descend(node.right, 'R:');
-        edges.push(`${id} -> ${b} [label=" GT " weight=${weight++}];`);
-      }
-    }
-    return id;
-  }
-  descend(tree._root);
-  var src = `
-  node [fillcolor=black, style=filled, color=black, shape=ellipse, width=.4, height=.3
-        fontname="Microsoft Sans Serif", fontsize=8, fontcolor=white, fixedsize=true];
-  edge [arrowhead=none, fontname="Microsoft Sans Serif", fontsize=8, fontcolor=grey]
-
-  ${leaves.join(', ')}
-  [label="", color=grey, fillcolor=grey, width=.1, height=.1]
-
-${blacks.length > 0 ? `  ${blacks.join(', ')}
-  [fillcolor=black];
-
-` : ``
-}${reds.length > 0 ? `  ${reds.join(', ')}
-  [fillcolor=red, color=red];
-
-` : ``
-}  ${nodes.join('\n  ')}
-  ${edges.join('\n  ')}
-`;
-  return src;
-}
-
-export function tableGraph<K, V>(tree: RedBlackTree<K, V>): string {
-  var nodes: string[] = [];
-  var leaves: number[] = [];
-  var edges: string[] = [];
-  var set = new Set();
-
-  function descend<K, V>(node: Node<K, V>): any {
-    var id = ++nextId;
-    if(set.has(node.key)) {
-      return `X${id}`;
-    }
-    if(isNone(node)) {
-      leaves.push(id);
-      return id;
-    }
-    else {
-      set.add(node.key);
-      var str = `<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD COLSPAN="2" PORT="${node.key}">${node.key}</TD></TR><TR>`;
-      if(node.left.red) {
-        str += `<TD PORT="${node.left.key}" COLOR="red"><FONT COLOR="red">${node.left.key}</FONT></TD>`;
-        edges.push(`${id}:${node.left.key} -> ${descend(node.left.left)} [label=" LT " weight=${weight++} style=dashed];`);
-        edges.push(`${id}:${node.left.key} -> ${descend(node.left.right)} [label=" GT " weight=${weight++}];`);
-      }
-      else {
-        str += `<TD PORT="L" COLOR="grey">    </TD>`;
-        edges.push(`${id}:L -> ${descend(node.left)} [label=" LT " weight=${weight++} style=dashed];`);
-      }
-      if(node.right.red) {
-        str += `<TD PORT="${node.right.key}" COLOR="red"><FONT COLOR="red">${node.right.key}</FONT></TD>`;
-        edges.push(`${id}:${node.right.key} -> ${descend(node.right.left)} [label=" LT " weight=${weight++} style=dashed];`);
-        edges.push(`${id}:${node.right.key} -> ${descend(node.right.right)} [label=" GT " weight=${weight++}];`);
-      }
-      else {
-        str += `<TD PORT="R" COLOR="grey">    </TD>`;
-        edges.push(`${id}:R -> ${descend(node.right)} [label=" GT " weight=${weight++}];`);
-      }
-      str += `</TR></TABLE>>`;
-      nodes.push(`${id} [label=${str}];`);
-      return `${id}:${node.key}`;
-    }
-  }
-  descend(tree._root);
-
-  var src = `
-  node [shape=plaintext, fontname="Microsoft Sans Serif", fontsize=8];
-  edge [arrowhead=none, fontname="Microsoft Sans Serif", fontsize=8, fontcolor=grey]
-  ${leaves.join(', ')}
-  [shape=square, label="", style=filled, color=grey, fillcolor=grey, width=.1, height=.1]
-  ${nodes.join('\n  ')}
-  ${edges.join('\n  ')}
-`;
-  return src;
 }
 
 export const unsortedValues = [4740, 7125, 672, 6864, 7232, 8875, 7495, 8161, 706, 2533, 1570, 7568, 1658, 450, 3646,
@@ -182,7 +73,6 @@ export function createTree() {
   unsortedValues.forEach(n => {
     tree = set(n, `#${n}`, tree);
   });
-  // writeGraph(nodeGraph(tree));
   return tree;
 }
 

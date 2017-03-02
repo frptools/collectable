@@ -2,7 +2,7 @@ import {log} from '../internals/debug'; // ## DEV ##
 import {isUndefined} from '@collectable/core';
 import {Comparator, createTree} from './red-black-tree';
 import {RedBlackTree} from './red-black-tree'; // ## DEV ##
-import {Node, BRANCH, NONE, isNone, editable} from './node';
+import {Node, BRANCH, NONE, isNone, editLeftChild, editRightChild /* ## DEV [[ */, checkInvalidNilAssignment /* ]] ## */} from './node';
 import {setChild} from './ops';
 
 export class PathNode<K, V> {
@@ -84,22 +84,19 @@ export function findPath<K, V>(key: K, root: Node<K, V>, compare: Comparator<K>,
     if(c < 0) {
       log(`[findPath (#${key})] node: ${node.key} is larger -- going LEFT`);
       p = PathNode.next(node, p, BRANCH.LEFT /* ## DEV [[ */, p.tree /* ]] ## */);
-      if(group && !isNone(node.left)) {
-        node.left = editable(group, node.left);
-      }
-      node = node.left;
+      node = editLeftChild(group, node);
+      checkInvalidNilAssignment(); // ## DEV ##
     }
     else if(c > 0) {
       log(`[findPath (#${key})] node: ${node.key} is smaller -- going RIGHT`);
       p = PathNode.next(node, p, BRANCH.RIGHT /* ## DEV [[ */, p.tree /* ]] ## */);
-      if(group && !isNone(node.right)) {
-        node.right = editable(group, node.right);
-      }
-      node = node.right;
+      node = editRightChild(group, node);
+      checkInvalidNilAssignment(); // ## DEV ##
     }
     else {
       p = PathNode.next(node, p, BRANCH.NONE /* ## DEV [[ */, p.tree /* ]] ## */);
       node = NONE;
+      checkInvalidNilAssignment(); // ## DEV ##
     }
     // ## DEV [[
     if(++loopCounter === 10) {
@@ -111,12 +108,12 @@ export function findPath<K, V>(key: K, root: Node<K, V>, compare: Comparator<K>,
   return p;
 }
 
-export function findPredecessor<K, V>(compare: Comparator<K>, p: PathNode<K, V>, group: number = 0): PathNode<K, V> {
-  p.next = BRANCH.LEFT;
-  var node = p.node.left;
-  while(!isNone(node.right)) {
-    p = PathNode.next(node, p, BRANCH.RIGHT /* ## DEV [[ */, p.tree /* ]] ## */);
-    node = node.right;
+export function findSuccessor<K, V>(compare: Comparator<K>, p: PathNode<K, V>, group: number): PathNode<K, V> {
+  p.next = BRANCH.RIGHT;
+  var node = editRightChild(group, p.node);
+  while(!isNone(node.left)) {
+    p = PathNode.next(node, p, BRANCH.LEFT /* ## DEV [[ */, p.tree /* ]] ## */);
+    node = editLeftChild(group, node);
   }
   p = PathNode.next(node, p, BRANCH.NONE /* ## DEV [[ */, p.tree /* ]] ## */);
   return p;
