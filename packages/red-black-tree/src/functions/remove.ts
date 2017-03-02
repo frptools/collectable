@@ -115,7 +115,7 @@ export function remove<K, V>(key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, 
           log(`[remove (${key})] Case 1a. Sibling (${sibling.key}) is red.`); // ## DEV ##
           log(tree, false, `[#${loopCounter}: Case 1a] ${iterationMessage}`); // ## DEV ##
           swapNodeColors(parent, sibling /* ## DEV [[ */, tree /* ]] ## */);
-          rotateLeft(gp, parent, sibling /* ## DEV [[ */, tree /* ]] ## */);
+          rotateLeft(gp, parent, sibling, tree);
           p.node = sibling;
           gp = p;
           p = PathNode.next(parent, p, BRANCH.LEFT /* ## DEV [[ */, tree /* ]] ## */);
@@ -149,7 +149,7 @@ export function remove<K, V>(key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, 
             left = editLeftChild(tree._group, sibling);
             p.next = BRANCH.RIGHT;
             swapNodeColors(sibling, left /* ## DEV [[ */, tree /* ]] ## */);
-            rotateRight(p, sibling, left /* ## DEV [[ */, tree /* ]] ## */);
+            rotateRight(p, sibling, left, tree);
             sibling = left;
           }
 
@@ -157,7 +157,7 @@ export function remove<K, V>(key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, 
           log(`[remove (${key})] Case 4a. Sibling's right child (${right.key}) is red.`); // ## DEV ##
           log(tree, false, `[#${loopCounter}: Case 4a] ${iterationMessage}`); // ## DEV ##
           right = editRightChild(tree._group, sibling);
-          rotateLeft(gp, parent, sibling /* ## DEV [[ */, tree /* ]] ## */);
+          rotateLeft(gp, parent, sibling, tree);
           sibling.red = parent.red;
           parent.red = false;
           right.red = false;
@@ -168,7 +168,7 @@ export function remove<K, V>(key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, 
         if((sibling = editLeftChild(tree._group, parent)).red) {
           log(`[remove (${key})] Case 1b. Sibling (${sibling.key}) is red.`); // ## DEV ##
           log(tree, false, `[#${loopCounter}: Case 1b] ${iterationMessage}`); // ## DEV ##
-          rotateRight(gp, parent, sibling /* ## DEV [[ */, tree /* ]] ## */);
+          rotateRight(gp, parent, sibling, tree);
           swapNodeColors(parent, sibling /* ## DEV [[ */, tree /* ]] ## */);
           p.node = sibling;
           gp = p;
@@ -203,7 +203,7 @@ export function remove<K, V>(key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, 
             right = editRightChild(tree._group, sibling);
             p.next = BRANCH.LEFT;
             swapNodeColors(sibling, right /* ## DEV [[ */, tree /* ]] ## */);
-            rotateLeft(p, sibling, right /* ## DEV [[ */, tree /* ]] ## */);
+            rotateLeft(p, sibling, right, tree);
             sibling = right;
           }
 
@@ -211,7 +211,7 @@ export function remove<K, V>(key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, 
           log(`[remove (${key})] Case 4b. Sibling's left child (${left.key}) is red.`); // ## DEV ##
           log(tree, false, `[#${loopCounter}: Case 4b] ${iterationMessage}`); // ## DEV ##
           left = editLeftChild(tree._group, sibling);
-          rotateRight(gp, parent, sibling /* ## DEV [[ */, tree /* ]] ## */);
+          rotateRight(gp, parent, sibling, tree);
           sibling.red = parent.red;
           parent.red = false;
           left.red = false;

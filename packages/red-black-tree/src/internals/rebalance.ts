@@ -16,9 +16,9 @@ const enum STATUS {
 }
 
 // ## DEV [[
-function writeBack<K, V>(p: PathNode<K, V>, newNode: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V>, /* ]] ## */): void {
+function writeBack<K, V>(p: PathNode<K, V>, newNode: Node<K, V>, tree: RedBlackTree<K, V>): void {
   if(p.parent) {
-    setChild(p.parent.next, p.parent.node, newNode /* ## DEV [[ */, tree /* ]] ## */);
+    setChild(p.parent.next, p.parent.node, newNode, tree);
   }
 }
 // ]] ##
@@ -40,8 +40,8 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
     parent = editable(group, p.node);
 
     // ## DEV [[
-    writeBack(p, parent /* ## DEV [[ */, tree /* ]] ## */);
-    setChild(p.next, parent, node /* ## DEV [[ */, tree /* ]] ## */);
+    writeBack(p, parent, tree);
+    setChild(p.next, parent, node, tree);
     // ]] ##
 
     if(status === STATUS.SAVING) {
@@ -73,7 +73,6 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
       else {
         if(pp.next === p.next) {
           if(p.next === BRANCH.LEFT) {
-            // rotate right
             grandParent.left = parent.right;
             parent.left = node;
             parent.right = grandParent;
@@ -81,13 +80,12 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
             grandParent.red = true;
             parent.red = false;
             node = parent;
-            writeBack(pp, parent /* ## DEV [[ */, tree /* ]] ## */);
+            writeBack(pp, parent, tree);
             log(tree, false, `case 2a: [left/left] rotate right`);
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
           }
           else {
-            // rotate left
             grandParent.right = parent.left;
             parent.right = node;
             parent.left = grandParent;
@@ -95,7 +93,7 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
             grandParent.red = true;
             parent.red = false;
             node = parent;
-            writeBack(pp, parent /* ## DEV [[ */, tree /* ]] ## */);
+            writeBack(pp, parent, tree);
             log(tree, false, `case 2b: [right/right] rotate left`);
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
@@ -106,7 +104,6 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
         }
         else {
           if(p.next === BRANCH.LEFT) {
-            // rotate right,left
             parent.left = node.right;
             grandParent.right = node.left;
             node.left = grandParent;
@@ -114,13 +111,12 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
             // ## DEV [[
             node.red = false;
             grandParent.red = true;
-            writeBack(pp, node /* ## DEV [[ */, tree /* ]] ## */);
+            writeBack(pp, node, tree);
             log(tree, false, `case 2d: [right/left] rotate right, left`);
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
           }
           else {
-            // rotate left,right
             parent.right = node.left;
             grandParent.left = node.right;
             node.left = parent;
@@ -128,7 +124,7 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
             // ## DEV [[
             node.red = false;
             grandParent.red = true;
-            writeBack(pp, node /* ## DEV [[ */, tree /* ]] ## */);
+            writeBack(pp, node, tree);
             log(tree, false, `case 2c: [left/right] rotate left, right`);
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##

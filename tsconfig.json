@@ -11,16 +11,13 @@
     "removeComments": true,
     "noUnusedLocals": true,
     "outDir": "./.build",
-    "lib": ["dom", "es5", "es6", "es2015"]
+    "lib": ["dom", "es5", "es6", "es2015"],
+    "skipLibCheck": true
   },
   "include": [
     "./src/**/*.ts",
     "./tests/**/*.ts",
     "./packages/*/src/**/*.ts",
     "./packages/*/tests/**/*.ts"
-  ],
-  "exclude": [
-    "./node_modules/lodash/**/*",
-    "./packages/*/visualiser/node_modules/**/*"
   ]
 }

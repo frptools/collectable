@@ -38,8 +38,8 @@ export function set<K, V>(key: K, value: V, tree: RedBlackTree<K, V>): RedBlackT
   var group = tree._group;
   root = tree._root = editable(group, tree._root);
   checkInvalidNilAssignment(); // ## DEV ##
+  // ]] ##
 
-  // ]]
   var p = findPath(key, tree._root, tree._compare /* ## DEV [[ */, group /* ]] ## */);
 
   if(p.next === BRANCH.NONE) {
@@ -59,14 +59,16 @@ export function set<K, V>(key: K, value: V, tree: RedBlackTree<K, V>): RedBlackT
     var group = immutable ? nextId() : tree._group;
     var node = createNode(group, true, key, value);
     var parent = editable(group, p.node);
+
     // ## DEV [[
     if(p.parent.isActive()) {
-      setChild(p.parent.next, p.parent.node, parent /* ## DEV [[ */, tree /* ]] ## */);
+      setChild(p.parent.next, p.parent.node, parent, tree);
     }
     else {
       tree._root = parent;
     }
-    // ]]
+    // ]] ##
+
     setChild(p.next, parent, node /* ## DEV [[ */, tree /* ]] ## */);
     log(`[set (#${key})] ${node.red ? 'red' : 'black'}`); // ## DEV ##
 

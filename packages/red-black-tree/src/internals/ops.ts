@@ -1,5 +1,5 @@
-import {log} from '../internals/debug'; // ## DEV ##
-import {RedBlackTree} from './red-black-tree'; // ## DEV ##
+import {log} from './debug'; // ## DEV ##
+import {RedBlackTree} from './red-black-tree';
 import {BRANCH, Node, isNone} from './node';
 import {PathNode} from './path';
 
@@ -12,16 +12,16 @@ function describe<K, V>(node: Node<K, V>): string {
 }
 // ]] ##
 
-function writeBack<K, V>(upper: PathNode<K, V>, lower: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): void {
+function writeBack<K, V>(upper: PathNode<K, V>, lower: Node<K, V>, tree: RedBlackTree<K, V>): void {
   if(upper.isActive()) {
-    setChild(upper.next, upper.node, lower /* ## DEV [[ */, tree /* ]] ## */);
+    setChild(upper.next, upper.node, lower);
   }
   else {
     tree._root = lower;
   }
 }
 
-export function rotateLeft<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, child: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): Node<K, V> {
+export function rotateLeft<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTree<K, V>): Node<K, V> {
   const pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(upper.isActive()) (<any>upper.node)._flag = 'rotate-upper'; // ## DEV ##
   (<any>parent)._flag = 'rotate'; // ## DEV ##
@@ -33,7 +33,7 @@ export function rotateLeft<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, chil
 
   parent.right = child.left;
   child.left = parent;
-  writeBack(upper, child /* ## DEV [[ */, tree /* ]] ## */);
+  writeBack(upper, child, tree);
 
   log(`[rotateLeft] upper: ${keyOf(upper.node)}, parent: ${pk}, child: ${ck} ===> ${describe(child)}`); // ## DEV ##
   log(tree, false, `rotate left around ${parent.key}`); // ## DEV ##
@@ -45,7 +45,7 @@ export function rotateLeft<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, chil
   return child;
 }
 
-export function rotateRight<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, child: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): Node<K, V> {
+export function rotateRight<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTree<K, V>): Node<K, V> {
   const pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(upper.isActive()) (<any>upper.node)._flag = 'rotate-upper'; // ## DEV ##
   (<any>parent)._flag = 'rotate'; // ## DEV ##
@@ -57,7 +57,7 @@ export function rotateRight<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, chi
 
   parent.left = child.right;
   child.right = parent;
-  writeBack(upper, child /* ## DEV [[ */, tree /* ]] ## */);
+  writeBack(upper, child, tree);
 
   log(`[rotateRight] upper: ${keyOf(upper.node)}, parent: ${pk}, child: ${ck} ===> ${describe(child)}`); // ## DEV ##
   log(tree, false, `rotate right around ${parent.key}`); // ## DEV ##
@@ -69,7 +69,7 @@ export function rotateRight<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, chi
   return child;
 }
 
-export function rotateLeftRight<K, V>(upper: PathNode<K, V>, grandParent: Node<K, V>, parent: Node<K, V>, child: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): Node<K, V> {
+export function rotateLeftRight<K, V>(upper: PathNode<K, V>, grandParent: Node<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTree<K, V>): Node<K, V> {
   const gk = keyOf(grandParent), pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(upper.isActive()) (<any>upper.node)._flag = 'rotate-upper'; // ## DEV ##
   (<any>grandParent)._flag = 'rotate'; // ## DEV ##
@@ -82,7 +82,7 @@ export function rotateLeftRight<K, V>(upper: PathNode<K, V>, grandParent: Node<K
   child.left = parent;
   grandParent.left = child.right;
   child.right = grandParent;
-  writeBack(upper, child /* ## DEV [[ */, tree /* ]] ## */);
+  writeBack(upper, child, tree);
 
   log(`[rotateLeftRight] upper: ${keyOf(upper.node)}, grandParent: ${gk}, parent: ${pk}, child: ${ck} ===> ${describe(child)}`); // ## DEV ##
   log(tree, false, `rotate left/right to ${child.key} as new parent`); // ## DEV ##
@@ -96,7 +96,7 @@ export function rotateLeftRight<K, V>(upper: PathNode<K, V>, grandParent: Node<K
   return child;
 }
 
-export function rotateRightLeft<K, V>(upper: PathNode<K, V>, grandParent: Node<K, V>, parent: Node<K, V>, child: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): Node<K, V> {
+export function rotateRightLeft<K, V>(upper: PathNode<K, V>, grandParent: Node<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTree<K, V>): Node<K, V> {
   const gk = keyOf(grandParent), pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(upper.isActive()) (<any>upper.node)._flag = 'rotate-upper'; // ## DEV ##
   (<any>grandParent)._flag = 'rotate'; // ## DEV ##
@@ -109,7 +109,7 @@ export function rotateRightLeft<K, V>(upper: PathNode<K, V>, grandParent: Node<K
   child.right = parent;
   grandParent.right = child.left;
   child.left = grandParent;
-  writeBack(upper, child /* ## DEV [[ */, tree /* ]] ## */);
+  writeBack(upper, child, tree);
 
   log(`[rotateRightLeft] upper: ${keyOf(upper.node)}, grandParent: ${gk}, parent: ${pk}, child: ${ck} ===> ${describe(child)}`); // ## DEV ## // ## DEV ##
   log(tree, false, `rotate right/left to ${child.key} as new parent`); // ## DEV ##
@@ -123,27 +123,13 @@ export function rotateRightLeft<K, V>(upper: PathNode<K, V>, grandParent: Node<K
   return child;
 }
 
-export function removeLeftEdgeChild<K, V>(parent: Node<K, V>, child: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): Node<K, V> {
-  const pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
-  parent.left = child.right;
-  log(`[removeLeftEdgeChild] parent: ${pk}, child: ${ck} ===> ${describe(parent)}`); // ## DEV ##
-  return parent.left;
-}
-
-export function removeRightEdgeChild<K, V>(parent: Node<K, V>, child: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): Node<K, V> {
-  const pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
-  parent.right = child.left;
-  log(`[removeRightEdgeChild] parent: ${pk}, child: ${ck} ===> ${describe(parent)}`); // ## DEV ##
-  return parent.right;
-}
-
 export function swapNodeContents<K, V>(upper: Node<K, V>, lower: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): void {
   log(`[swapNodeContents] upper: ${keyOf(upper)}, lower: ${keyOf(lower)}`); // ## DEV ##
   var key = upper.key;
   upper.key = lower.key;
   upper.value = lower.value;
 
-  lower.key = key; // ## DEV ##
+  lower.key = key;
   (<any>upper)._flag = 'swap-key'; // ## DEV ##
   (<any>lower)._flag = 'swap-key'; // ## DEV ##
   log(tree, false, `swap node contents; ${upper.key} <==> ${lower.key}`); // ## DEV ##
@@ -169,9 +155,9 @@ export function swapNodeColors<K, V>(upper: Node<K, V>, lower: Node<K, V> /* ## 
   delete (<any>lower)._flag; // ## DEV ##
 }
 
-export function setChild<K, V>(branch: BRANCH, parent: Node<K, V>, child: Node<K, V> /* ## DEV [[ */, tree: RedBlackTree<K, V> /* ]] ## */): void {
+export function setChild<K, V>(branch: BRANCH, parent: Node<K, V>, child: Node<K, V>): void {
   if(branch === BRANCH.NONE) return;
-  if(isNone(parent)) throw new Error(`Invalid assignment of ${child.key} to ${BRANCH[branch]} child of NIL node`); // ## DEV
+  if(isNone(parent)) throw new Error(`Invalid assignment of ${child.key} to ${BRANCH[branch]} child of NIL node`); // ## DEV ##
   const pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(branch === BRANCH.LEFT) {
     parent.left = child;
@@ -180,5 +166,4 @@ export function setChild<K, V>(branch: BRANCH, parent: Node<K, V>, child: Node<K
     parent.right = child;
   }
   log(`[setChild] branch: ${BRANCH[branch]}, parent: ${pk}, child: ${ck} ===> ${describe(parent)}`); // ## DEV ##
-  // log(tree, false, `assign ${keyOf(child)} ${BRANCH[branch]} of ${keyOf(parent)}`); // ## DEV ##
 }

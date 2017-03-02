@@ -1,13 +1,13 @@
 import {log} from '../internals/debug'; // ## DEV ##
 import {isUndefined} from '@collectable/core';
-import {Comparator, createTree} from './red-black-tree';
+import {Comparator /* ## DEV [[ */, createTree /* ]] ## */} from './red-black-tree';
 import {RedBlackTree} from './red-black-tree'; // ## DEV ##
 import {Node, BRANCH, NONE, isNone, editLeftChild, editRightChild /* ## DEV [[ */, checkInvalidNilAssignment /* ]] ## */} from './node';
 import {setChild} from './ops';
 
 export class PathNode<K, V> {
   static NONE: PathNode<any, any>;
-  static NO_TREE = createTree<any, any>(false);
+  static NO_TREE = createTree<any, any>(false); // ## DEV ##
   static cache: PathNode<any, any>;
 
   constructor(
@@ -50,7 +50,7 @@ export class PathNode<K, V> {
 
   replace(node: Node<K, V>): void {
     if(this.parent.isActive()) {
-      setChild(this.parent.next, this.parent.node, node /* ## DEV [[ */, this.tree /* ]] ## */);
+      setChild(this.parent.next, this.parent.node, node);
     }
     this.node = node;
   }
@@ -82,13 +82,13 @@ export function findPath<K, V>(key: K, root: Node<K, V>, compare: Comparator<K>,
   do {
     var c = compare(key, node.key);
     if(c < 0) {
-      log(`[findPath (#${key})] node: ${node.key} is larger -- going LEFT`);
+      log(`[findPath (#${key})] node: ${node.key} is larger -- going LEFT`); // ## DEV ##
       p = PathNode.next(node, p, BRANCH.LEFT /* ## DEV [[ */, p.tree /* ]] ## */);
       node = editLeftChild(group, node);
       checkInvalidNilAssignment(); // ## DEV ##
     }
     else if(c > 0) {
-      log(`[findPath (#${key})] node: ${node.key} is smaller -- going RIGHT`);
+      log(`[findPath (#${key})] node: ${node.key} is smaller -- going RIGHT`); // ## DEV ##
       p = PathNode.next(node, p, BRANCH.RIGHT /* ## DEV [[ */, p.tree /* ]] ## */);
       node = editRightChild(group, node);
       checkInvalidNilAssignment(); // ## DEV ##
