@@ -54,26 +54,26 @@ export class PCGRandom {
    */
   constructor(seedHi: OptionalNumber, seedLo: OptionalNumber, incHi: OptionalNumber, incLo: OptionalNumber);
   constructor(seedHi?: OptionalNumber, seedLo?: OptionalNumber, incHi?: OptionalNumber, incLo?: OptionalNumber) {
-    if (isNullOrUndefined(seedLo) && isNullOrUndefined(seedHi)) {
+    if(isNullOrUndefined(seedLo) && isNullOrUndefined(seedHi)) {
       seedLo = (Math.random() * 0xffffffff) >>> 0;
       seedHi = 0;
     }
-    else if (isNullOrUndefined(seedLo)) {
+    else if(isNullOrUndefined(seedLo)) {
       seedLo = seedHi;
       seedHi = 0;
     }
-    if (isNullOrUndefined(incLo) && isNullOrUndefined(incHi)) {
+    if(isNullOrUndefined(incLo) && isNullOrUndefined(incHi)) {
       incLo = this._state ? this._state[3] : defaultIncLo;
       incHi = this._state ? this._state[2] : defaultIncHi;
     }
-    else if (isNullOrUndefined(incLo)) {
-      incLo = incHi;
+    else if(isNullOrUndefined(incLo)) {
+      incLo = <number>incHi;
       incHi = 0;
     }
 
-    this._state = new Int32Array([ 0, 0, incHi >>> 0, (incLo|1) >>> 0 ]);
+    this._state = new Int32Array([ 0, 0, <number>incHi >>> 0, (incLo|1) >>> 0 ]);
     this._next();
-    add64(this._state, this._state[0], this._state[1], seedHi>>>0, seedLo>>>0);
+    add64(this._state, this._state[0], this._state[1], <number>seedHi>>>0, <number>seedLo>>>0);
     this._next();
     return this;
   };
@@ -119,11 +119,11 @@ export class PCGRandom {
 
   /// Get a uniformly distributed 32 bit integer between [0, max).
   integer(max) {
-    if (!max) {
+    if(!max) {
       return this._next();
     }
     max = max >>> 0;
-    if ((max & (max - 1)) === 0) {
+    if((max & (max - 1)) === 0) {
       return this._next() & (max - 1); // fast path for power of 2
     }
 
@@ -154,13 +154,13 @@ function mul64(out: Int32Array, aHi: number, aLo: number, bHi: number, bLo: numb
 
   c0 = (c0 << 16) >>> 0;
   lo = (lo + c0) >>> 0;
-  if ((lo >>> 0) < (c0 >>> 0)) {
+  if((lo >>> 0) < (c0 >>> 0)) {
     hi = (hi + 1) >>> 0;
   }
 
   c1 = (c1 << 16) >>> 0;
   lo = (lo + c1) >>> 0;
-  if ((lo >>> 0) < (c1 >>> 0)) {
+  if((lo >>> 0) < (c1 >>> 0)) {
     hi = (hi + 1) >>> 0;
   }
 
@@ -175,7 +175,7 @@ function mul64(out: Int32Array, aHi: number, aLo: number, bHi: number, bLo: numb
 function add64(out: Int32Array, aHi: number, aLo: number, bHi: number, bLo: number): void {
   var hi = (aHi + bHi) >>> 0;
   var lo = (aLo + bLo) >>> 0;
-  if ((lo >>> 0) < (aLo >>> 0)) {
+  if((lo >>> 0) < (aLo >>> 0)) {
     hi = (hi + 1) | 0;
   }
   out[0] = hi;
