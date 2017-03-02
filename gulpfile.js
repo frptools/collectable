@@ -58,7 +58,7 @@ function compile() {
   ]);
 }
 
-function preprocess() {
+function runPreprocessor() {
   return merge([
     gulp.src(`${path}/src/**/*.ts`)
       .pipe(plumber())
@@ -98,7 +98,7 @@ function clean() {
 }
 
 gulp.task(`clean`, clean());
-gulp.task(`preprocess`, preprocess);
+gulp.task(`preprocess`, runPreprocessor);
 gulp.task(`compile`, [`preprocess`], compile);
 gulp.task(`watch`, () => gulp.watch([`${path}/src/**/*.ts`, `${path}/tests/**/*.ts`], [`build`]));
 gulp.task(`test`, [`compile`, `lint`], runTests);
