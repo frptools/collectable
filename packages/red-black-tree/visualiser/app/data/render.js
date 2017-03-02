@@ -6,6 +6,9 @@ const BRANCH_MARGIN = 20;
 
 function renderModel(model, offset) {
   switch(model.type) {
+    case 'red':
+    case 'black':
+    case 'dummy':
     case 'none':
       return renderNode(model, calculateRect(model.size, model.size, offset));
     case 'subtree':
@@ -55,11 +58,11 @@ function renderSubtree(subtree, offset = {x: 1, y: 1}) {
   const leftId = subtree.left.node.id;
   const rightId = subtree.right.node.id;
 
-  var node;
-  const leftInnerId = (node = subtree.left.inner.node || subtree.left.inner).id;
-  const rightInnerId = (node = subtree.right.inner.node || subtree.right.inner).id;
-  const leftOuterId = leftOuter ? (node = subtree.left.outer.node || subtree.left.outer).id : '';
-  const rightOuterId = rightOuter ? (node = subtree.right.outer.node || subtree.right.outer).id : '';
+  var linode, rinode, lonode, ronode;
+  const leftInnerId = (linode = subtree.left.inner.node || subtree.left.inner).id;
+  const rightInnerId = (rinode = subtree.right.inner.node || subtree.right.inner).id;
+  const leftOuterId = leftOuter ? (lonode = subtree.left.outer.node || subtree.left.outer).id : '';
+  const rightOuterId = rightOuter ? (ronode = subtree.right.outer.node || subtree.right.outer).id : '';
 
   const leftNode = renderNode(subtree.left.node, leftNodeRect);
   const centerNode = renderNode(subtree.node, centerNodeRect);
@@ -67,6 +70,12 @@ function renderSubtree(subtree, offset = {x: 1, y: 1}) {
 
   const rect = calculateBoundingBox(nodesRect, branchesRect);
   rect.cx = centerNodeRect.cx;
+  const lflag = centerNode.flag && leftNode.flag ? `flag` : '';
+  const rflag = centerNode.flag && rightNode.flag ? `flag` : '';
+  const liflag = leftNode.flag && linode.flag ? `flag` : '';
+  const riflag = leftNode.flag && rinode.flag ? `flag` : '';
+  const loflag = leftNode.flag && lonode && lonode.flag ? `flag` : '';
+  const roflag = leftNode.flag && ronode && ronode.flag ? `flag` : '';
   const views = [
     ...leftNode.views,
     ...centerNode.views,
@@ -75,12 +84,12 @@ function renderSubtree(subtree, offset = {x: 1, y: 1}) {
     ...leftInner.views,
     ...rightInner.views,
     ...(rightOuter ? rightOuter.views : []),
-    renderEdge(centerNodeRect.x, centerNodeRect.cy, leftNodeRect.x + leftNodeRect.width, leftNodeRect.cy, centerId, leftId),
-    renderEdge(centerNodeRect.x + centerNodeRect.width, centerNodeRect.cy, rightNodeRect.x, rightNodeRect.cy, centerId, rightId),
-    renderEdge(leftNodeRect.cx, leftNodeRect.y + leftNodeRect.height, leftInner.rect.cx, leftInner.rect.y, leftId, leftInnerId),
-    renderEdge(rightNodeRect.cx, rightNodeRect.y + rightNodeRect.height, rightInner.rect.cx, rightInner.rect.y, rightId, rightInnerId),
-    ...(!leftOuter ? [] : [renderEdge(leftNodeRect.cx, leftNodeRect.y + leftNodeRect.height, leftOuter.rect.cx, leftOuter.rect.y, leftId, leftOuterId)]),
-    ...(!rightOuter ? [] : [renderEdge(rightNodeRect.cx, rightNodeRect.y + rightNodeRect.height, rightOuter.rect.cx, rightOuter.rect.y, rightId, rightOuterId)])
+    renderEdge(centerNodeRect.x, centerNodeRect.cy, leftNodeRect.x + leftNodeRect.width, leftNodeRect.cy, centerId, leftId, lflag),
+    renderEdge(centerNodeRect.x + centerNodeRect.width, centerNodeRect.cy, rightNodeRect.x, rightNodeRect.cy, centerId, rightId, rflag),
+    renderEdge(leftNodeRect.cx, leftNodeRect.y + leftNodeRect.height, leftInner.rect.cx, leftInner.rect.y, leftId, leftInnerId, liflag),
+    renderEdge(rightNodeRect.cx, rightNodeRect.y + rightNodeRect.height, rightInner.rect.cx, rightInner.rect.y, rightId, rightInnerId, riflag),
+    ...(!leftOuter ? [] : [renderEdge(leftNodeRect.cx, leftNodeRect.y + leftNodeRect.height, leftOuter.rect.cx, leftOuter.rect.y, leftId, leftOuterId, loflag)]),
+    ...(!rightOuter ? [] : [renderEdge(rightNodeRect.cx, rightNodeRect.y + rightNodeRect.height, rightOuter.rect.cx, rightOuter.rect.y, rightId, rightOuterId, roflag)])
   ];
   return {rect, views};
 }
@@ -168,8 +177,9 @@ function renderNode(node, rect) {
       h('animate', {attrs: {class: 'anim-move-y', attributeType: 'XML', attributeName: 'y', from: rect.cy, to: rect.cy, calcMode: 'spline', keyTimes: ANIM_TIMES_FAST, keySplines: EASE_IN_OUT_CURVES, dur: ANIM_DUR_FAST, repeatCount: 1, fill: 'freeze'}}),
     );
   }
+  var flag = node.flag ? ` flag-${node.flag}` : '';
   const circle = h('circle', {attrs: {r, cx: rect.cx, cy: rect.cy, opacity: 1}, insert: onInsertNode, update: onUpdateNode, postpatch: onPostPatchNode}, circleAnims);
-  const views = [h('g', {key: node.id, attrs: {id: node.id, class: `node ${node.type}`}}, [
+  const views = [svg({key: node.id, attrs: {id: node.id, class: `node ${node.type}${flag}`}}, [
     circle,
     ...(node.text === void 0 ? [] : [
       h('text', {attrs: {x: rect.cx, y: rect.cy}, update: onUpdateNodeText, postpatch: onPostPatchNodeText}, [`${node.text}`, ...textAnims])
@@ -200,7 +210,7 @@ function onPostPatchEdge(v) {
   anim.beginElement();
 }
 
-function renderEdge(x0, y0, x1, y1, fromId, toId) {
+function renderEdge(x0, y0, x1, y1, fromId, toId, flag = '') {
   const id = `edge--${fromId}--${toId}`;
   const xh = Math.floor((x1 - x0)/6);
   const yh = Math.floor((y1 - y0)/2);
@@ -213,7 +223,8 @@ function renderEdge(x0, y0, x1, y1, fromId, toId) {
     h('animate', {attrs: {class: 'anim-opacity', attributeType: 'XML', attributeName: 'opacity', from: 0, to: 1, dur: ANIM_DUR_MED, repeatCount: 1}}),
     h('animate', {attrs: {class: 'anim-move', attributeType: 'XML', attributeName: 'd', from: d, to: d, calcMode: 'spline', keyTimes: ANIM_TIMES_FAST, keySplines: EASE_IN_OUT_CURVES, dur: ANIM_DUR_FAST, repeatCount: 1, fill: 'freeze'}})
   ];
-  return h('path', {key: id, attrs: {id, class: `edge ${y1 > y0 ? 'tb' : x1 > x0 ? 'lr' : 'rl'}`, d, opacity: 1}, insert: onInsertEdge, update: onUpdateEdge, postpatch: onPostPatchEdge}, anims);
+  if(flag) flag = ` ${flag}`;
+  return h('path', {key: id, attrs: {id, class: `edge ${y1 > y0 ? 'tb' : x1 > x0 ? 'lr' : 'rl'}${flag}`, d, opacity: 1}, insert: onInsertEdge, update: onUpdateEdge, postpatch: onPostPatchEdge}, anims);
 }
 
 function calculateRect(width, height, {x = 0, y = 0, xAnchor = 'left', yAnchor = 'top'} = {}) {
@@ -318,6 +329,16 @@ export function render({index, model}) {
   views.sort(compareElements);
   return svg({attrs: {width: rect.width + 2, height: rect.height + 2}}, [
     h('defs', [
+      h('filter', {id: 'drop-shadow'}, [
+        h('feGaussianBlur', {attrs: {in: 'SourceAlpha', stdDeviation: '2.2'}}),
+        h('feOffset', {attrs: {dx: '0', dy: '0', result: 'offsetblur'}}),
+        h('feFlood', {attrs: {'flood-color': 'rgba(0,0,0,0.5)'}}),
+        h('feComposite', {attrs: {in2: 'offsetblur', operator: 'in'}}),
+        h('feMerge', [
+          h('feMergeNode'),
+          h('feMergeNode', {attrs: {in: 'SourceGraphic'}}),
+        ]),
+      ]),
       arrow('left-arrow', 'arrow left'),
       arrow('right-arrow', 'arrow right'),
       arrow('down-arrow', 'arrow down'),

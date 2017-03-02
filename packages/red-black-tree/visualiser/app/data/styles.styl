@@ -21,6 +21,39 @@
       stroke: #c7c7c7
       stroke-width: 2
       stroke-dasharray: 4, 2
+      &.flag-rotate
+        circle
+          stroke: $palette-2
+          stroke-width: 2
+    &.flag-cycle
+      circle
+        fill: $palette-2
+        stroke: darken($palette-1, 30%)
+        stroke-dasharray: 2, 2
+        stroke-width: 2
+      text
+        fill: darken($palette-1, 30%)
+        font-weight: 700
+
+
+    &.flag-rotate
+    &.flag-rotate-upper
+    &.flag-rotate-child
+      &.red
+      &.black
+        circle
+          filter: url(#drop-shadow)
+    &.flag-rotate-upper
+      &.red
+      &.black
+        circle
+          fill: $palette-4
+    &.flag-rotate
+      &.red
+      &.black
+        circle
+          stroke: white
+          stroke-width: 2
 
   .edge
     animation: 1s ease-in-out 1
@@ -34,5 +67,7 @@
       marker-end: url(#left-arrow)
     &.tb
       marker-end: url(#down-arrow)
+    &.flag
+      stroke: $palette-1
   .arrow
     fill: grey

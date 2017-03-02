@@ -39,7 +39,7 @@ function addNext(add) {
         return;
       }
       else {
-        log.push(arg && typeof arg === 'object' ? CJ.parse(CJ.stringify(arg)) : arg);
+        log.push(arg && typeof arg === 'object' && !(arg instanceof Error) ? CJ.parse(CJ.stringify(arg)) : arg);
       }
     }
 

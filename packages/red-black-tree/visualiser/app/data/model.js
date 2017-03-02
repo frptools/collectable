@@ -3,38 +3,38 @@ function isNone(node) {
 }
 
 var _nextId = 0;
-function Node(type, size, key, ids, pid, gid, pos) {
-  var id;
+function Node(type, size, key, ids, pid, gid, pos, flag = '') {
+  var id, dupe = false;
   switch(type) {
     case 'dummy': id = `dummy-${gid}-${pos}`; break;
     case 'none': id = `leaf-${pid}-${pos}`; break;
     default:
       id = `node-${key}`;
-      if(ids.has(id)) id += `-${pid}-${pos}`;
+      if(ids.has(id)) {
+        id += `-${pid}-${pos}`;
+        dupe = true;
+      }
       break;
   }
-  if(ids.has(id)) {
-    id += `-${++_nextId}`;
-  }
-  else {
-    ids.add(id);
-  }
+  ids.add(id);
   return {
     id,
     type,
     size,
-    text: key
+    text: key,
+    flag,
+    dupe
   };
 }
 
-const DummyNode = (ids, pid, gid, pos) => Node('dummy', 30, void 0, ids, pid, gid, pos);
+const DummyNode = (ids, pid, gid, pos, flag = '') => Node('dummy', 30, void 0, ids, pid, gid, pos, flag);
 const VoidNode = (ids, pid, gid, pos) => Node('none', 12, void 0, ids, pid, gid, pos);
-const RedNode = (key, ids, pid, gid, pos) => Node('red', 30, key, ids, pid, gid, pos);
-const BlackNode = (key, ids, pid, gid, pos) => Node('black', 30, key, ids, pid, gid, pos);
+const RedNode = (key, ids, pid, gid, pos, flag = '') => Node('red', 30, key, ids, pid, gid, pos, flag);
+const BlackNode = (key, ids, pid, gid, pos, flag = '') => Node('black', 30, key, ids, pid, gid, pos, flag);
 
 function SubtreeBranch(node, left, ids, pid, gid, pos) {
   const red = ('_red' in node ? node._red : node.red);
-  const branchNode = red ? (node.red ? RedNode : BlackNode)(node.key, ids, pid, gid, pos) : DummyNode(ids, pid, gid, pos);
+  const branchNode = red ? (node.red ? RedNode : BlackNode)(node.key, ids, pid, gid, pos, node._flag) : DummyNode(ids, pid, gid, pos, node._flag);
   if(node.red) pid = branchNode.id;
   return {
     type: 'branch',
@@ -47,7 +47,12 @@ function SubtreeBranch(node, left, ids, pid, gid, pos) {
 
 function Subtree(node, ids, pid, gid, pos) {
   if(isNone(node)) return VoidNode(ids, pid, gid, pos);
-  const center = (node.red ? RedNode : BlackNode)(node.key, ids, pid, gid, pos);
+  const center = (node.red ? RedNode : BlackNode)(node.key, ids, pid, gid, pos, node._flag);
+  var left, right;
+  if(center.dupe) {
+    node._flag += ` flag-cycle`;
+    return center;
+  }
   return {
     type: 'subtree',
     node: center,
