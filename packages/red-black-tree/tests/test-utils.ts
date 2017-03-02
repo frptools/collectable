@@ -22,9 +22,13 @@ export function represent<K, V>(treeOrNode: RedBlackTree<K, V>|Node<K, any>, set
 }
 
 export function getValues(node: Node<number, string>, array: string[] = []): string[] {
-  if(!isNone(node.left)) getValues(node.left, array);
+  if(!isNone(node.left)) {
+    getValues(node.left, array);
+  }
   array.push(node.value);
-  if(!isNone(node.right)) getValues(node.right, array);
+  if(!isNone(node.right)) {
+    getValues(node.right, array);
+  }
   return array;
 }
 

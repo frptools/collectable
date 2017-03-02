@@ -65,3 +65,13 @@ export function editLeftChild<K, V>(group: number, node: Node<K, V>): Node<K, V>
   return isNone(child) || child.group === group ? child
        : (node.left = (child = cloneNode(group, child)), child);
 }
+
+export function assignValue<K, V>(value: V, node: Node<K, V>): boolean {
+  const v = node.value;
+  // Note the double-equals below is used to correct compare Symbol() with Object(Symbol())
+  if(v === value || (v !== null && typeof v === 'object' && v == value)) { // tslint:disable-line:triple-equals
+    return false;
+  }
+  node.value = value;
+  return true;
+}

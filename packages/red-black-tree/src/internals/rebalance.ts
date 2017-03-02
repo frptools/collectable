@@ -1,5 +1,4 @@
 import {log} from '../internals/debug'; // ## DEV ##
-import {RedBlackTree} from './red-black-tree'; // ## DEV ##
 import {setChild} from './ops';
 import {PathNode} from './path';
 import {
@@ -14,14 +13,6 @@ const enum STATUS {
   SAVING = 1,
   DONE = 2
 }
-
-// ## DEV [[
-function writeBack<K, V>(p: PathNode<K, V>, newNode: Node<K, V>, tree: RedBlackTree<K, V>): void {
-  if(p.parent) {
-    setChild(p.parent.next, p.parent.node, newNode, tree);
-  }
-}
-// ]] ##
 
 export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<K, V>, parent: Node<K, V>, tree?: any): Node<K, V> {
   var p: PathNode<K, V> = tail;
@@ -39,13 +30,8 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
 
     parent = editable(group, p.node);
 
-    // ## DEV [[
-    writeBack(p, parent, tree);
-    setChild(p.next, parent, node, tree);
-    // ]] ##
-
     if(status === STATUS.SAVING) {
-      setChild(p.next, parent, node /* ## DEV [[ */, tree /* ]] ## */);
+      setChild(p.next, parent, node);
       if(parent === p.node) {
         status = STATUS.DONE;
       }
@@ -54,7 +40,6 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
 
     else if(parent.red) {
       var pp = <PathNode<K, V>>p.parent, grandParent = editable(group, pp.node);
-      writeBack(pp, grandParent /* ## DEV [[ */, tree /* ]] ## */); // ## DEV ##
       var uncle = pp.next === BRANCH.LEFT ? grandParent.right : grandParent.left;
       if(uncle.red) {
         uncle = editable(group, uncle);
@@ -63,9 +48,9 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
         if(pp.parent.isActive()) {
           grandParent.red = true;
         }
-        setChild(p.next, parent, node /* ## DEV [[ */, tree /* ]] ## */);
-        setChild(pp.next, grandParent, parent /* ## DEV [[ */, tree /* ]] ## */);
-        setChild(pp.next === BRANCH.LEFT ? BRANCH.RIGHT : BRANCH.LEFT, grandParent, uncle /* ## DEV [[ */, tree /* ]] ## */);
+        setChild(p.next, parent, node);
+        setChild(pp.next, grandParent, parent);
+        setChild(pp.next === BRANCH.LEFT ? BRANCH.RIGHT : BRANCH.LEFT, grandParent, uncle);
         node = grandParent;
         log(tree, false, `case 3 [red uncle] ${uncle.key}`); // ## DEV ##
         checkInvalidNilAssignment(); // ## DEV ##
@@ -80,7 +65,6 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
             grandParent.red = true;
             parent.red = false;
             node = parent;
-            writeBack(pp, parent, tree);
             log(tree, false, `case 2a: [left/left] rotate right`);
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
@@ -93,7 +77,6 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
             grandParent.red = true;
             parent.red = false;
             node = parent;
-            writeBack(pp, parent, tree);
             log(tree, false, `case 2b: [right/right] rotate left`);
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
@@ -111,7 +94,6 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
             // ## DEV [[
             node.red = false;
             grandParent.red = true;
-            writeBack(pp, node, tree);
             log(tree, false, `case 2d: [right/left] rotate right, left`);
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
@@ -124,7 +106,6 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
             // ## DEV [[
             node.red = false;
             grandParent.red = true;
-            writeBack(pp, node, tree);
             log(tree, false, `case 2c: [left/right] rotate left, right`);
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
@@ -136,7 +117,7 @@ export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<
       p = <PathNode<K, V>>p.release();
     }
     else {
-      setChild(p.next, parent, node /* ## DEV [[ */, tree /* ]] ## */);
+      setChild(p.next, parent, node);
       status = parent === p.node ? STATUS.DONE : STATUS.SAVING;
       node = parent;
       log(tree, false, `case 1: [black parent]`); // ## DEV ##

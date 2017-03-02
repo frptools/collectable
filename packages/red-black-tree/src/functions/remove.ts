@@ -46,6 +46,7 @@ export function remove<K, V>(key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, 
   }
 
   if(tree._size === 1) {
+    PathNode.release(p, tree._root);
     log(`[remove (#${key})] This is the last item in the tree. Returning an empty tree.`); // ## DEV ##
     if(immutable) {
       return createTree<K, V>(false, tree._compare);
