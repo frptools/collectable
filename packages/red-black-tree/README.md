@@ -113,7 +113,7 @@ Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of t
 
 ## API
 
-All set-manipulation functions are available from module `@collectable/red-black-tree`.
+All tree-manipulation functions are available from module `@collectable/red-black-tree`.
 
 Curried versions of each of these (where applicable) are available from module `@collectable/red-black-tree/curried`. The curried versions of each function will suffer a minor performance hit due to the additional layers of indirection required to provide a curried interface. In most cases this is not worth worrying about, but if maximum performance is desired, consider using the non-curried API instead.
 
@@ -216,7 +216,7 @@ it is modified and returned as-is, instead of being cloned beforehand.
 import {updateTree} from '@collectable/core';
 ```
 
-#### `update<K, V>(callback: UpdateTreeEntryCallback<K, V|undefined>, key: K, tree: RedBlackTree<K, V>): RedBlackTree<K,
+#### `update<K, V>(callback: UpdateTreeEntryCallback<K, V|undefined>, key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, V>`
 
 Locates a value in the tree and passes it to a callback function that should return an updated value. If the value
 returned is equal to the old value, then the original tree is returned, otherwise a modified copy of the original
