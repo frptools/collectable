@@ -1,23 +1,23 @@
 import {log} from '../internals/debug'; // ## DEV ##
 import {isUndefined} from '@collectable/core';
 import {Comparator /* ## DEV [[ */, createTree /* ]] ## */} from './red-black-tree';
-import {RedBlackTree} from './red-black-tree'; // ## DEV ##
+import {RedBlackTreeImpl} from './red-black-tree'; // ## DEV ##
 import {Node, BRANCH, NONE, isNone, editLeftChild, editRightChild /* ## DEV [[ */, checkInvalidNilAssignment /* ]] ## */} from './node';
-import {setChild} from './ops';
+import {setChild, updateCount} from './ops';
 
 export class PathNode<K, V> {
   static NONE: PathNode<any, any>;
-  static NO_TREE = createTree<any, any>(false); // ## DEV ##
+  static NO_TREE = <RedBlackTreeImpl<any, any>>createTree<any, any>(false); // ## DEV ##
   static cache: PathNode<any, any>;
 
   constructor(
     public node: Node<K, V>,
     public parent: PathNode<K, V>,
     public next: BRANCH,
-    public tree: RedBlackTree<K, V> // ## DEV ##
+    public tree?: RedBlackTreeImpl<K, V> // ## DEV ##
   ) {}
 
-  static next<K, V>(node: Node<K, V>, parent: PathNode<K, V>, next: BRANCH /* ## DEV [[ */, tree: RedBlackTree<K, V>, /* ]] ## */): PathNode<K, V> {
+  static next<K, V>(node: Node<K, V>, parent: PathNode<K, V>, next: BRANCH /* ## DEV [[ */, tree?: RedBlackTreeImpl<K, V>, /* ]] ## */): PathNode<K, V> {
     var p = PathNode.cache;
     if(p.isActive()) {
       PathNode.cache = p.parent;
@@ -31,8 +31,18 @@ export class PathNode<K, V> {
     return p;
   }
 
-  static release<K, V>(p: PathNode<K, V>, node: Node<K, V>): Node<K, V> {
+  static release<K, V>(p: PathNode<K, V>, node: Node<K, V> = NONE): Node<K, V> {
     do {
+      p.node = NONE;
+    }
+    while(p.parent.isActive() && (p = p.parent, node = p.node));
+    p.parent = PathNode.cache;
+    return node;
+  }
+
+  static releaseAndRecount<K, V>(p: PathNode<K, V>, node: Node<K, V>): Node<K, V> {
+    do {
+      updateCount(p.node);
       p.node = NONE;
     }
     while(p.parent.isActive() && (p = p.parent, node = p.node));
@@ -57,6 +67,7 @@ export class PathNode<K, V> {
 
   release(): PathNode<K, V> {
     var p = this.parent;
+    log(`[PathNode#release] Now pointing at node ${p.node.key||'NIL'}`); // ## DEV ##
     this.node = NONE;
     this.parent = PathNode.cache;
     this.tree = PathNode.NO_TREE; // ## DEV ##
@@ -100,7 +111,7 @@ export function findPath<K, V>(key: K, root: Node<K, V>, compare: Comparator<K>,
     }
     // ## DEV [[
     if(++loopCounter === 10) {
-      throw new Error('Infinite loop in findPath()');
+      throw new Error(`Infinite loop in findPath() while searching for key #${key}`);
     }
     // ]] ##
   } while(!isNone(node));
@@ -111,7 +122,7 @@ export function findPath<K, V>(key: K, root: Node<K, V>, compare: Comparator<K>,
 export function findSuccessor<K, V>(compare: Comparator<K>, p: PathNode<K, V>, group: number): PathNode<K, V> {
   p.next = BRANCH.RIGHT;
   var node = editRightChild(group, p.node);
-  while(!isNone(node.left)) {
+  while(!isNone(node._left)) {
     p = PathNode.next(node, p, BRANCH.LEFT /* ## DEV [[ */, p.tree /* ]] ## */);
     node = editLeftChild(group, node);
   }

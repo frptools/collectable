@@ -1,2 +1,2 @@
 export * from './functions';
-export {RedBlackTree} from './internals';
+export {RedBlackTreeEntry, Comparator} from './internals';

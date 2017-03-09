@@ -1,5 +1,8 @@
+.docs/
 .build/
 .devnotes/
+.vscode/settings.json
+.assets/working-files/
 node_modules/
 lib/
 *.log

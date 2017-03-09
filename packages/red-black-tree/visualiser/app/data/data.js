@@ -1,4 +1,4 @@
-import {RedBlackTree, empty, set, remove} from '../../../../../.build/packages/red-black-tree/src';
+import {empty, set, remove, isRedBlackTree} from '../../../../../.build/packages/red-black-tree/src';
 import {log} from './index';
 
 const unsortedValues = [4740, 7125, 672, 6864, 7232, 8875, 7495, 8161, 706, 2533, 1570, 7568, 1658, 450, 3646,
@@ -38,5 +38,5 @@ export function start() {
 }
 
 export function isInstanceOfVisualisedType(arg) {
-  return arg && arg instanceof RedBlackTree;
+  return isRedBlackTree(arg);
 }

@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -29,7 +29,7 @@
     "@types/node": "^7.0.5",
     "chai": "^3.5.0",
     "gulp": "^3.9.1",
-    "gulp-mocha": "^3.0.1",
+    "gulp-mocha": "^4.0.1",
     "gulp-plumber": "^1.1.0",
     "gulp-sourcemaps": "^2.4.1",
     "gulp-transform": "^1.1.0",
@@ -38,10 +38,10 @@
     "gulp-typescript": "^3.1.4",
     "merge2": "^1.0.3",
     "mocha": "^3.2.0",
-    "rimraf": "^2.5.4",
+    "rimraf": "^2.6.1",
     "source-map-support": "^0.4.11",
     "tiny-preprocessor": "^1.0.0",
-    "tslint": "^4.4.2",
+    "tslint": "^4.5.1",
     "typedoc": "^0.5.5",
     "typedoc-plugin-external-module-map": "^0.0.6",
     "typescript": "^2.1.5",
@@ -52,6 +52,7 @@
     "@collectable/list": "latest",
     "@collectable/map": "latest",
     "@collectable/set": "latest",
+    "@collectable/red-black-tree": "latest",
     "@typed/curry": "latest"
   }
 }

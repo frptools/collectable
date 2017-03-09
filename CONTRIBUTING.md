@@ -146,9 +146,9 @@ Collectable also provides circular reference detection in order to safely and co
 
 1. import `preventCircularRefs` from `@collectable/core`
 2. pass the following:
-  a. a callback to create your empty output target (e.g. an array or plain object)
-  b. a callback to unwrap your collection elements into the output target
-  c. an instance of your collection
+   - a callback to create your empty output target (e.g. an array or plain object)
+   - a callback to unwrap your collection elements into the output target
+   - an instance of your collection
 3. The function returns the successfully-unwrapped result
 
 Internally, your collection instance will be correlated with the output target you created. During recursive unwrapping, if your collection is encountered a second time, instead of unwrapping it, the existing output target will be returned directly, which will preserve the structural correctness of the outer output object, prevent duplicate work and avoid infinite recursion during the operation.

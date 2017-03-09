@@ -1,18 +1,19 @@
 import {assert} from 'chai';
 import {set} from '../../src';
-import {empty, represent, sortedValues, getValues, createTree, verifyRedBlackAdjacencyInvariant, verifyBlackHeightInvariant} from '../test-utils';
+import {RedBlackTreeImpl, Node, isNone} from '../../src/internals';
+import {empty, represent, sortedValues, unsortedValues, getValues, createTree, verifyRedBlackAdjacencyInvariant, verifyBlackHeightInvariant} from '../test-utils';
 
 suite('[RedBlackTree]', () => {
   suite('set()', () => {
     test('should replace the root of an empty list', () => {
-      const tree = set(1, 1, empty());
+      const tree = <RedBlackTreeImpl<any, any>>set(1, 1, empty());
       assert.strictEqual(tree._size, 1);
       assert.strictEqual(tree._root.value, 1);
     });
 
     test('should add the second entry as a child of the root', () => {
-      const tree0 = set(1, 1, empty());
-      const tree1 = set(2, 2, tree0);
+      const tree0 = <RedBlackTreeImpl<any, any>>set(1, 1, empty());
+      const tree1 = <RedBlackTreeImpl<any, any>>set(2, 2, tree0);
       assert.notStrictEqual(tree0, tree1);
       assert.notStrictEqual(tree0._root, tree1._root);
       assert.deepEqual(represent(tree0), [['black', 1]]);
@@ -20,7 +21,7 @@ suite('[RedBlackTree]', () => {
     });
 
     test('should insert successive values in the correct sort order', () => {
-      var tree = createTree();
+      var tree = <RedBlackTreeImpl<any, any>>createTree();
       var values = getValues(tree._root);
       assert.deepEqual(values, sortedValues.map(v => `#${v}`));
     });
@@ -32,13 +33,13 @@ suite('[RedBlackTree]', () => {
     });
 
     test('should replace an existing value if it has changed', () => {
-      var tree = createTree();
+      var tree = <RedBlackTreeImpl<any, any>>createTree();
       var expectedValues1 = sortedValues.map(n => `#${n}`);
       expectedValues1[0] = '#foo';
       var expectedValues2 = expectedValues1.slice();
       expectedValues2[10] = '#bar';
-      var tree1 = set(sortedValues[0], expectedValues1[0], tree);
-      var tree2 = set(sortedValues[10], expectedValues2[10], tree1);
+      var tree1 = <RedBlackTreeImpl<any, any>>set(sortedValues[0], expectedValues1[0], tree);
+      var tree2 = <RedBlackTreeImpl<any, any>>set(sortedValues[10], expectedValues2[10], tree1);
       var values = getValues(tree._root);
       var values1 = getValues(tree1._root);
       var values2 = getValues(tree2._root);
@@ -58,6 +59,23 @@ suite('[RedBlackTree]', () => {
     test('should preserve the black height invariant required for red-black trees', () => {
       var tree = createTree();
       verifyBlackHeightInvariant(tree);
+    });
+
+    test('should maintain the correct subtree count at each updated node', () => {
+      var tree = <RedBlackTreeImpl<any, any>>empty();
+
+      for(var i = 0; i < unsortedValues.length; i++) {
+        tree = <RedBlackTreeImpl<any, any>>set(unsortedValues[i], unsortedValues[i], tree);
+        assert.strictEqual(tree._root._count, tree._size, `root count: ${tree._root._count} is incorrect for tree size ${tree._size}`);
+        walk(tree._root);
+      }
+
+      function walk(node: Node<any, any>): void {
+        const msg = `node count: ${node._count} is incorrect for node #${node.key} at tree size ${tree._size} (count left: ${node._left._count}, right: ${node._right._count})`;
+        assert.strictEqual(node._count, node._left._count + node._right._count + 1, msg);
+        if(!isNone(node._left)) walk(node._left);
+        if(!isNone(node._right)) walk(node._right);
+      }
     });
   });
 });

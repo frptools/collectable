@@ -1,46 +1,53 @@
-import {Collection, IndexableCollectionTypeInfo, nextId, batch} from '@collectable/core';
-import {Node, NONE} from './node';
+import {Collection, IndexableCollectionTypeInfo, nextId, batch, isDefined} from '@collectable/core';
+import {Node, RedBlackTreeEntry, NONE} from './node';
+import {unwrap, iterateFromFirst, set, update, get, has, isEqual} from '../functions';
 
 export const DEFAULT_COMPARATOR: Comparator<any> = function(a: any, b: any): number {
   return a < b ? -1 : a > b ? 1 : 0;
 };
 
+/**
+ * A function that compares two keys and returns a value less than 0 if the first is smaller than the second, a value
+ * greater than 0 if the second is smaller than the first, or 0 if they're equal.
+ */
 export type Comparator<K> = (a: K, b: K) => number;
 
 const REDBLACKTREE_TYPE: IndexableCollectionTypeInfo = {
   type: Symbol('Collectable.RedBlackTree'),
   indexable: true,
 
-  equals(other: RedBlackTree<any, any>, tree: RedBlackTree<any, any>): any {
-    throw new Error('Not Implemented');
+  equals(other: RedBlackTree<any, any>, tree: RedBlackTreeImpl<any, any>): any {
+    return isEqual(tree, other);
   },
 
-  unwrap(tree: RedBlackTree<any, any>): any {
-    throw new Error('Not Implemented');
+  unwrap(tree: RedBlackTreeImpl<any, any>): any {
+    return unwrap(true, tree);
   },
 
-  get(key: any, tree: RedBlackTree<any, any>): any {
-    throw new Error('Not Implemented');
+  get(key: any, tree: RedBlackTreeImpl<any, any>): any {
+    return get(key, tree);
   },
 
-  has(key: any, tree: RedBlackTree<any, any>): boolean {
-    throw new Error('Not Implemented');
+  has(key: any, tree: RedBlackTreeImpl<any, any>): boolean {
+    return has(key, tree);
   },
 
-  set(key: any, value: any, tree: RedBlackTree<any, any>): any {
-    throw new Error('Not Implemented');
+  set(key: any, value: any, tree: RedBlackTreeImpl<any, any>): any {
+    return set(key, value, tree);
   },
 
-  update(key: any, updater: (value) => any, tree: RedBlackTree<any, any>): any {
-    throw new Error('Not Implemented');
+  update(key: any, updater: (value) => any, tree: RedBlackTreeImpl<any, any>): any {
+    return update(updater, key, tree);
   },
 
-  verifyKey(key: any, tree: RedBlackTree<any, any>): boolean {
-    throw new Error('Not Implemented');
+  verifyKey(key: any, tree: RedBlackTreeImpl<any, any>): boolean {
+    return isDefined(key);
   }
 };
 
-export class RedBlackTree<K, V> implements Collection<[K, V]> {
+export interface RedBlackTree<K, V> extends Collection<RedBlackTreeEntry<K, V>> {}
+
+export class RedBlackTreeImpl<K, V> implements RedBlackTree<K, V> {
   readonly '@@type' = REDBLACKTREE_TYPE;
 
   constructor(
@@ -51,24 +58,28 @@ export class RedBlackTree<K, V> implements Collection<[K, V]> {
     public _size: number
   ) {}
 
-  [Symbol.iterator](): IterableIterator<[K, V]> {
-    throw new Error('Not Implemented');
+  [Symbol.iterator](): IterableIterator<RedBlackTreeEntry<K, V>> {
+    return iterateFromFirst(this);
   }
 }
 
 export function createTree<K, V>(mutable: boolean, comparator?: Comparator<K>): RedBlackTree<K, V> {
-  return new RedBlackTree<K, V>(nextId(), batch.owner(mutable), comparator || DEFAULT_COMPARATOR, NONE, 0);
+  return new RedBlackTreeImpl<K, V>(batch.owner(mutable), nextId(), comparator || DEFAULT_COMPARATOR, NONE, 0);
 }
 
-export function cloneTree<K, V>(tree: RedBlackTree<K, V>, group: number, mutable: boolean): RedBlackTree<K, V> {
-  return new RedBlackTree<K, V>(batch.owner(mutable), group, tree._compare, tree._root, tree._size);
+export function cloneTree<K, V>(tree: RedBlackTreeImpl<K, V>, group: number, mutable: boolean): RedBlackTree<K, V> {
+  return new RedBlackTreeImpl<K, V>(batch.owner(mutable), group, tree._compare, tree._root, tree._size);
 }
 
-export function cloneAsMutable<K, V>(tree: RedBlackTree<K, V>): RedBlackTree<K, V> {
+export function cloneAsMutable<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTree<K, V> {
   return cloneTree(tree, nextId(), true);
 }
 
-export function doneMutating<K, V>(tree: RedBlackTree<K, V>): RedBlackTree<K, V> {
+export function cloneAsImmutable<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTree<K, V> {
+  return cloneTree(tree, nextId(), false);
+}
+
+export function doneMutating<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTree<K, V> {
   if(tree._owner === -1) {
     tree._owner = 0;
   }

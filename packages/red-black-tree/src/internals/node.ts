@@ -1,11 +1,20 @@
 export interface Node<K, V> {
-  group: number;
+  _group: number;
   key: K;
   value: V;
-  red: boolean;
-  left: Node<K, V>;
-  right: Node<K, V>;
+  _red: boolean;
+  _left: Node<K, V>;
+  _right: Node<K, V>;
+  _count: number;
 }
+
+/** A read-only reference to an entry in a RedBlackTree instance. */
+export type RedBlackTreeEntry<K, V> = {
+  /** Read only. The hash key of this entry in the tree. */
+  readonly key: K;
+  /** Read only. The value of this entry in the tree. */
+  readonly value: V;
+};
 
 export /* ## PROD [[ const ]] ## */ enum BRANCH {
   NONE = 0,
@@ -14,35 +23,37 @@ export /* ## PROD [[ const ]] ## */ enum BRANCH {
 };
 
 export const NONE: Node<any, any> = {
-  group: 0,
+  _group: 0,
   key: <any>void 0,
   value: <any>void 0,
-  red: false,
-  left: <any>void 0,
-  right: <any>void 0
+  _red: false,
+  _left: <any>void 0,
+  _right: <any>void 0,
+  _count: 0
 };
-NONE.left = NONE;
-NONE.right = NONE;
+NONE._left = NONE;
+NONE._right = NONE;
 
 // ## DEV [[
 export function checkInvalidNilAssignment() {
-  if(NONE.left !== NONE) throw new Error(`Invalid assignment of ${NONE.left.key} to left child of NIL node`); // ## DEV
-  if(NONE.right !== NONE) throw new Error(`Invalid assignment of ${NONE.right.key} to right child of NIL node`); // ## DEV
+  if(NONE._left !== NONE) throw new Error(`Invalid assignment of ${NONE._left.key} to left child of NIL node`); // ## DEV
+  if(NONE._right !== NONE) throw new Error(`Invalid assignment of ${NONE._right.key} to right child of NIL node`); // ## DEV
 }
 // ]] ##
 
 export function createNode<K, V>(group: number, red: boolean, key: K, value: V): Node<K, V> {
-  return {group, key, value, red, left: NONE, right: NONE};
+  return {_group: group, key, value, _red: red, _left: NONE, _right: NONE, _count: 1};
 }
 
 export function cloneNode<K, V>(group: number, node: Node<K, V>): Node<K, V> {
   return {
-    group,
+    _group: group,
     key: node.key,
     value: node.value,
-    red: node.red,
-    left: node.left,
-    right: node.right
+    _red: node._red,
+    _left: node._left,
+    _right: node._right,
+    _count: node._count
   };
 }
 
@@ -51,24 +62,24 @@ export function isNone<K, V>(node: Node<K, V>): boolean {
 }
 
 export function editable<K, V>(group: number, node: Node<K, V>): Node<K, V> {
-  return isNone(node) || node.group === group ? node : cloneNode(group, node);
+  return isNone(node) || node._group === group ? node : cloneNode(group, node);
 }
 
 export function editRightChild<K, V>(group: number, node: Node<K, V>): Node<K, V> {
-  var child = node.right;
-  return isNone(child) || child.group === group ? child
-       : (node.right = (child = cloneNode(group, child)), child);
+  var child = node._right;
+  return isNone(child) || child._group === group ? child
+       : (node._right = (child = cloneNode(group, child)), child);
 }
 
 export function editLeftChild<K, V>(group: number, node: Node<K, V>): Node<K, V> {
-  var child = node.left;
-  return isNone(child) || child.group === group ? child
-       : (node.left = (child = cloneNode(group, child)), child);
+  var child = node._left;
+  return isNone(child) || child._group === group ? child
+       : (node._left = (child = cloneNode(group, child)), child);
 }
 
 export function assignValue<K, V>(value: V, node: Node<K, V>): boolean {
   const v = node.value;
-  // Note the double-equals below is used to correct compare Symbol() with Object(Symbol())
+  // Note the double-equals below is used to correctly compare Symbol() with Object(Symbol())
   if(v === value || (v !== null && typeof v === 'object' && v == value)) { // tslint:disable-line:triple-equals
     return false;
   }

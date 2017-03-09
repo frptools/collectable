@@ -179,10 +179,14 @@ function renderNode(node, rect) {
   }
   var flag = node.flag ? ` flag-${node.flag}` : '';
   const circle = h('circle', {attrs: {r, cx: rect.cx, cy: rect.cy, opacity: 1}, insert: onInsertNode, update: onUpdateNode, postpatch: onPostPatchNode}, circleAnims);
-  const views = [svg({key: node.id, attrs: {id: node.id, class: `node ${node.type}${flag}`}}, [
+  const views = [h('g', {key: node.id, attrs: {id: node.id, class: `node ${node.type}${flag}`}}, [
     circle,
     ...(node.text === void 0 ? [] : [
-      h('text', {attrs: {x: rect.cx, y: rect.cy}, update: onUpdateNodeText, postpatch: onPostPatchNodeText}, [`${node.text}`, ...textAnims])
+      h('text', {attrs: {x: rect.cx, y: rect.cy}, update: onUpdateNodeText, postpatch: onPostPatchNodeText}, [
+        h('tspan', {attrs: {dy: '-0.1em'}}, [`${node.text}`]),
+        h('tspan', {attrs: {x: rect.cx, dy: '1.2em', 'font-size': '0.8em'}}, [`${node.count}`]),
+        ...textAnims
+      ])
     ])
   ])];
   return {rect, views};

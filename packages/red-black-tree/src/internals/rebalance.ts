@@ -1,142 +1,117 @@
 import {log} from '../internals/debug'; // ## DEV ##
-import {setChild} from './ops';
+import {rotateLeft, rotateRight, rotateLeftRight, rotateRightLeft, updateCount} from './ops';
 import {PathNode} from './path';
 import {
   BRANCH,
   Node,
-  editable,
+  editLeftChild,
+  editRightChild,
   checkInvalidNilAssignment, // ## DEV ##
 } from './node';
 
-const enum STATUS {
-  ACTIVE = 0,
-  SAVING = 1,
-  DONE = 2
-}
-
-export function rebalance<K, V>(group: number, tail: PathNode<K, V>, node: Node<K, V>, parent: Node<K, V>, tree?: any): Node<K, V> {
+export function rebalance<K, V>(tail: PathNode<K, V>, node: Node<K, V>, parent: Node<K, V>, tree: any): void {
   var p: PathNode<K, V> = tail;
-  var status = STATUS.ACTIVE;
-
   var loopCounter = 0; // ## DEV ##
+  var done = false;
+
   do {
     // ## DEV [[
-    log(`[rebalance] parent: ${p.node.key} (pointing ${p.next === BRANCH.LEFT ? 'LEFT' : 'RIGHT'})`);
+    log(`[rebalance] parent: ${p.node.key} (pointing ${p.next === BRANCH.LEFT ? 'LEFT' : 'RIGHT'})`); // ## DEV ##
     if(++loopCounter === 100) {
-      console.warn('INFINITE LOOP');
-      return parent;
+      throw new Error('Infinite loop while rebalancing after insertion');
     }
     // ]] ##
 
-    parent = editable(group, p.node);
+    parent = p.node;
 
-    if(status === STATUS.SAVING) {
-      setChild(p.next, parent, node);
-      if(parent === p.node) {
-        status = STATUS.DONE;
-      }
-      node = parent;
+    if(done) {
+      log(`Would now recount #${p.node.key}`); // ## DEV ##
+      updateCount(parent);
     }
-
-    else if(parent.red) {
-      var pp = <PathNode<K, V>>p.parent, grandParent = editable(group, pp.node);
-      var uncle = pp.next === BRANCH.LEFT ? grandParent.right : grandParent.left;
-      if(uncle.red) {
-        uncle = editable(group, uncle);
-        uncle.red = false;
-        parent.red = false;
+    else if(parent._red) {
+      var pp = p.parent, grandParent = pp.node;
+      var uncle = pp.next === BRANCH.LEFT ? editRightChild(tree._group, grandParent) : editLeftChild(tree._group, grandParent);
+      if(uncle._red) {
+        uncle._red = false;
+        parent._red = false;
         if(pp.parent.isActive()) {
-          grandParent.red = true;
+          grandParent._red = true;
         }
-        setChild(p.next, parent, node);
-        setChild(pp.next, grandParent, parent);
-        setChild(pp.next === BRANCH.LEFT ? BRANCH.RIGHT : BRANCH.LEFT, grandParent, uncle);
+        updateCount(parent);
+        updateCount(grandParent);
         node = grandParent;
-        log(tree, false, `case 3 [red uncle] ${uncle.key}`); // ## DEV ##
+        log(tree, false, `Case 3 [red uncle #${uncle.key}] push down black`); // ## DEV ##
         checkInvalidNilAssignment(); // ## DEV ##
       }
       else {
         if(pp.next === p.next) {
           if(p.next === BRANCH.LEFT) {
-            grandParent.left = parent.right;
-            parent.left = node;
-            parent.right = grandParent;
+            rotateRight(pp.parent, grandParent, parent, tree);
             // ## DEV [[
-            grandParent.red = true;
-            parent.red = false;
+            grandParent._red = true;
+            parent._red = false;
             node = parent;
-            log(tree, false, `case 2a: [left/left] rotate right`);
+            log(tree, false, `Case 2a: [left/left] rotate right`); // ## DEV ##
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
           }
           else {
-            grandParent.right = parent.left;
-            parent.right = node;
-            parent.left = grandParent;
+            rotateLeft(pp.parent, grandParent, parent, tree);
             // ## DEV [[
-            grandParent.red = true;
-            parent.red = false;
+            grandParent._red = true;
+            parent._red = false;
             node = parent;
-            log(tree, false, `case 2b: [right/right] rotate left`);
+            log(tree, false, `Case 2b: [right/right] rotate left`); // ## DEV ##
+            checkInvalidNilAssignment();
             // ]] ##
-            checkInvalidNilAssignment(); // ## DEV ##
           }
-          grandParent.red = true;
-          parent.red = false;
+          grandParent._red = true;
+          parent._red = false;
           node = parent;
         }
         else {
           if(p.next === BRANCH.LEFT) {
-            parent.left = node.right;
-            grandParent.right = node.left;
-            node.left = grandParent;
-            node.right = parent;
+            rotateRightLeft(pp.parent, grandParent, parent, node, tree);
             // ## DEV [[
-            node.red = false;
-            grandParent.red = true;
-            log(tree, false, `case 2d: [right/left] rotate right, left`);
+            node._red = false;
+            grandParent._red = true;
+            log(tree, false, `Case 2d: [right/left] rotate right, left`); // ## DEV ##
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
           }
           else {
-            parent.right = node.left;
-            grandParent.left = node.right;
-            node.left = parent;
-            node.right = grandParent;
+            rotateLeftRight(pp.parent, grandParent, parent, node, tree);
             // ## DEV [[
-            node.red = false;
-            grandParent.red = true;
-            log(tree, false, `case 2c: [left/right] rotate left, right`);
+            node._red = false;
+            grandParent._red = true;
+            log(tree, false, `Case 2c: [left/right] rotate left, right`); // ## DEV ##
             // ]] ##
             checkInvalidNilAssignment(); // ## DEV ##
           }
-          node.red = false;
-          grandParent.red = true;
+          node._red = false;
+          grandParent._red = true;
         }
       }
-      p = <PathNode<K, V>>p.release();
+      p = p.release();
+
+      if(!node._red) {
+        done = true;
+      }
     }
     else {
-      setChild(p.next, parent, node);
-      status = parent === p.node ? STATUS.DONE : STATUS.SAVING;
+      done = parent === p.node;
       node = parent;
-      log(tree, false, `case 1: [black parent]`); // ## DEV ##
+      updateCount(node);
+      log(tree, false, `Case 1: [black parent]`); // ## DEV ##
       checkInvalidNilAssignment(); // ## DEV ##
     }
 
-    if(status === STATUS.ACTIVE && !node.red) {
-      status = STATUS.SAVING;
-    }
-
-    log(`[rebalance] ${node.left.key||0}]<---[${node.key}]--->[${node.right.key||0}`); // ## DEV ##
+    log(`[rebalance] ${node._left.key||0}]<---[${node.key}]--->[${node._right.key||0}`); // ## DEV ##
     p = p.release();
   }
-  while(status !== STATUS.DONE && p.isActive());
+  while(p.isActive());
 
   if(p.isActive()) {
     node = PathNode.release(p, node);
   }
-
-  log('insertion complete.\n'); // ## DEV ##
-  return node;
 }

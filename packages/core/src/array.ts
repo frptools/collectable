@@ -20,6 +20,7 @@ export function copyArray<T>(values: T[]): T[] {
 }
 
 export type MappingFunction<T, U> = (value: T, index: number) => U;
+export type KeyedMappingFunction<K, V, U> = (value: V, key: K, index: number) => U;
 
 export function concatArray<T>(left: T[], right: T[]): T[] {
   var arr = new Array(left.length + right.length);

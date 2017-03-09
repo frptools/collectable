@@ -1,6 +1,6 @@
-# Collectable.js
+# [![Collectable.js](.assets/logo.png)](https://github.com/frptools/collectable)
 
-> An all-you-can-eat buffet of high-performance immutable/persistent data structures
+An all-you-can-eat buffet of high-performance, immutable/persistent data structures.
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/collectable.svg)](http://badge.fury.io/js/collectable)
@@ -9,11 +9,12 @@
 
 ## Available Data Structures
 
-- [ **[List](/packages/list#collectablejs-immutable-list)** ] A persistent vector structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc. Most features are much faster than Immutable.js, some by one or more orders of magnitude.
+- [ **[List](/packages/list#collectablejs-immutable-list)** ] A persistent vector structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc.
 - [ **[Map](/packages/map#collectablejs-immutable-map)** ] A Clojure-style hash-array-mapped trie, adapted by [TylorS](https://github.com/TylorS) from [Matt Bierner's HAMT](https://github.com/mattbierner/hamt_plus) implementation.  
   *Note: stopgap ES6 Map-backed implementation currently in place, to be replaced shortly.*
 - [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent set implementation, backed by our own immutable map structure.  
   *Note: stopgap ES6 Set-backed implementation currently in place, to be replaced shortly.*
+- [ **[Red Black Tree](/packages/red-black-tree#immutable-red-black-tree)** ] A persistent red/black tree structure, typically intended to be used as a backing structure for other data structures.
 - [More to come...](/wiki)
 
 Want to help out? See [the guide for contributors](CONTRIBUTING.md).
@@ -37,6 +38,7 @@ TypeScript type definitions are included by default.
 | [List](/packages/list/README.md#collectablejs-immutable-list)
 | [Map](/packages/map/README.md#collectablejs-immutable-map)
 | [Set](/packages/set/README.md#collectablejs-immutable-set)
+| [Red Black Tree](/packages/red-black-tree/README.md#immutable-red-black-tree)
 | [Others...](/wiki) ]
 
 Individual data structures are pulled in automatically as dependencies of the main package. By having your project take a dependency on `collectable` itself, all data structures are made available implicitly as scoped imports, and operations on deeply-nested data structures are available via the main package.
