@@ -88,13 +88,25 @@ TypeScript type definitions are included by default.
 Import and use the functions you need:
 
 ```js
-// to do.
+import {empty, set, get} from '@collectable/red-black-tree';
+
+const tree0 = empty();
+const tree1 = set(123, 'Collectable.js!', tree0);
+const value = get(123, tree1); // value === "Collectable.js!"
 ```
 
 Pre-curried versions of functions for a given data structure are available by appending `/curried` to the import path, like so:
 
 ```ts
-// to do.
+import {empty} from '@collectable/red-black-tree';
+import {set, get} from '@collectable/red-black-tree/curried';
+
+const set123 = set(123);
+const get123 = get(123);
+
+const tree0 = empty();
+const tree1 = set123('Collectable.js!', tree0);
+const value = get123(tree1); // value === "Collectable.js!"
 ```
 
 Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to use what you need while excluding anything else from the final build.
