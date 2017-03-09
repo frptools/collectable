@@ -63,7 +63,7 @@
 
 ## Installation
 
-```
+```bash
 # via NPM
 npm install --save @collectable/red-black-tree
 
@@ -73,7 +73,7 @@ yarn add @collectable/red-black-tree
 
 If you intend to use other data structures as well, install the main collectable package instead. It takes a dependency on each of these data structures, and so they will become available implicitly, after installation.
 
-```
+```bash
 # via NPM
 npm install --save collectable
 
