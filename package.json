@@ -44,15 +44,15 @@
     "tslint": "^4.5.1",
     "typedoc": "^0.5.5",
     "typedoc-plugin-external-module-map": "^0.0.6",
-    "typescript": "^2.1.5",
+    "typescript": "^2.2.1",
     "yargs": "^6.6.0"
   },
   "dependencies": {
     "@collectable/core": "latest",
     "@collectable/list": "latest",
     "@collectable/map": "latest",
-    "@collectable/set": "latest",
     "@collectable/red-black-tree": "latest",
+    "@collectable/set": "latest",
     "@typed/curry": "latest"
   }
 }
