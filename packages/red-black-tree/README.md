@@ -1,4 +1,4 @@
-[![Collectable.js](../../.assets/logo.png)](https://github.com/frptools/collectable)
+[![Collectable.js](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
 
 # Immutable Red-Black Tree
 
@@ -445,10 +445,6 @@ An operation used to locate an entry in a tree
 - "lt": the rightmost entry with a key less than the specified input key
 - "lte": the rightmost entry with a key less than or equal to the specified input key
 - "eq": the entry for which the key is equal to the specified input key
-
-```js
-import {type} from '@collectable/core';
-```
 
 #### `find<K, V>(op: FindOp, key: K, tree: RedBlackTree<K, V>): RedBlackTreeEntry<K, V>|undefined`
 
