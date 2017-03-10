@@ -15,7 +15,7 @@ An all-you-can-eat buffet of high-performance, immutable/persistent data structu
 - [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent set implementation, backed by our own immutable map structure.  
   *Note: stopgap ES6 Set-backed implementation currently in place, to be replaced shortly.*
 - [ **[Red Black Tree](/packages/red-black-tree#immutable-red-black-tree)** ] A persistent red/black tree structure, typically intended to be used as a backing structure for other data structures.
-- [More to come...](/wiki)
+- [More to come...](/https://github.com/frptools/collectable/wiki)
 
 Want to help out? See [the guide for contributors](CONTRIBUTING.md).
 
@@ -39,7 +39,7 @@ TypeScript type definitions are included by default.
 | [Map](/packages/map/README.md#collectablejs-immutable-map)
 | [Set](/packages/set/README.md#collectablejs-immutable-set)
 | [Red Black Tree](/packages/red-black-tree/README.md#immutable-red-black-tree)
-| [Others...](/wiki) ]
+| [Others...](/https://github.com/frptools/collectable/wiki) ]
 
 Individual data structures are pulled in automatically as dependencies of the main package. By having your project take a dependency on `collectable` itself, all data structures are made available implicitly as scoped imports, and operations on deeply-nested data structures are available via the main package.
 
