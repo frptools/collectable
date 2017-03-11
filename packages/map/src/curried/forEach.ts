@@ -7,4 +7,4 @@ export interface ForEachFn {
   <K, V>(f: ForEachPredicate<K, V>): (hashmap: HashMap<K, V>) => HashMap<K, V>;
 }
 
-export const forEach: ForEachFn = curry2(_forEach)
+export const forEach: ForEachFn = curry2(_forEach);
