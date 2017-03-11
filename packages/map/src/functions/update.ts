@@ -13,7 +13,7 @@ export function updateMap<K, V>(callback: UpdateMapCallback<K, V>, map: HashMapI
   return map === nextMap || !immutable ? map : cloneAsImmutable(nextMap);
 }
 
-export function update<K, V>(key: K, callback: UpdateEntryCallback<V>, map: HashMap<K, V>): HashMap<K, V> {
+export function update<K, V>(callback: UpdateEntryCallback<V>, key: K, map: HashMap<K, V>): HashMap<K, V> {
   var oldv = get(key, map);
   var newv = callback(oldv);
   return newv === oldv ? map

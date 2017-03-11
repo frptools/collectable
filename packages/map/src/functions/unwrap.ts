@@ -1,10 +1,9 @@
 import {curry3} from '@typed/curry';
-import {preventCircularRefs, unwrapAny} from '@collectable/core';
+import {Associative, preventCircularRefs, unwrapAny} from '@collectable/core';
 import {HashMap, HashMapImpl} from '../internals/HashMap';
 import {iterator, identity} from '../internals/primitives';
 import {Leaf} from '../internals/nodes';
 
-export type Associative<T> = {[key: string]: T};
 const newObject: <T>() => Associative<T> = () => ({});
 const unwrapShallow: <K, V>(map: HashMapImpl<K, V>, target: Associative<V>) => Associative<V> = curry3(unwrapMap)(false);
 const unwrapDeep: <K, V>(map: HashMapImpl<K, V>) => Associative<V> = curry3(preventCircularRefs)(newObject, curry3(unwrapMap)(true));

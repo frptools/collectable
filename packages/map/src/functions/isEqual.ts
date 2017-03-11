@@ -3,8 +3,8 @@ import {iterator, identity} from '../internals/primitives';
 import {HashMap, HashMapImpl} from '../internals/HashMap';
 import {Leaf} from '../internals/nodes';
 
-export function isEqual<K, V>(other: HashMap<K, V>, map: HashMap<K, V>): boolean;
-export function isEqual<K, V>(other: HashMapImpl<K, V>, map: HashMapImpl<K, V>): boolean {
+export function isEqual<K, V>(map: HashMap<K, V>, other: HashMap<K, V>): boolean;
+export function isEqual<K, V>(map: HashMapImpl<K, V>, other: HashMapImpl<K, V>): boolean {
   if(map === other) return true;
   if(map._size !== other._size) return false;
 

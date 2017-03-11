@@ -1,12 +1,7 @@
-import {HashMap} from '../internals/HashMap';
+import {HashMap, HashMapImpl} from '../internals/HashMap';
 import {setKeyValue} from '../internals/primitives';
-import {curry3} from '@typed/curry';
 
-export const set: SetFn = curry3(setKeyValue);
-
-export interface SetFn {
-  <K, V>(key: K, value: V, map: HashMap<K, V>): HashMap<K, V>;
-  <K, V>(key: K, value: V): (map: HashMap<K, K>) => HashMap<K, V>;
-  <K, V>(key: K): (value: V, map: HashMap<K, V>) => HashMap<K, V>;
-  <K, V>(key: K): (value: V) => (map: HashMap<K, V>) => HashMap<K, V>;
+export function set<K, V>(key: K, value: V, map: HashMap<K, V>): HashMap<K, V>;
+export function set<K, V>(key: K, value: V, map: HashMapImpl<K, V>): HashMapImpl<K, V> {
+  return setKeyValue(key, value, map);
 }

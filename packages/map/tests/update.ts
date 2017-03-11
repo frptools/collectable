@@ -9,15 +9,15 @@ suite('Map', () => {
     test('returns a new map with the specified key updated', () => {
       var map = set('x', 3, empty<string, number>());
 
-      var map1 = update('x', x => {
+      var map1 = update(x => {
         assert.strictEqual(x, 3);
         return 2;
-      }, map);
+      }, 'x', map);
 
-      var map2 = update('y', y => {
+      var map2 = update(y => {
         assert.isUndefined(y);
         return 2;
-      }, map);
+      }, 'y', map);
 
       assert.isFalse(isThawed(map));
       assert.isFalse(isThawed(map1));
@@ -32,8 +32,8 @@ suite('Map', () => {
 
     test('returns the same map if the returned value is unchanged', () => {
       var map = set('x', 3, empty<string, number>());
-      var map1 = update('x', x => 3, map);
-      var map2 = update('y', y => void 0, map);
+      var map1 = update(x => 3, 'x', map);
+      var map2 = update(y => void 0, 'y', map);
 
       assert.isFalse(isThawed(map));
       assert.strictEqual(map, map1);
@@ -48,7 +48,7 @@ suite('Map', () => {
       assert.isTrue(isThawed(map));
       assert.deepEqual(toJS(map), {x: 3});
 
-      var map1 = update('y', y => 2, map);
+      var map1 = update(y => 2, 'y', map);
 
       assert.strictEqual(map, map1);
       assert.isTrue(isThawed(map1));
