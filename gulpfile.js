@@ -74,7 +74,7 @@ function runPreprocessor() {
 }
 
 function lint() {
-  return gulp.src(`${path}/.build/ts/**/*.ts`)
+  return gulp.src([`${path}/src/**/*.ts`, `${path}/tests/**/*.ts`])
     .pipe(plumber())
     .pipe(gtslint({formatter: "verbose"}))
     .pipe(gtslint.report());
@@ -98,11 +98,11 @@ function clean() {
 }
 
 gulp.task(`clean`, clean());
-gulp.task(`preprocess`, runPreprocessor);
-gulp.task(`compile`, [`preprocess`], compile);
+gulp.task(`preprocess`, [`lint`], runPreprocessor);
+gulp.task(`compile`, [`lint`, `preprocess`], compile);
 gulp.task(`watch`, () => gulp.watch([`${path}/src/**/*.ts`, `${path}/tests/**/*.ts`], [`build`]));
-gulp.task(`test`, [`compile`, `lint`], runTests);
-gulp.task(`lint`, [`preprocess`, `compile`], lint);
+gulp.task(`test`, [`compile`], runTests);
+gulp.task(`lint`, lint);
 gulp.task(`build`, [`preprocess`, `compile`, `test`, `lint`]);
 gulp.task(`dev`, [`build`, `watch`]);
 gulp.task(`default`, [`build`]);
