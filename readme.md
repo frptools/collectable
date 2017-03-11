@@ -1,4 +1,4 @@
-# [![Collectable.js: Immutable Data Structures](.assets/logo.png)](https://github.com/frptools/collectable)
+# [![Collectable.js: Immutable Data Structures](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
 
 An all-you-can-eat buffet of high-performance, persistent/immutable/functional data structures.
 
@@ -25,7 +25,7 @@ Want to help out? See [the guide for contributors](CONTRIBUTING.md).
 
 ## Installation
 
-```
+```bash
 # via NPM
 npm install --save collectable
 
