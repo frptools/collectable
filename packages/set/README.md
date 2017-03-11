@@ -1,4 +1,6 @@
-# Collectable.js: Immutable Set
+# [![Collectable.js: Immutable Set](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
+
+# Immutable Set
 
 > An persistent set data structure, backed by an immutable hash map
 

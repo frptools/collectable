@@ -1,4 +1,4 @@
-[![Collectable.js: Immutable Map](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
+# [![Collectable.js: Immutable Map](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
 
 # Immutable Map
 

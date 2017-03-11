@@ -1,6 +1,6 @@
-# [![Collectable.js](.assets/logo.png)](https://github.com/frptools/collectable)
+# [![Collectable.js: Immutable Data Structures](.assets/logo.png)](https://github.com/frptools/collectable)
 
-An all-you-can-eat buffet of high-performance, immutable/persistent data structures.
+An all-you-can-eat buffet of high-performance, persistent/immutable/functional data structures.
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/collectable.svg)](http://badge.fury.io/js/collectable)

@@ -1,4 +1,4 @@
-[![Collectable.js: Immutable Red-Black Tree](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
+# [![Collectable.js: Immutable Red-Black Tree](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
 
 # Immutable Red-Black Tree
 
