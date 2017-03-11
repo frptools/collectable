@@ -1,5 +1,5 @@
 // ## DEV [[
-export function log(...args: any[])
+export function log(...args: any[]);
 export function log() {
   publish(Array.from(arguments));
 }
