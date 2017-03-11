@@ -1,5 +1,5 @@
 import {curry3} from '@typed/curry';
-import {KeyedMappingFunction, preventCircularRefs, unwrapAny, isUndefined} from '@collectable/core';
+import {Associative, KeyedMappingFunction, preventCircularRefs, unwrapAny, isUndefined} from '@collectable/core';
 import {RedBlackTree, RedBlackTreeImpl, RedBlackTreeEntry, BRANCH, Node, isNone} from '../internals';
 import {iterateFromFirst, size} from './index';
 
@@ -96,7 +96,6 @@ export function keys<K, V>(tree: RedBlackTreeImpl<K, V>): K[] {
   return array;
 }
 
-export type Associative<T> = {[key: string]: T};
 const newObject: <T>() => Associative<T> = () => ({});
 const unwrapShallow: <K, V>(tree: RedBlackTree<K, V>, target: Associative<V>) => Associative<V> = curry3(unwrapTree)(false);
 const unwrapDeep: <K, V>(tree: RedBlackTree<K, V>) => Associative<V> = curry3(preventCircularRefs)(newObject, curry3(unwrapTree)(true));
