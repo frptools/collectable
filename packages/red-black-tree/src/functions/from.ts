@@ -1,4 +1,4 @@
-import {Associative} from './unwrap';
+import {Associative} from '@collectable/core';
 import {set} from './set';
 import {freeze} from './freeze';
 import {RedBlackTree, createTree, Comparator, DEFAULT_COMPARATOR} from '../internals';
