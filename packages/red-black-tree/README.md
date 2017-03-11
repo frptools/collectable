@@ -1,8 +1,10 @@
-[![Collectable.js](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
+[![Collectable.js: Immutable Red-Black Tree](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
 
 # Immutable Red-Black Tree
 
 > A persistent/immutable/functional red-black tree data structure
+
+This package provides an immutable variant of a [red-black tree](https://en.wikipedia.org/wiki/Red%E2%80%93black_tree) data structure, which is essentially a balanced binary search tree that maps keys to values and has general O(logN) performance for most operations.
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/%40collectable%2Fred-black-tree.svg)](http://badge.fury.io/js/%40collectable%2Fset)

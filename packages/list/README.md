@@ -1,13 +1,15 @@
-# Collectable.js: Immutable List
+[![Collectable.js: Immutable List](https://github.com/frptools/collectable/raw/master/.assets/logo.png)](https://github.com/frptools/collectable)
 
-> A persistent vector structure based on a modified RRB Tree
+# Immutable List
+
+> A persistent/immutable/functional vector structure based on a modified RRB Tree
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/%40collectable%2Flist.svg)](http://badge.fury.io/js/%40collectable%2Flist)
 [![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
 [![Gitter](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/FRPTools/Lobby)
 
-Collectable's List structure is a Clojure-style persistent vector based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc. Most features are much faster than Immutable.js, some by one or more orders of magnitude.
+This package provides a Clojure-style persistent vector based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc.
 
 *This documentation is under construction. The list of functions below is comprehensive, but descriptions and examples are pending.*
 
