@@ -1,10 +1,13 @@
 {
     "files.watcherExclude": {
-        "**/.git/objects/**": true
+        "**/.git/objects/**": true,
+        "**/.build/**": true,
+        "**/lib/**": true
     },
     "search.exclude": {
         "**/node_modules": true,
-        "lib/": true
+        "**/.build/**": true,
+        "**/lib/**": true
     },
     "eslint.enable": false,
     "typescript.tsdk": "node_modules/typescript/lib",
