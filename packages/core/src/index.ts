@@ -5,3 +5,4 @@ export * from './hash';
 export * from './iterator';
 export * from './ownership';
 export * from './random';
+export * from './types';

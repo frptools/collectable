@@ -1,3 +1,5 @@
+import {MappingFunction} from './types';
+
 export function copyArray<T>(values: T[]): T[] {
   if(values.length > 7) {
     var arr = new Array(values.length);
@@ -18,9 +20,6 @@ export function copyArray<T>(values: T[]): T[] {
     default: return values.slice(); // never reached, but seems to trigger optimization in V8 for some reason
   }
 }
-
-export type MappingFunction<T, U> = (value: T, index: number) => U;
-export type KeyedMappingFunction<K, V, U> = (value: V, key: K, index: number) => U;
 
 export function concatArray<T>(left: T[], right: T[]): T[] {
   var arr = new Array(left.length + right.length);
