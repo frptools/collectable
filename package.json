@@ -42,6 +42,7 @@
     "source-map-support": "^0.4.11",
     "tiny-preprocessor": "^1.0.0",
     "tslint": "^4.5.1",
+    "tslint-eslint-rules": "^3.4.0",
     "typedoc": "^0.5.5",
     "typedoc-plugin-external-module-map": "^0.0.6",
     "typescript": "^2.2.1",

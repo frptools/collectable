@@ -1,5 +1,5 @@
 import {Collection, CollectionTypeInfo, isCollection, batch} from '@collectable/core';
-import {fromPairs} from '@collectable/map';
+import {fromArray} from '@collectable/map';
 import {isIndexable} from '../internals';
 
 export type UpdateInCallback<T> = (value: T|undefined) => T;
@@ -17,5 +17,5 @@ function updateDeep<C extends Collection<T>, T, U>(collection: C, path: any[], k
       : c => updateDeep(c, path, keyidx + 1, update), collection);
   }
   var value = keyidx === path.length - 1 ? update(void 0) : updateDeep(<any>void 0, path, keyidx + 1, update);
-  return <any>fromPairs<any, T>([[<any>key, <any>value]]);
+  return <any>fromArray<any, T>([[<any>key, <any>value]]);
 }

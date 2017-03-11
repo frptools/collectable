@@ -7,7 +7,7 @@ const toJS = curry2(unwrap)(false);
 suite('Map', () => {
   suite('updateMap()', () => {
     // test('returns the same map if no changes are made', () => {
-    //   var map = emptyMap();
+    //   var map = empty();
     //   var map1 = updateMap(m => {}, map);
     //   var map2 = updateMap(m => m, map);
     //   assert.strictEqual(map, map1);
@@ -36,13 +36,13 @@ suite('Map', () => {
         return m2;
       }, map1);
 
-      assert.strictEqual(map1, map1a);
-      assert.strictEqual(map2, map2a);
+      assert.notStrictEqual(map1, map1a);
+      assert.notStrictEqual(map2, map2a);
       assert.isFalse(isThawed(map));
       assert.isFalse(isThawed(map1));
       assert.isFalse(isThawed(map2));
-      assert.isFalse(isThawed(map1a));
-      assert.isFalse(isThawed(map2a));
+      assert.isTrue(isThawed(map1a));
+      assert.isTrue(isThawed(map2a));
       assert.deepEqual(toJS(map), {x: 3});
       assert.deepEqual(toJS(map1), {x: 3, y: 5, z: 7});
       assert.deepEqual(toJS(map2), {x: 9, y: 5, z: 7, k: 1});

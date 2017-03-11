@@ -1,24 +1,24 @@
 import {curry2} from '@typed/curry';
 import {assert} from 'chai';
-import {empty, isThawed, thaw, freeze, set, unwrap} from '../src';
+import {empty, isFrozen, thaw, freeze, set, unwrap} from '../src';
 
 const toJS = curry2(unwrap)(false);
 
 suite('Map', () => {
-  suite('asImmutable()', () => {
+  suite('freeze()', () => {
     test('creates an immutable copy of a mutable map', () => {
       var map = thaw(set('x', 3, empty()));
       var map1 = freeze(map);
 
       assert.notStrictEqual(map, map1);
-      assert.isTrue(isThawed(map));
-      assert.isFalse(isThawed(map1));
+      assert.isFalse(isFrozen(map));
+      assert.isTrue(isFrozen(map1));
 
       set('y', 2, map);
       set('z', 2, map1);
 
-      assert.isTrue(isThawed(map));
-      assert.isFalse(isThawed(map1));
+      assert.isFalse(isFrozen(map));
+      assert.isTrue(isFrozen(map1));
       assert.deepEqual(toJS(map), {x: 3, y: 2});
       assert.deepEqual(toJS(map1), {x: 3});
     });

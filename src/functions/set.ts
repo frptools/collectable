@@ -1,5 +1,5 @@
 import {Collection, CollectionTypeInfo, isCollection, batch} from '@collectable/core';
-import {fromPairs} from '@collectable/map';
+import {fromArray} from '@collectable/map';
 import {isIndexable} from '../internals';
 
 export function setIn<T>(path: any[], value: any, collection: Collection<T>): Collection<T> {
@@ -17,5 +17,5 @@ function setDeep<T>(collection: Collection<T>, path: any[], keyidx: number, valu
       ? type.set(key, value, collection)
       : type.update(key, c => setDeep(c, path, keyidx + 1, value), collection);
   }
-  return <any>fromPairs([[key, keyidx === path.length - 1 ? value : setDeep(<any>void 0, path, keyidx + 1, value)]]);
+  return <any>fromArray([[key, keyidx === path.length - 1 ? value : setDeep(<any>void 0, path, keyidx + 1, value)]]);
 }

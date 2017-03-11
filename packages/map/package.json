@@ -1,6 +1,6 @@
 {
   "name": "@collectable/map",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "[Collectable.js] Immutable Map",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
