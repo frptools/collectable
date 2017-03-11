@@ -23,7 +23,7 @@ suite('[List: composite operations]', () => {
     var values: string[] = [];
     for(var i = 0; i < m; i++) {
       list = append(i.toString(), list);
-      values.push((i++).toString())
+      values.push((i++).toString());
       list = prepend(i.toString(), list);
       values.unshift(i.toString());
     }
