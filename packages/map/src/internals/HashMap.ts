@@ -53,14 +53,14 @@ export class HashMapImpl<K, V> implements HashMap<K, V> {
   }
 }
 
-export function cloneTree<K, V>(tree: HashMapImpl<K, V>, group: number, mutable: boolean): HashMapImpl<K, V> {
+export function cloneMap<K, V>(tree: HashMapImpl<K, V>, group: number, mutable: boolean): HashMapImpl<K, V> {
   return new HashMapImpl<K, V>(batch.owner(mutable), group, tree._root, tree._size);
 }
 
 export function cloneAsMutable<K, V>(tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  return cloneTree(tree, nextId(), true);
+  return cloneMap(tree, nextId(), true);
 }
 
 export function cloneAsImmutable<K, V>(tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  return cloneTree(tree, nextId(), false);
+  return cloneMap(tree, nextId(), false);
 }
