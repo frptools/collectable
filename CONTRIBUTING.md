@@ -1,4 +1,85 @@
+# Guidelines for contributors
+
 Collectable is a monorepo, so there are multiple subpackages of the main package. These can be utilised individually, or installed via the main package in order to save time and gain access to multiple data structure at once, with additional functionality for deep operations between certain primary structures (think Immutable.js' `toJS`, `fromJS`, `setIn`, `getIn`, etc.).
+
+<!-- TOC -->
+
+- [Commits](#commits)
+  - [Examples](#examples)
+- [Package Structure](#package-structure)
+- [Development of new data structure packages](#development-of-new-data-structure-packages)
+  - [Transient mutation and batch operations](#transient-mutation-and-batch-operations)
+    - [Batch membership](#batch-membership)
+    - [Group membership](#group-membership)
+  - [Collection type information](#collection-type-information)
+    - [Indexable collections](#indexable-collections)
+  - [Unwrapping](#unwrapping)
+  - [Core library](#core-library)
+- [Building](#building)
+  - [Building with Gulp](#building-with-gulp)
+  - [Concurrent development and testing](#concurrent-development-and-testing)
+
+<!-- /TOC -->
+
+## Commits
+
+The convention for commit messages is as follows, and must be followed before a pull request will be accepted:
+
+```
+TARGET(type): message
+
+TARGET(type): message; fixes #123
+
+TARGET(type): message
+- specific change 1
+- specific change 2
+- etc.
+```
+
+`TARGET` refers to the package affected by the changes. Valid values are:
+
+- `ALL` - affects all (or many) packages
+- `MAIN` - main (root) package, aka "collectable"
+- Child packages:
+  - `LIST`: @collectable/list
+  - `MAP`: @collectable/map
+  - `SET`: @collectable/set
+  - `SSET`: @collectable/sorted-set
+  - `SMAP`: @collectable/sorted-map
+  - `RBT`: @collectable/red-black-tree
+  - Others assigned as new packages become available.
+
+The `type` descriptor is a variation on the Google's pseudo-standard for semantic commit messages, which I don't like.
+
+> _I don't like "feat" because it's abbreviated arbitrarily, and yet "refactor" is not. Also, "feat" doesn't read well, in my opinion, not to mention that not all enhancements are features, per se. I don't like "chore" because it implies that anything to do with the build process is boring or gruelling. I've abbreviated "refactor" because if you're going to do something, be consistent._
+
+| Type Name | Changed From | Meaning
+|-----------|--------------|-----------------------------------------------------------------------
+| **impl**  | _feat_       | Implementation of new features, enhancements and packages
+| **fix**   | -            | Bug fixes, both to features and tests
+| **docs**  | -            | Changes to readme files, documentation, examples, jsdoc comments
+| **style** | -            | Whitespace, formatting, semicolons, etc.
+| **refac** | _refactor_   | Refactoring to improve code quality without affecting behaviour
+| **perf**  | -            | Changes that target performance without affecting behaviour
+| **test**  | -            | Implementation of new unit tests, perf tests and other types of tests
+| **build** | _chore_      | Build process, releases, package publishing, infrastructure for tools, docs, perf tests, unit tests, etc.
+
+Finally, keep commit messages short, where possible. The first line should be a brief indicator of what the commit is about. Further details can be added as bullet points on subsequent lines.
+
+### Examples
+
+```
+MAP(impl): Implemented add, remove
+
+LIST(fix): Error when appending, fixes #123
+
+MAIN(build): Perf test infrastructure complete
+
+SSET(style): Fix tslint issues
+- Missing semicolon in functions/add.ts
+- Missing semicolon in functions/remove.ts
+- Extraneous whitespace in tests/iterate.ts
+```
 
 ## Package Structure
 
@@ -28,7 +109,7 @@ $ yarn link @collectable/core
 $ gulp build --pkg core        # see further below for more information about the gulp setup
 ```
 
-## Code
+## Development of new data structure packages
 
 Collectable.js prefers a functional approach, but your main persistent data structure is implemented as a class with a minimal interface. Do not apply list manipulation methods to the class, it is meant only as a container with core functionality.
 
