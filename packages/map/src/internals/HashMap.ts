@@ -4,7 +4,7 @@ import {entries} from '../functions/entries';
 import {AnyNode} from './nodes';
 
 const MAP_TYPE: IndexableCollectionTypeInfo = {
-  type: Symbol('Collectable.List'),
+  type: Symbol('Collectable.Map'),
   indexable: true,
 
   equals(other: HashMapImpl<any, any>, map: HashMapImpl<any, any>): boolean {
@@ -51,6 +51,10 @@ export class HashMapImpl<K, V> implements HashMap<K, V> {
   public [Symbol.iterator](): IterableIterator<[K, V]> {
     return entries<K, V>(this);
   }
+}
+
+export function isHashMap<K, V>(arg: any): arg is HashMapImpl<K, V> {
+  return !!arg && arg['@@type'] === MAP_TYPE;
 }
 
 export function cloneMap<K, V>(tree: HashMapImpl<K, V>, group: number, mutable: boolean): HashMapImpl<K, V> {
