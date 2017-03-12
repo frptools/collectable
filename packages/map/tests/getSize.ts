@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import {empty, size, set, remove} from '../src';
 
-suite('Map', () => {
+suite('[Map]', () => {
   suite('size()', () => {
     test('returns 0 when the map empty', () => {
       assert.strictEqual(size(empty()), 0);

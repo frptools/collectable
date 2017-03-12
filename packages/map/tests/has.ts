@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import {empty, thaw, has, set, remove} from '../src';
 
-suite('Map', () => {
+suite('[Map]', () => {
   suite('has()', () => {
     test('returns true if the specified property exists', () => {
       var map = set('x', 3, empty<string, number>());

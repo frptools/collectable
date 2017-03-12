@@ -4,7 +4,7 @@ import {empty, thaw, isThawed, updateMap, has, set, remove, unwrap} from '../src
 
 const toJS = curry2(unwrap)(false);
 
-suite('Map', () => {
+suite('[Map]', () => {
   suite('remove()', () => {
     test('returns a new map is the original map is immutable', () => {
       var map = set('x', 3, empty<string, number>());

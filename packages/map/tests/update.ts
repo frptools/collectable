@@ -4,7 +4,7 @@ import {empty, thaw, isThawed, update, set, unwrap} from '../src';
 
 const toJS = curry2(unwrap)(false);
 
-suite('Map', () => {
+suite('[Map]', () => {
   suite('update()', () => {
     test('returns a new map with the specified key updated', () => {
       var map = set('x', 3, empty<string, number>());
