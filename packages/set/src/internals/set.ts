@@ -1,5 +1,7 @@
-import {Collection, CollectionTypeInfo, isDefined, nextId, batch} from '@collectable/core';
-import {iterate, isEqual, unwrap} from '../functions';
+import {Collection, CollectionTypeInfo, MappableIterator, isDefined, nextId, batch} from '@collectable/core';
+import {Map, empty, fromIterable} from '@collectable/map';
+import {isEqual, unwrap} from '../functions';
+import {iterate} from './iterate';
 
 const SET_TYPE: CollectionTypeInfo = {
   type: Symbol('Collectable.Set'),
@@ -9,18 +11,20 @@ const SET_TYPE: CollectionTypeInfo = {
     return isEqual(other, collection);
   },
 
-  unwrap(set: HashSet<any>): any {
+  unwrap(set: HashSetImpl<any>): any {
     return unwrap(true, set);
   }
 };
 
-export class HashSet<T> implements Collection<T> {
+export interface HashSet<T> extends Collection<T> {}
+
+export class HashSetImpl<T> implements HashSet<T> {
   get '@@type'() { return SET_TYPE; }
 
   constructor(
-    public values: Set<T>,
-    public owner: number,
-    public group: number
+    public _map: Map<T, null>,
+    public _owner: number,
+    public _group: number
   ) {}
 
   [Symbol.iterator](): IterableIterator<T> {
@@ -28,19 +32,30 @@ export class HashSet<T> implements Collection<T> {
   }
 }
 
-export function cloneSet<T>(state: HashSet<T>, mutable = false): HashSet<T> {
-  return new HashSet<T>(new Set<T>(state.values), batch.owner(mutable), nextId());
+export function isHashSet<T>(arg: any): arg is HashSetImpl<T> {
+  return arg && arg['@@type'] === SET_TYPE;
 }
 
-export function createSet<T>(values?: T[]|Iterable<T>): HashSet<T> {
-  return new HashSet<T>(
-    isDefined(values) ? new Set<T>(values) : new Set<T>(),
-    nextId(),
-    batch.owner(false)
-  );
+export function cloneSet<T>(mutable: boolean, set: HashSetImpl<T>): HashSetImpl<T> {
+  return new HashSetImpl<T>(set._map, batch.owner(mutable), nextId());
 }
 
-export function emptySet<T>(): HashSet<T> {
+export function cloneSetAsMutable<T>(set: HashSetImpl<T>): HashSetImpl<T> {
+  return cloneSet(true, set);
+}
+
+function toMapEntry<T>(x: T): [T, null] {
+  return [x, null];
+}
+
+export function createSet<T>(values?: T[]|Iterable<T>): HashSetImpl<T> {
+  var map = isDefined(values)
+    ? fromIterable(new MappableIterator<T, [T, null]>(values, toMapEntry))
+    : empty<T, null>();
+  return new HashSetImpl<T>(map, nextId(), batch.owner(false));
+}
+
+export function emptySet<T>(): HashSetImpl<T> {
   return _empty;
 }
 
