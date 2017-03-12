@@ -63,6 +63,10 @@ export class RedBlackTreeImpl<K, V> implements RedBlackTree<K, V> {
   }
 }
 
+export function isRedBlackTree<K, V>(arg: any): arg is RedBlackTreeImpl<K, V> {
+  return !!arg && arg['@@type'] === REDBLACKTREE_TYPE;
+}
+
 export function createTree<K, V>(mutable: boolean, comparator?: Comparator<K>): RedBlackTree<K, V> {
   return new RedBlackTreeImpl<K, V>(batch.owner(mutable), nextId(), comparator || DEFAULT_COMPARATOR, NONE, 0);
 }

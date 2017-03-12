@@ -1,5 +1,4 @@
-import {Collection} from '@collectable/core';
-import {RedBlackTree, RedBlackTreeImpl, Comparator, createTree} from '../internals';
+import {RedBlackTree, Comparator, createTree, isRedBlackTree as _isRedBlackTree} from '../internals';
 
 /**
  * Creates an empty tree. If no comparator function is supplied, keys are compared using logical less-than and
@@ -24,6 +23,6 @@ export function empty<K, V>(comparator?: Comparator<K>): RedBlackTree<K, V> {
  * @param {RedBlackTree<K, V>} arg The input value to check
  * @returns {boolean} True if the input value is a RedBlackTree, otherwise false
  */
-export function isRedBlackTree(arg: Collection<any>): boolean {
-  return typeof arg === 'object' && arg !== null && arg instanceof RedBlackTreeImpl;
+export function isRedBlackTree<K, V>(arg: any): arg is RedBlackTree<K, V> {
+  return _isRedBlackTree<K, V>(arg);
 }
