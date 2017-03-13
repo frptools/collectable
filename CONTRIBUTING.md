@@ -26,14 +26,14 @@ Collectable is a monorepo, so there are multiple subpackages of the main package
 The convention for commit messages is as follows, and must be followed before a pull request will be accepted:
 
 ```
-TARGET(type): message
+TARGET(type): Message
 
-TARGET(type): message; fixes #123
+TARGET(type): Message; fixes #123
 
-TARGET(type): message
-- specific change 1
-- specific change 2
-- etc.
+TARGET(type): Message
+- Specific change 1
+- Specific change 2
+- Etc.
 ```
 
 `TARGET` refers to the package affected by the changes. Valid values are:
@@ -56,7 +56,7 @@ The `type` descriptor is a variation on the Google's pseudo-standard for semanti
 
 | Type Name | Changed From | Meaning
 |-----------|--------------|-----------------------------------------------------------------------
-| **impl**  | _feat_       | Implementation of new features, enhancements and packages
+| **impl**  | _feat_       | Implementation/iteration of new features, enhancements and packages
 | **fix**   | -            | Bug fixes, both to features and tests
 | **docs**  | -            | Changes to readme files, documentation, examples, jsdoc comments
 | **style** | -            | Whitespace, formatting, semicolons, etc.
@@ -65,18 +65,24 @@ The `type` descriptor is a variation on the Google's pseudo-standard for semanti
 | **test**  | -            | Implementation of new unit tests, perf tests and other types of tests
 | **build** | _chore_      | Build process, releases, package publishing, infrastructure for tools, docs, perf tests, unit tests, etc.
 
-Finally, keep commit messages short, where possible. The first line should be a brief indicator of what the commit is about. Further details can be added as bullet points on subsequent lines.
+- Capitalize the first letter following the initial colon, e.g. "MAIN(test): Fix whatever", not "MAIN(test): fix whatever".
+- Bug fix commits should describe the bug, rather than the act of fixing it, as the _fix_ tag already does that job, e.g. "LIST(fix): Error when growing the tree, fixes #123", not "LIST(fix): Fix issue with tree growth, fixes #123".
+- The sole exception to the above rule is when fixing something where the _fix_ tag does not apply, e.g. "MAIN(style): Fix typo in README".
+- Write commit messages as present tense, for consistency, e.g. "Implement feature X", rather than "Implemented feature X".
+- Keep commit messages short, where possible. The first line should be a brief indicator of what the commit is about, not exceeding 50-70 characters in length. Further details can be added as bullet points on subsequent lines, but should be kept as terse as possible, within reason. Nobody wants to read an essay in a commit message.
+
+_Note: Violations to the above rules exist in the repo history due to the fact that these rules were only nailed down partway through development. All new commit messages must follow these rules, however._
 
 ### Examples
 
 ```
-MAP(impl): Implemented add, remove
+MAP(impl): Implement add, remove
 
 LIST(fix): Error when appending, fixes #123
 
 MAIN(build): Perf test infrastructure complete
 
-SSET(style): Fix tslint issues
+SSET(style): Resolve tslint issues
 - Missing semicolon in functions/add.ts
 - Missing semicolon in functions/remove.ts
 - Extraneous whitespace in tests/iterate.ts
