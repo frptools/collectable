@@ -35,7 +35,7 @@ function owner(ensureMutable: true): number {
 }
 
 export const batch: Batch = <any>Object.assign(
-  function (callback: (owner?: number) => any): any {
+  function(callback: (owner?: number) => any): any {
     start();
     var result = callback(_owner);
     end();
