@@ -38,7 +38,8 @@ TARGET(type): message
 
 `TARGET` refers to the package affected by the changes. Valid values are:
 
-- `ALL` - affects all (or many) packages
+- `ALL` - affects all packages
+- `MISC` - addresses a concern that affects a subset of available packages
 - `MAIN` - main (root) package, aka "collectable"
 - Child packages:
   - `LIST`: @collectable/list
