@@ -57,14 +57,14 @@ export function isHashMap<K, V>(arg: any): arg is HashMapImpl<K, V> {
   return !!arg && arg['@@type'] === MAP_TYPE;
 }
 
-export function cloneMap<K, V>(tree: HashMapImpl<K, V>, group: number, mutable: boolean): HashMapImpl<K, V> {
-  return new HashMapImpl<K, V>(batch.owner(mutable), group, tree._root, tree._size);
+export function cloneMap<K, V>(mutable: boolean, tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
+  return new HashMapImpl<K, V>(batch.owner(mutable), nextId(), tree._root, tree._size);
 }
 
 export function cloneAsMutable<K, V>(tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  return cloneMap(tree, nextId(), true);
+  return cloneMap(true, tree);
 }
 
 export function cloneAsImmutable<K, V>(tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  return cloneMap(tree, nextId(), false);
+  return cloneMap(false, tree);
 }

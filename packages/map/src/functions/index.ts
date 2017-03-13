@@ -1,3 +1,4 @@
+export * from './clone';
 export * from './empty';
 export * from './entries';
 export * from './filter';
