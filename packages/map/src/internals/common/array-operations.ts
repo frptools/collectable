@@ -44,7 +44,7 @@ export function remove<T>(index: number, array: Array<T>): Array<T> {
  */
 export function insert<T>(index: number, value: T, array: Array<T>): Array<T> {
   const length = array.length;
-  const newArray = Array(length - 1);
+  const newArray = Array(length + 1);
 
   let i = 0;
 
@@ -54,7 +54,7 @@ export function insert<T>(index: number, value: T, array: Array<T>): Array<T> {
 
   newArray[i++] = value;
 
-  for(; i < length; ++i) {
+  for(; i < length + 1; ++i) {
     newArray[i] = array[i - 1];
   }
 

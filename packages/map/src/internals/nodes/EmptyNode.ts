@@ -7,10 +7,6 @@ export class EmptyNode<K, V> implements Empty<K, V> {
   public group = 0;
   public type: NodeType.EMPTY = NodeType.EMPTY;
 
-  constructor() {
-    console.log(`Construct EmptyNode()`);
-  }
-
   public modify(
     group: number,
     shift: number,

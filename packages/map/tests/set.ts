@@ -6,14 +6,14 @@ const toJS = curry2(unwrap)(false);
 
 suite('[Map]', () => {
   suite('set()', () => {
-    test('returns a new map is the original map is immutable', () => {
+    test('returns a new map if the original map is immutable', () => {
       var map = set('x', 3, empty<string, number>());
       var map1 = set('y', 2, map);
 
       assert.notStrictEqual(map, map1);
     });
 
-    test('returns the same map is the original map is mutable', () => {
+    test('returns the same map if the original map is mutable', () => {
       var map = thaw(set('x', 3, empty<string, number>()));
       var map1 = set('y', 2, map);
 
@@ -80,6 +80,28 @@ suite('[Map]', () => {
       assert.isFalse(has('x', map1));
       assert.deepEqual(toJS(map), {x: 3, y: 2});
       assert.deepEqual(toJS(map1), {y: 2});
+    });
+
+    test('adds many values to the same mutable map', () => {
+      var values: [string, number][] = [];
+      var map = thaw(empty<string, number>());
+      for(var i = 0, c = 'a'.charCodeAt(0); i < 26; i++, c++) {
+        var entry: [string, number] = [String.fromCharCode(c), i*2 + 1];
+        values.push(entry);
+        set(entry[0], entry[1], map);
+        assert.sameDeepMembers(Array.from(map), values);
+      }
+    });
+
+    test('adds many values to successive copies of an immutable map', () => {
+      var values: [string, number][] = [];
+      var map = empty<string, number>();
+      for(var i = 0, c = 'a'.charCodeAt(0); i < 26; i++, c++) {
+        var entry: [string, number] = [String.fromCharCode(c), i*2 + 1];
+        values.push(entry);
+        map = set(entry[0], entry[1], map);
+        assert.sameDeepMembers(Array.from(map), values);
+      }
     });
   });
 });
