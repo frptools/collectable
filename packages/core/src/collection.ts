@@ -15,7 +15,7 @@ export interface IndexableCollectionTypeInfo extends CollectionTypeInfo {
 
 export interface Collection<T> {
   readonly '@@type': CollectionTypeInfo;
-  [Symbol.iterator](): IterableIterator<T | undefined>;
+  [Symbol.iterator](): IterableIterator<T>;
 }
 
 export function isCollection<T>(value: any): value is Collection<T> {

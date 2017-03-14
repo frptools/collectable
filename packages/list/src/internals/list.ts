@@ -53,7 +53,7 @@ export class List<T> implements Collection<T> {
     public _right: View<T>
   ) {}
 
-  [Symbol.iterator](): IterableIterator<T|undefined> {
+  [Symbol.iterator](): IterableIterator<T> {
     return createIterator(this);
   }
 }
