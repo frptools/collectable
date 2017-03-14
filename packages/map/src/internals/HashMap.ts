@@ -73,3 +73,11 @@ export function refreeze<K, V>(map: HashMapImpl<K, V>): HashMapImpl<K, V> {
   map._owner = 0;
   return map;
 }
+
+export function replace<K, V>(source: HashMapImpl<K, V>, target: HashMapImpl<K, V>): HashMapImpl<K, V> {
+  target._owner = source._owner;
+  target._group = source._group;
+  target._size = source._size;
+  target._root = source._root;
+  return target;
+}
