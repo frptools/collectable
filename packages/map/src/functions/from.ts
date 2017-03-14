@@ -1,21 +1,34 @@
-import {HashMap} from '../internals/HashMap';
+import {HashMap, HashMapImpl, refreeze} from '../internals/HashMap';
 import {empty} from './empty';
 import {set} from './set';
+import {thaw} from './thaw';
 
 export function fromArray<K, V>(array: Array<[K, V]>): HashMap<K, V> {
-  let map = empty<K, V>();
+  let map = thaw(empty<K, V>());
 
   for(let i = 0; i < array.length; ++i) {
-    const [key, value] = array[i];
-
-    map = set(key, value, map);
+    var entry = array[i];
+    set(entry[0], entry[1], map);
   }
 
-  return map;
+  return refreeze(<HashMapImpl<K, V>>map);
 }
 
 export function fromIterable<K, V>(iterable: Iterable<[K, V]>): HashMap<K, V> {
-  return fromArray(Array.from(iterable));
+  let map = thaw(empty<K, V>());
+  let current: IteratorResult<[K, V]>;
+  let it = iterable[Symbol.iterator]();
+
+  while(!(current = it.next()).done) {
+    var entry = current.value;
+    set(entry[0], entry[1], map);
+  }
+
+  return refreeze(<HashMapImpl<K, V>>map);
+}
+
+export function fromNativeMap<K, V>(map: Map<K, V>): HashMap<K, V> {
+  return fromIterable(map);
 }
 
 export function fromObject<V>(object: { [key: number ]: V }): HashMap<number, V>;
