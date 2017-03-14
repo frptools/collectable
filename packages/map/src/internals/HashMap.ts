@@ -68,3 +68,8 @@ export function cloneAsMutable<K, V>(tree: HashMapImpl<K, V>): HashMapImpl<K, V>
 export function cloneAsImmutable<K, V>(tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
   return cloneMap(false, tree);
 }
+
+export function refreeze<K, V>(set: HashMapImpl<K, V>): HashMapImpl<K, V> {
+  set._owner = 0;
+  return set;
+}
