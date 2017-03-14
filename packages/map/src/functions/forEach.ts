@@ -1,9 +1,8 @@
-import {HashMap} from '../internals/HashMap';
-import {reduce} from './reduce';
+import {HashMap, HashMapImpl} from '../internals/HashMap';
+import {fold} from '../internals/primitives';
 
-export type ForEachPredicate<K, V> = (value: V, key?: K) => any;
+export type ForEachPredicate<K, V> = (value: V, key: K, index: number) => any;
 
 export function forEach<K, V>(f: ForEachPredicate<K, V>, map: HashMap<K, V>): HashMap<K, V> {
-  reduce((_, value, key) => f(value, key), null, map);
-  return map;
+  return fold((_, value, key, index) => f(value, key, index), <any>null, <HashMapImpl<K, V>>map, true);
 };

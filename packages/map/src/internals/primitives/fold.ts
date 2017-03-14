@@ -2,9 +2,10 @@ import {HashMapImpl} from '../HashMap';
 import {NodeType} from '../nodes';
 
 export function fold<K, V, R>(
-  f: (accum: R, value: V, key?: K) => R,
+  f: (accum: R, value: V, key: K, index: number) => R,
   seed: R,
-  map: HashMapImpl<K, V>): R {
+  map: HashMapImpl<K, V>,
+  cancelOnFalse = false): R {
 
   const node = map._root;
 
@@ -13,14 +14,14 @@ export function fold<K, V, R>(
   }
 
   if(node.type === NodeType.LEAF) {
-    return f(seed, node.value, node.key);
+    return f(seed, node.value, node.key, 0);
   }
 
   const nodesToVisit = [node.children];
 
-  let children;
+  let children, index = 0;
 
-  while(children = nodesToVisit.shift()) {
+  while((!cancelOnFalse || <any>seed !== false) && (children = nodesToVisit.shift())) {
     for(let i = 0; i < children.length; ++i) {
       const child = children[i];
 
@@ -30,7 +31,7 @@ export function fold<K, V, R>(
         continue;
       }
       else if(child.type === NodeType.LEAF) {
-        seed = f(seed, child.value, child.key);
+        seed = f(seed, child.value, child.key, index++);
       }
       else {
         nodesToVisit.push(child.children);

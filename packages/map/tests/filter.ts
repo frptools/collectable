@@ -9,8 +9,8 @@ function pairFromNumber(n: number): [number, string] {
 suite('[Map]', () => {
   suite('filter()', () => {
     let values0: Pair[], values1: Pair[], values2: Pair[];
-    const predicate1 = (value: string, key: number) => ((key >>> 2) << 2) !== key;
-    const predicate2 = (value: string, key: number) => ((key >>> 2) << 2) === key;
+    const predicate1 = (value: string, key: number) => ((key >>> 1) << 1) !== key;
+    const predicate2 = (value: string, key: number) => ((key >>> 1) << 1) === key;
     suiteSetup(() => {
       values0 = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89].map(pairFromNumber);
       values1 = values0.filter(v => predicate1(v[1], v[0]));
