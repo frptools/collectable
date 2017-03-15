@@ -1,4 +1,5 @@
 export * from './at';
+export * from './clone';
 export * from './empty';
 export * from './equality';
 export * from './find';

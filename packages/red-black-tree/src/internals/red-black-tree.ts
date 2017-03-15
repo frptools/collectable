@@ -67,23 +67,23 @@ export function isRedBlackTree<K, V>(arg: any): arg is RedBlackTreeImpl<K, V> {
   return !!arg && arg['@@type'] === REDBLACKTREE_TYPE;
 }
 
-export function createTree<K, V>(mutable: boolean, comparator?: Comparator<K>): RedBlackTree<K, V> {
+export function createTree<K, V>(mutable: boolean, comparator?: Comparator<K>): RedBlackTreeImpl<K, V> {
   return new RedBlackTreeImpl<K, V>(batch.owner(mutable), nextId(), comparator || DEFAULT_COMPARATOR, NONE, 0);
 }
 
-export function cloneTree<K, V>(tree: RedBlackTreeImpl<K, V>, group: number, mutable: boolean): RedBlackTree<K, V> {
-  return new RedBlackTreeImpl<K, V>(batch.owner(mutable), group, tree._compare, tree._root, tree._size);
+export function cloneTree<K, V>(mutable: boolean, tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
+  return new RedBlackTreeImpl<K, V>(batch.owner(mutable), nextId(), tree._compare, tree._root, tree._size);
 }
 
-export function cloneAsMutable<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTree<K, V> {
-  return cloneTree(tree, nextId(), true);
+export function cloneAsMutable<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
+  return cloneTree(true, tree);
 }
 
-export function cloneAsImmutable<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTree<K, V> {
-  return cloneTree(tree, nextId(), false);
+export function cloneAsImmutable<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
+  return cloneTree(false, tree);
 }
 
-export function doneMutating<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTree<K, V> {
+export function doneMutating<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
   if(tree._owner === -1) {
     tree._owner = 0;
   }
