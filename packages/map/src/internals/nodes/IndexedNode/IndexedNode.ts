@@ -1,4 +1,4 @@
-import {blockCopy} from '@collectable/core';
+import {blockCopy, replaceArrayElement, removeArrayElement, insertArrayElement} from '@collectable/core';
 import {Indexed, AnyNode, NodeType, ChildrenNodes, ChildNode, Size, GetValueFn} from '../types';
 import {empty} from '../EmptyNode';
 import {
@@ -6,10 +6,7 @@ import {
   MAX_INDEX_NODE,
   hashFragment,
   toBitmap,
-  bitmapToIndex,
-  remove,
-  insert,
-  replace,
+  bitmapToIndex
 } from '../../common';
 import {toArrayNode} from './toArrayNode';
 
@@ -61,7 +58,7 @@ export class IndexedNode<K, V> implements Indexed<K, V> {
         return this;
       }
 
-      return new IndexedNode(group, bitmap, remove(index, children));
+      return new IndexedNode(group, bitmap, removeArrayElement(index, children));
     }
 
     if(!exists && child.type !== NodeType.EMPTY) {
@@ -77,7 +74,7 @@ export class IndexedNode<K, V> implements Indexed<K, V> {
         return this;
       }
 
-      return new IndexedNode(group, mask | bit, insert(index, child, children));
+      return new IndexedNode(group, mask | bit, insertArrayElement(index, child, children));
     }
 
     if(mutate) {
@@ -85,7 +82,7 @@ export class IndexedNode<K, V> implements Indexed<K, V> {
       return this;
     }
 
-    return new IndexedNode<K, V>(group, mask, replace(index, child, children));
+    return new IndexedNode<K, V>(group, mask, replaceArrayElement(index, child, children));
   }
 }
 

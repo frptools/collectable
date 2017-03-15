@@ -1,7 +1,7 @@
+import {removeArrayElement, insertArrayElement} from '@collectable/core';
 import {NOTHING} from '../constants';
 import {LeafNode} from '../LeafNode';
 import {Size, GetValueFn} from '../types';
-import {remove, insert} from '../../common';
 
 export function newCollisionList<K, V>(
   group: number,
@@ -26,10 +26,10 @@ export function newCollisionList<K, V>(
 
       if(newValue === NOTHING) {
         --size.value;
-        return remove(i, list);
+        return removeArrayElement(i, list);
       }
 
-      return insert(i, new LeafNode(group, hash, key, newValue), list);
+      return insertArrayElement(i, new LeafNode(group, hash, key, newValue), list);
     }
   }
 
@@ -41,5 +41,5 @@ export function newCollisionList<K, V>(
 
   ++size.value;
 
-  return insert(length, new LeafNode(group, hash, key, newValue), list);
+  return insertArrayElement(length, new LeafNode(group, hash, key, newValue), list);
 }
