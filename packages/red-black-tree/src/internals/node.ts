@@ -12,8 +12,8 @@ export interface Node<K, V> {
 export type RedBlackTreeEntry<K, V> = {
   /** Read only. The hash key of this entry in the tree. */
   readonly key: K;
-  /** Read only. The value of this entry in the tree. */
-  readonly value: V;
+  /** Read/write. The value of this entry in the tree. */
+  value: V;
 };
 
 export /* ## PROD [[ const ]] ## */ enum BRANCH {
