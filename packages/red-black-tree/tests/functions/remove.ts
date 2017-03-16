@@ -13,7 +13,6 @@ suite('[RedBlackTree]', () => {
 
     test('should not find the removed key after it is removed', () => {
       var tree = createTree();
-      console.log(unsortedValues.length);
       for(var i = 0; i < unsortedValues.length; i++) {
         assert.isDefined(get(unsortedValues[i], tree), `The key "${unsortedValues[i]}" is unexpectedly missing prior to removal`);
         tree = <RedBlackTreeImpl<number, string>>remove(unsortedValues[i], tree);

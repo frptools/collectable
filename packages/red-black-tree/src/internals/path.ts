@@ -1,7 +1,7 @@
 import {log} from '../internals/debug'; // ## DEV ##
 import {isUndefined} from '@collectable/core';
-import {Comparator /* ## DEV [[ */, createTree /* ]] ## */} from './red-black-tree';
-import {RedBlackTreeImpl} from './red-black-tree'; // ## DEV ##
+import {Comparator} from './RedBlackTree';
+import {RedBlackTreeImpl, createTree} from './RedBlackTree'; // ## DEV ##
 import {Node, BRANCH, NONE, isNone, editLeftChild, editRightChild /* ## DEV [[ */, checkInvalidNilAssignment /* ]] ## */} from './node';
 import {setChild, updateCount} from './ops';
 

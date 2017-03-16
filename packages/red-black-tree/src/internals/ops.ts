@@ -1,5 +1,5 @@
 import {log} from './debug'; // ## DEV ##
-import {RedBlackTreeImpl} from './red-black-tree';
+import {RedBlackTreeImpl} from './RedBlackTree';
 import {BRANCH, Node, isNone} from './node';
 import {PathNode} from './path';
 

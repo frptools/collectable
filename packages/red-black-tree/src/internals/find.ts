@@ -1,5 +1,5 @@
 import {isUndefined} from '@collectable/core';
-import {RedBlackTreeImpl, Comparator} from './red-black-tree';
+import {RedBlackTreeImpl, Comparator} from './RedBlackTree';
 import {Node, NONE, BRANCH, isNone} from './node';
 import {PathNode} from './path';
 

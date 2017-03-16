@@ -1,4 +1,4 @@
-export * from './red-black-tree';
+export * from './RedBlackTree';
 export * from './rebalance';
 export * from './path';
 export * from './node';
