@@ -15,6 +15,14 @@ const MAP_TYPE: IndexableCollectionTypeInfo = {
     return unwrap(true, map);
   },
 
+  group(map: HashMapImpl<any, any>): any {
+    return map._group;
+  },
+
+  owner(map: HashMapImpl<any, any>): any {
+    return map._owner;
+  },
+
   get(key: any, map: HashMapImpl<any, any>): any {
     return get(key, map);
   },

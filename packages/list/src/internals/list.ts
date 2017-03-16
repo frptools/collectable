@@ -18,6 +18,14 @@ const LIST_TYPE: IndexableCollectionTypeInfo = {
     return unwrap(true, list);
   },
 
+  group(list: List<any>): any {
+    return list._group;
+  },
+
+  owner(list: List<any>): any {
+    return list._owner;
+  },
+
   get(index: number, list: List<any>): any {
     return get(index, list);
   },

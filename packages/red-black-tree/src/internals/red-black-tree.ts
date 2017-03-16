@@ -24,6 +24,14 @@ const REDBLACKTREE_TYPE: IndexableCollectionTypeInfo = {
     return unwrap(true, tree);
   },
 
+  group(tree: RedBlackTreeImpl<any, any>): any {
+    return tree._group;
+  },
+
+  owner(tree: RedBlackTreeImpl<any, any>): any {
+    return tree._owner;
+  },
+
   get(key: any, tree: RedBlackTreeImpl<any, any>): any {
     return get(key, tree);
   },

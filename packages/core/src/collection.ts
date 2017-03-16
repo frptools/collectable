@@ -1,6 +1,8 @@
 export interface CollectionTypeInfo {
   readonly type: symbol;
   readonly indexable: boolean;
+  owner(collection: any): number;
+  group(collection: any): number;
   equals(other: any, collection: any): boolean;
   unwrap(collection: any): any;
 }
@@ -43,4 +45,12 @@ export function preventCircularRefs<T, U, C extends Collection<U>>(createTarget:
 
 export function unwrapAny(value: any): any {
   return isCollection<any>(value) ? value['@@type'].unwrap(value) : value;
+}
+
+export function getGroup<T>(collection: Collection<T>): number {
+  return collection['@@type'].group(collection);
+}
+
+export function getOwner<T>(collection: Collection<T>): number {
+  return collection['@@type'].owner(collection);
 }
