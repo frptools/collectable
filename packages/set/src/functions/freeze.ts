@@ -1,11 +1,12 @@
-import {HashSet, HashSetImpl} from '../internals';
+import {isImmutable} from '@collectable/core';
+import {HashSet, HashSetImpl, cloneAsImmutable} from '../internals';
 
 export function freeze<T>(set: HashSet<T>): HashSet<T>;
 export function freeze<T>(set: HashSetImpl<T>): HashSetImpl<T> {
-  throw new Error('Not implemented');
+  return isImmutable(set._owner) ? set : cloneAsImmutable(set);
 }
 
 export function isFrozen<T>(set: HashSet<T>): boolean;
 export function isFrozen<T>(set: HashSetImpl<T>): boolean {
-  throw new Error('Not implemented');
+  return isImmutable(set._owner);
 }

@@ -1,2 +1,2 @@
-export * from './set';
+export * from './HashSet';
 export * from './iterate';

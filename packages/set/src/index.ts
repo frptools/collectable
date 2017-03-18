@@ -1,2 +1,2 @@
-export {HashSetImpl as Set} from './internals';
+export {HashSet as Set} from './internals';
 export * from './functions';

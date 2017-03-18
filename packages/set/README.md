@@ -12,7 +12,7 @@
 
 ## Installation
 
-```
+```bash
 # via NPM
 npm install --save @collectable/set
 
@@ -22,7 +22,7 @@ yarn add @collectable/set
 
 If you intend to use other data structures as well, install the main collectable package instead. It takes a dependency on each of these data structures, and so they will become available implicitly, after installation.
 
-```
+```bash
 # via NPM
 npm install --save collectable
 
@@ -37,10 +37,10 @@ TypeScript type definitions are included by default.
 Import and use the functions you need:
 
 ```js
-import {fromArray, arrayFrom} from '@collectable/set';
+import {fromArray, toArray} from '@collectable/set';
 
 const set = fromArray(['X', 'Y']); // => <[X, Y]>
-const array = arrayFrom(set); // => [X, Y]
+const array = toArray(set); // => [X, Y]
 ```
 
 Pre-curried versions of functions for a given data structure are available by appending `/curried` to the import path, like so:

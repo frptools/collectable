@@ -1,12 +1,13 @@
+import {size as _size} from '@collectable/map';
 import {HashSet, HashSetImpl} from '../internals';
 
 export function size<T>(set: HashSet<T>): number;
 export function size<T>(set: HashSetImpl<T>): number {
-  throw new Error('Not implemented');
+  return _size(set._map);
 }
 
 export function isEmpty<T>(set: HashSet<T>): boolean;
 export function isEmpty<T>(set: HashSetImpl<T>): boolean {
-  throw new Error('Not implemented');
+  return _size(set._map) === 0;
 }
 

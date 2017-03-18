@@ -1,7 +1,8 @@
-import {HashSetImpl} from './set';
+import {keys} from '@collectable/map';
+import {HashSetImpl} from './HashSet';
 
 export function iterate<T>(set: HashSetImpl<T>): IterableIterator<T> {
-  throw new Error('Not implemented');
+  return keys(set._map);
 }
 
 export function isIterable<T>(arg: any): arg is Iterable<T> {

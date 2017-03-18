@@ -1,5 +1,5 @@
 export * from './add';
-export * from './difference';
+export * from './clone';
 export * from './empty';
 export * from './filter';
 export * from './forEach';
