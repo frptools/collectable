@@ -1,5 +1,5 @@
 import {curry3} from '@typed/curry';
-import {Associative, KeyedMappingFunction, preventCircularRefs, unwrapAny, isUndefined} from '@collectable/core';
+import {Associative, KeyedMappingFunction, MappableIterator, preventCircularRefs, unwrapAny, isUndefined} from '@collectable/core';
 import {RedBlackTree, RedBlackTreeImpl, RedBlackTreeEntry, BRANCH, Node, isNone} from '../internals';
 import {iterateFromFirst, size} from './index';
 
@@ -55,45 +55,35 @@ export function arrayFrom<K, V, U>(arg: KeyedMappingFunction<K, V, U>|RedBlackTr
 }
 
 /**
- * Returns an array of values; one for each entry in the tree. The array is guaranteed to be in the same order as the
- * corresponding entries in the tree.
+ * Returns a value iterator; one for each entry in the tree. The iterator is guaranteed to iterate in the same order as
+ * the corresponding entries in the tree.
  *
  * @export
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
  * @param {RedBlackTree<K, V>} tree The tree to read values from
- * @returns {V[]} An array of values from the tree
+ * @returns {IterableIterator<V>} An iterable iterator that will visit each value in the tree
  */
-export function values<K, V>(tree: RedBlackTree<K, V>): V[];
-export function values<K, V>(tree: RedBlackTreeImpl<K, V>): V[] {
-  var array = new Array<V>(tree._size);
+export function values<K, V>(tree: RedBlackTree<K, V>): IterableIterator<V>;
+export function values<K, V>(tree: RedBlackTreeImpl<K, V>): IterableIterator<V> {
   var it = iterateFromFirst(tree);
-  for(var i = 0; i < array.length; i++) {
-    var node = it.next().value;
-    array[i] = node.value;
-  }
-  return array;
+  return new MappableIterator<RedBlackTreeEntry<K, V>, V>(it, valueOf);
 }
 
 /**
- * Returns an array of keys; one for each entry in the tree. The array is guaranteed to be in the same order as the
- * corresponding entries in the tree.
+ * Returns a key iterator; one for each entry in the tree. The iterator is guaranteed to iterate in the same order as
+ * the corresponding entries in the tree.
  *
  * @export
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
  * @param {RedBlackTree<K, V>} tree The tree to read values from
- * @returns {K[]} An array of keys from the tree
+ * @returns {IterableIterator<K>} An iterable iterator that will visit each key in the tree
  */
-export function keys<K, V>(tree: RedBlackTree<K, V>): K[];
-export function keys<K, V>(tree: RedBlackTreeImpl<K, V>): K[] {
-  var array = new Array<K>(tree._size);
+export function keys<K, V>(tree: RedBlackTree<K, V>): IterableIterator<K>;
+export function keys<K, V>(tree: RedBlackTreeImpl<K, V>): IterableIterator<K> {
   var it = iterateFromFirst(tree);
-  for(var i = 0; i < array.length; i++) {
-    var node = it.next().value;
-    array[i] = node.key;
-  }
-  return array;
+  return new MappableIterator<RedBlackTreeEntry<K, V>, K>(it, keyOf);
 }
 
 const newObject: <T>() => Associative<T> = () => ({});
@@ -150,4 +140,12 @@ function unwrapTree<K, V>(deep: boolean, tree: RedBlackTreeImpl<K, V>, target: A
     }
   } while(i > 0 || branch !== BRANCH.NONE);
   return target;
+}
+
+function keyOf<K, V>(node: Node<K, V>): K {
+  return node.key;
+}
+
+function valueOf<K, V>(node: Node<K, V>): V {
+  return node.value;
 }

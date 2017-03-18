@@ -33,10 +33,10 @@ suite('[RedBlackTree]', () => {
       assert.notStrictEqual(tree1, tree0);
       assert.notStrictEqual(tree2, tree0);
       assert.notStrictEqual(tree3, tree1);
-      assert.deepEqual(values(tree0), sortedValues.map(n => `#${n}`));
-      assert.deepEqual(values(tree1), values1);
-      assert.deepEqual(values(tree2), values2);
-      assert.deepEqual(values(tree3), values3);
+      assert.deepEqual(Array.from(values(tree0)), sortedValues.map(n => `#${n}`));
+      assert.deepEqual(Array.from(values(tree1)), values1);
+      assert.deepEqual(Array.from(values(tree2)), values2);
+      assert.deepEqual(Array.from(values(tree3)), values3);
     });
   });
 
@@ -58,7 +58,7 @@ suite('[RedBlackTree]', () => {
       assert.strictEqual(tree0, tree1);
       assert.strictEqual(tree0, tree2);
       assert.strictEqual(tree0, tree3);
-      assert.deepEqual(values(tree0), sortedValues.concat([1, 572, 9450]).sort((a, b) => a - b).map(n => `#${n}`));
+      assert.deepEqual(Array.from(values(tree0)), sortedValues.concat([1, 572, 9450]).sort((a, b) => a - b).map(n => `#${n}`));
     });
   });
 

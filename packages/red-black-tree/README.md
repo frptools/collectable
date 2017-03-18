@@ -581,29 +581,23 @@ the corresponding entries in the tree.
 import {arrayFrom} from '@collectable/core';
 ```
 
-#### `values<K, V>(tree: RedBlackTree<K, V>): V[]`
+#### `values<K, V>(tree: RedBlackTree<K, V>): IterableIterator<V>`
 
-Returns an array of values; one for each entry in the tree. The array is guaranteed to be in the same order as the
-corresponding entries in the tree.
+Returns a value iterator; one for each entry in the tree. The iterator is guaranteed to iterate in the same order as the corresponding entries in the tree.
 
 - **tree** (_RedBlackTree<K, V>_): The tree to read values from
-- **returns** (_V[]_): An array of values from the tree
+- **returns** (_IterableIterator<V>_): An iterable iterator that will visit each value in the tree
 
 ```js
 import {values} from '@collectable/core';
 ```
 
-#### `keys<K, V>(tree: RedBlackTree<K, V>): K[]`
+#### `keys<K, V>(tree: RedBlackTree<K, V>): IterableIterator<K>`
 
-Returns an array of keys; one for each entry in the tree. The array is guaranteed to be in the same order as the
-corresponding entries in the tree.
+Returns a key iterator; one for each entry in the tree. The iterator is guaranteed to iterate in the same order as the corresponding entries in the tree.
 
 - **tree** (_RedBlackTree<K, V>_): The tree to read values from
-- **returns** (_K[]_): An array of keys from the tree
-
-Represents a plain JavaScript object containing values of type `T`.
-
-* `type Associative<T> = {[key: string]: T}`
+- **returns** (_IterableIterator<K>_): An iterable iterator that will visit each key in the tree
 
 ```js
 import {keys} from '@collectable/core';

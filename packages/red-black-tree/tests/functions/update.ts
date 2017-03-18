@@ -26,7 +26,7 @@ suite('[RedBlackTree]', () => {
         set(1, '#1', tree);
       }, tree);
       assert.isTrue(isFrozen(tree1));
-      assert.deepEqual(values(tree1), [1].concat(sortedValues).map(n => `#${n}`));
+      assert.deepEqual(Array.from(values(tree1)), [1].concat(sortedValues).map(n => `#${n}`));
     });
   });
 
