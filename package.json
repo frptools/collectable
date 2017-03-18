@@ -52,7 +52,7 @@
     "@collectable/core": "^2.3.0",
     "@collectable/list": "^2.1.0",
     "@collectable/map": "^1.2.0",
-    "@collectable/red-black-tree": "^1.3.0",
+    "@collectable/red-black-tree": "^2.0.0",
     "@collectable/set": "^1.0.0",
     "@typed/curry": "^1.0.1"
   }
