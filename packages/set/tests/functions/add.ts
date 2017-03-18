@@ -49,7 +49,9 @@ suite('[Set]', () => {
         });
 
         test('the set has all of the items it had before the new item was added', () => {
-          assert.sameMembers(Array.from(set1), ['A', 'B', 'C', 'D']);
+          for(let c of Array.from(set0)) {
+            assert.isTrue(has(c, set1));
+          }
         });
       });
 
@@ -81,6 +83,10 @@ suite('[Set]', () => {
 
         test('the added item can be retrieved from the new set', () => {
           assert.isTrue(has('D', set1));
+        });
+
+        test('all expected members exist in the new set in the correct order', () => {
+          assert.sameMembers(Array.from(set1), ['A', 'B', 'C', 'D']);
         });
       });
     });
