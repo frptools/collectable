@@ -1,6 +1,6 @@
 {
   "name": "@collectable/red-black-tree",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "[Collectable.js] Immutable Red-Black Tree",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
