@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
   "main": "lib/index.js",
   "module": "lib/index.js",
