@@ -29,7 +29,7 @@ _Note: This library is an active work in progress. Some of the features and stru
 - [ **[List](/packages/list#collectablejs-immutable-list)** ] A persistent [list/vector](https://en.wikipedia.org/wiki/List_(abstract_data_type)) structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc.
 - [ **[Map](/packages/map#collectablejs-immutable-map)** ] A persistent [hash table](https://en.wikipedia.org/wiki/Associative_array), mapping keys to values. Implemented as a Clojure-style [hash array mapped trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
 - [ **Sorted Map** ] A persistent sorted [hash table](https://en.wikipedia.org/wiki/Associative_array) backed by an [immutable map](/packages/red-black-tree#collectablejs-immutable-map) and a [sorted set](/packages/red-black-tree#collectablejs-immutable-sorted-set).
-- [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation, backed by an [immutable red-black tree].(/packages/red-black-tree#collectablejs-immutable-red-black-tree).
+- [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation, backed by an [immutable map](/packages/map#collectablejs-immutable-map).
 - [ **Sorted Set** ] A persistent sorted [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation backed by an [immutable red-black tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree), with the order of values defined by a custom, user-provided predicate.
 
 ### Secondary Structures
