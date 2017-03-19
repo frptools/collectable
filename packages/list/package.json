@@ -1,6 +1,6 @@
 {
   "name": "@collectable/list",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "[Collectable.js] Immutable List",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
