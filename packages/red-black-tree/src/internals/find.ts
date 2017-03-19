@@ -1,5 +1,5 @@
 import {isUndefined} from '@collectable/core';
-import {RedBlackTreeImpl, Comparator} from './RedBlackTree';
+import {RedBlackTreeImpl, ComparatorFn} from './RedBlackTree';
 import {Node, NONE, BRANCH, isNone} from './node';
 import {PathNode} from './path';
 
@@ -27,7 +27,7 @@ export function findNodeByKey<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): Node<
   return found ? node : void 0;
 }
 
-export function findIndex<K, V>(key: K, node: Node<K, V>, compare: Comparator<K>): number {
+export function findIndex<K, V>(key: K, node: Node<K, V>, compare: ComparatorFn<K>): number {
   var found = false, i = node._left._count;
 
   var loopCounter = 0; // ## DEV ##
@@ -54,7 +54,7 @@ export function findIndex<K, V>(key: K, node: Node<K, V>, compare: Comparator<K>
   return found ? i : -1;
 }
 
-export function findPathToNodeByKey<K, V>(key: K, node: Node<K, V>, compare: Comparator<K>): PathNode<K, V> {
+export function findPathToNodeByKey<K, V>(key: K, node: Node<K, V>, compare: ComparatorFn<K>): PathNode<K, V> {
   var path = PathNode.NONE,
       found = false;
 
@@ -123,7 +123,7 @@ export function findMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, key: K, 
   return isNone(found) ? void 0 : found;
 }
 
-export function findPathToMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, parent: PathNode<K, V>, compare: Comparator<K>): PathNode<K, V>|undefined {
+export function findPathToMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, parent: PathNode<K, V>, compare: ComparatorFn<K>): PathNode<K, V>|undefined {
   var path: PathNode<K, V>,
       found: PathNode<K, V>|undefined,
       c = compare(key, node.key);
@@ -157,7 +157,7 @@ export function findPathToMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, ke
   return found;
 }
 
-export function findMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, compare: Comparator<K>): Node<K, V>|undefined {
+export function findMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, compare: ComparatorFn<K>): Node<K, V>|undefined {
   var c = compare(key, node.key);
   if(c >= 0) {
     if(c === 0 && allowExactKeyMatch) {
@@ -177,7 +177,7 @@ export function findMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, key: K,
   return isUndefined(found) ? node : found;
 }
 
-export function findPathToMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, parent: PathNode<K, V>, compare: Comparator<K>): PathNode<K, V>|undefined {
+export function findPathToMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, parent: PathNode<K, V>, compare: ComparatorFn<K>): PathNode<K, V>|undefined {
   var path: PathNode<K, V>,
       found: PathNode<K, V>|undefined,
       c = compare(key, node.key);

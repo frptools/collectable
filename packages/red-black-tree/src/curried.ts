@@ -1,5 +1,5 @@
 import {curry2, curry3, curry4} from '@typed/curry';
-import {Associative, KeyedMappingFunction} from '@collectable/core';
+import {Associative, KeyedMapFn} from '@collectable/core';
 import {RedBlackTree, RedBlackTreeEntry, RedBlackTreeIterator} from './internals';
 import {
   UpdateTreeCallback, UpdateTreeEntryCallback, FindOp,
@@ -166,8 +166,8 @@ export interface IterateFromFn {
 export const iterateFrom: IterateFromFn = curry4(_iterateFrom);
 
 export interface ArrayFromFn {
-  <K, V, U>(mapper: KeyedMappingFunction<K, V, U>, tree: RedBlackTree<K, V>): U[];
-  <K, V, U>(mapper: KeyedMappingFunction<K, V, U>): (tree: RedBlackTree<K, V>) => U[];
+  <K, V, U>(mapper: KeyedMapFn<K, V, U>, tree: RedBlackTree<K, V>): U[];
+  <K, V, U>(mapper: KeyedMapFn<K, V, U>): (tree: RedBlackTree<K, V>) => U[];
 }
 export const arrayFrom: ArrayFromFn = curry2(_arrayFrom);
 

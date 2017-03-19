@@ -1,6 +1,6 @@
 import {log} from '../internals/debug'; // ## DEV ##
 import {isUndefined} from '@collectable/core';
-import {Comparator} from './RedBlackTree';
+import {ComparatorFn} from './RedBlackTree';
 import {RedBlackTreeImpl, createTree} from './RedBlackTree'; // ## DEV ##
 import {Node, BRANCH, NONE, isNone, editLeftChild, editRightChild /* ## DEV [[ */, checkInvalidNilAssignment /* ]] ## */} from './node';
 import {setChild, updateCount} from './ops';
@@ -80,7 +80,7 @@ PathNode.NONE = new PathNode<any, any>(NONE, <any>void 0, BRANCH.NONE /* ## DEV 
 PathNode.NONE.parent = PathNode.NONE;
 PathNode.cache = PathNode.NONE;
 
-export function findPath<K, V>(key: K, root: Node<K, V>, compare: Comparator<K>, group: number = 0, p?: PathNode<K, V>): PathNode<K, V> {
+export function findPath<K, V>(key: K, root: Node<K, V>, compare: ComparatorFn<K>, group: number = 0, p?: PathNode<K, V>): PathNode<K, V> {
   var node = root; // Assumes root has already been assigned. Check for a void root before calling insert().
 
   if(isUndefined(p)) {
@@ -119,7 +119,7 @@ export function findPath<K, V>(key: K, root: Node<K, V>, compare: Comparator<K>,
   return p;
 }
 
-export function findSuccessor<K, V>(compare: Comparator<K>, p: PathNode<K, V>, group: number): PathNode<K, V> {
+export function findSuccessor<K, V>(compare: ComparatorFn<K>, p: PathNode<K, V>, group: number): PathNode<K, V> {
   p.next = BRANCH.RIGHT;
   var node = editRightChild(group, p.node);
   while(!isNone(node._left)) {

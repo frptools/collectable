@@ -2,7 +2,7 @@ import {Collection, IndexableCollectionTypeInfo, nextId, batch, isDefined} from 
 import {Node, RedBlackTreeEntry, NONE} from './node';
 import {unwrap, iterateFromFirst, set, update, get, has, isEqual} from '../functions';
 
-export const DEFAULT_COMPARATOR: Comparator<any> = function(a: any, b: any): number {
+export const DEFAULT_ComparatorFn: ComparatorFn<any> = function(a: any, b: any): number {
   return a < b ? -1 : a > b ? 1 : 0;
 };
 
@@ -10,7 +10,7 @@ export const DEFAULT_COMPARATOR: Comparator<any> = function(a: any, b: any): num
  * A function that compares two keys and returns a value less than 0 if the first is smaller than the second, a value
  * greater than 0 if the second is smaller than the first, or 0 if they're equal.
  */
-export type Comparator<K> = (a: K, b: K) => number;
+export type ComparatorFn<K> = (a: K, b: K) => number;
 
 const REDBLACKTREE_TYPE: IndexableCollectionTypeInfo = {
   type: Symbol('Collectable.RedBlackTree'),
@@ -61,7 +61,7 @@ export class RedBlackTreeImpl<K, V> implements RedBlackTree<K, V> {
   constructor(
     public _owner: number,
     public _group: number,
-    public _compare: Comparator<K>,
+    public _compare: ComparatorFn<K>,
     public _root: Node<K, V>,
     public _size: number
   ) {}
@@ -75,8 +75,8 @@ export function isRedBlackTree<K, V>(arg: any): arg is RedBlackTreeImpl<K, V> {
   return !!arg && arg['@@type'] === REDBLACKTREE_TYPE;
 }
 
-export function createTree<K, V>(mutable: boolean, comparator?: Comparator<K>): RedBlackTreeImpl<K, V> {
-  return new RedBlackTreeImpl<K, V>(batch.owner(mutable), nextId(), comparator || DEFAULT_COMPARATOR, NONE, 0);
+export function createTree<K, V>(mutable: boolean, ComparatorFn?: ComparatorFn<K>): RedBlackTreeImpl<K, V> {
+  return new RedBlackTreeImpl<K, V>(batch.owner(mutable), nextId(), ComparatorFn || DEFAULT_ComparatorFn, NONE, 0);
 }
 
 export function cloneTree<K, V>(mutable: boolean, tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
