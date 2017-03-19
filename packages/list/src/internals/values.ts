@@ -1,4 +1,4 @@
-import {isUndefined, MappingFunction, blockCopy, blockCopyMapped, copyArray} from '@collectable/core';
+import {isUndefined, MapFn, blockCopy, blockCopyMapped, copyArray} from '@collectable/core';
 import {isMutable, nextId} from '@collectable/core';
 import {CONST, OFFSET_ANCHOR, normalizeIndex, verifyIndex} from './common';
 import {List, cloneList, createList} from './list';
@@ -105,7 +105,7 @@ export function arrayFrom<T>(list: List<T>): T[] {
   return array;
 }
 
-export function mapArrayFrom<T, U>(mapper: MappingFunction<T, U>, list: List<T>, array: U[]): U[] {
+export function mapArrayFrom<T, U>(mapper: MapFn<T, U>, list: List<T>, array: U[]): U[] {
   var map = new Map<Slot<T>, Map<number, Slot<T>>>();
   var [root, depth] = getRoot(list, map);
   if(depth === 0) {
@@ -183,7 +183,7 @@ function populateArray<T>(array: T[], node: Slot<T>, map: Map<Slot<T>, Map<numbe
   return c;
 }
 
-function populateArrayMapped<T, U>(mapper: MappingFunction<T, U>, array: U[], node: Slot<T>, map: Map<Slot<T>, Map<number, Slot<T>>>, level: number, offset: number): number {
+function populateArrayMapped<T, U>(mapper: MapFn<T, U>, array: U[], node: Slot<T>, map: Map<Slot<T>, Map<number, Slot<T>>>, level: number, offset: number): number {
   var slots = <Slot<T>[]>node.slots;
   for(var i = 0, c = 0; i < slots.length; i++) {
     var child = getSlotFromMap(map, node, i) || slots[i];

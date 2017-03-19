@@ -1,10 +1,10 @@
 import {curry3} from '@typed/curry';
-import {MappingFunction, preventCircularRefs, unwrapAny} from '@collectable/core';
+import {MapFn, preventCircularRefs, unwrapAny} from '@collectable/core';
 import {List, arrayFrom, mapArrayFrom} from '../internals';
 
 const unwrapDeep: <T>(list: List<T>) => T[] = curry3(preventCircularRefs)(newArray, (c, t) => mapArrayFrom(unwrapAny, c, t));
 
-export function mapToArray<T, U>(mapper: MappingFunction<T, U>, list: List<T>): U[] {
+export function mapToArray<T, U>(mapper: MapFn<T, U>, list: List<T>): U[] {
   return mapArrayFrom<any, any>(mapper, list, new Array<any>(list._size));
 }
 
