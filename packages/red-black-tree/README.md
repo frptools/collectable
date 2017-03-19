@@ -15,9 +15,9 @@ This package provides an immutable variant of a [red-black tree](https://en.wiki
 - **[Usage](#usage)**
 - **[API](#api)**
   - **[Creating a tree](#creating-a-tree)**  
-    [empty()](#emptyk-vcomparator-comparatork-redblacktreek-v)
-    | [fromPairs()](#frompairsk-vpairs-k-v-comparator-comparatork-redblacktreek-v)
-    | [fromObject()](#fromobjectvobj-associativev-comparator-comparatorany-redblacktreestring-v)
+    [empty()](#emptyk-vcomparatorfn-comparatorfnk-redblacktreek-v)
+    | [fromPairs()](#frompairsk-vpairs-k-v-comparatorfn-comparatorfnk-redblacktreek-v)
+    | [fromObject()](#fromobjectvobj-associativev-comparatorfn-comparatorfnany-redblacktreestring-v)
   - **[Adding, removing and updating entries in the tree](#adding-removing-and-updating-entries-in-the-tree)**  
     [remove()](#removek-vkey-k-tree-redblacktreek-v-redblacktreek-v)
     | [set()](#setk-vkey-k-value-v-tree-redblacktreek-v-redblacktreek-v)
@@ -51,7 +51,7 @@ This package provides an immutable variant of a [red-black tree](https://en.wiki
     | [iterateFromFirst()](#iteratefromfirstk-vtree-redblacktreek-v-redblacktreeiteratork-v)
   - **[Converting a tree to a native JavaScript collection type](#converting-a-tree-to-a-native-javascript-collection-type)**  
     [arrayFrom()](#arrayfromk-vtree-redblacktreek-v-redblacktreeentryk-v)
-    | [arrayFrom(mapped)](#arrayfromk-v-umapper-keyedmappingfunctionk-v-u-tree-redblacktreek-v-u)
+    | [arrayFrom(mapped)](#arrayfromk-v-umapper-keyedmapfnk-v-u-tree-redblacktreek-v-u)
     | [values()](#valuesk-vtree-redblacktreek-v-v)
     | [keys()](#keysk-vtree-redblacktreek-v-k)
     | [unwrap()](#unwrapk-vdeep-boolean-tree-redblacktreek-v-associativev)
@@ -123,50 +123,53 @@ Curried versions of each of these (where applicable) are available from module `
 
 ### Creating a tree
 
-#### `empty<K, V>(comparator?: Comparator<K>): RedBlackTree<K, V>`
+#### `empty<K, V>(ComparatorFn?: ComparatorFn<K>): RedBlackTree<K, V>`
 
-Creates an empty tree. If no comparator function is supplied, keys are compared using logical less-than and
+Creates an empty tree. If no ComparatorFn function is supplied, keys are compared using logical less-than and
 greater-than operations, which will generally only be suitable for numeric or string keys.
 
-- **comparator** (_Comparator<K>_): A comparison function, taking two keys, and returning a value less than 0 if the
+- **ComparatorFn** (_ComparatorFn<K>_): A comparison function, taking two keys, and returning a value less than 0 if the
                                     first key is smaller than the second, a value greater than 0 if the first key is
                                     greater than the second, or 0 if they're the same.
 - **returns** (_RedBlackTree<K, V>_): An empty tree
 
 ```js
-import {empty} from '@collectable/core';
+import {ComparatorFn} from '@collectable/core';
+import {empty} from '@collectable/red-black-tree';
 ```
 
 
-#### `fromPairs<K, V>(pairs: [K, V][], comparator?: Comparator<K>): RedBlackTree<K, V>`
+#### `fromPairs<K, V>(pairs: [K, V][], ComparatorFn?: ComparatorFn<K>): RedBlackTree<K, V>`
 
-Creates a new `RedBlackTree` from an array of key/value pairs (tuples). If no comparator function is supplied, keys
+Creates a new `RedBlackTree` from an array of key/value pairs (tuples). If no ComparatorFn function is supplied, keys
 are compared using logical less-than and greater-than operations, which will generally only be suitable for numeric
 or string keys.
 
 - **pairs** (_[K, V][]_): An array of pairs (tuples), each being a two-element array of [key, value]
-- **comparator** (_Comparator<K>_): A comparison function, taking two keys, and returning a value less than 0 if the
+- **ComparatorFn** (_ComparatorFn<K>_): A comparison function, taking two keys, and returning a value less than 0 if the
                                     first key is smaller than the second, a value greater than 0 if the first key is
                                     greater than the second, or 0 if they're the same.
 - **returns** (_RedBlackTree<K, V>_): A tree populated with an entry for each pair in the input array
 
 ```js
-import {fromPairs} from '@collectable/core';
+import {ComparatorFn} from '@collectable/core';
+import {fromPairs} from '@collectable/red-black-tree';
 ```
 
-#### `fromObject<V>(obj: Associative<V>, comparator?: Comparator<any>): RedBlackTree<string, V>`
+#### `fromObject<V>(obj: Associative<V>, ComparatorFn?: ComparatorFn<any>): RedBlackTree<string, V>`
 
-Creates a new `RedBlackTree` from a plain input object. If no comparator function is supplied, keys are compared
+Creates a new `RedBlackTree` from a plain input object. If no ComparatorFn function is supplied, keys are compared
 using logical less-than and greater-than operations, which will generally only be suitable for numeric or string keys.
 
 - **obj** (_Associative<V>_): The input object from which to create a new tree
-- **comparator** (_Comparator<any>_): A comparison function, taking two keys, and returning a value less than 0 if the
+- **ComparatorFn** (_ComparatorFn<any>_): A comparison function, taking two keys, and returning a value less than 0 if the
                                     first key is smaller than the second, a value greater than 0 if the first key is
                                     greater than the second, or 0 if they're the same.
 - **returns** (_RedBlackTree<string, V>_): A tree populated with the keys and values of the input object
 
 ```js
-import {fromObject} from '@collectable/core';
+import {Associative, ComparatorFn} from '@collectable/core';
+import {fromObject} from '@collectable/red-black-tree';
 ```
 
 --------------------------------------------------------------------------------
@@ -183,7 +186,7 @@ is returned.
 - **returns** (_RedBlackTree<K, V>_): An updated copy of the tree, or the same tree if the input tree was already mutable
 
 ```js
-import {remove} from '@collectable/core';
+import {remove} from '@collectable/red-black-tree';
 ```
 
 #### `set<K, V>(key: K, value: V, tree: RedBlackTree<K, V>): RedBlackTree<K, V>`
@@ -198,7 +201,7 @@ returned.
 - **returns** (_RedBlackTree<K, V>_): An updated copy of the tree, or the same tree if the input tree was already mutable
 
 ```js
-import {set} from '@collectable/core';
+import {set} from '@collectable/red-black-tree';
 ```
 
 #### `updateTree<K, V>(callback: UpdateTreeCallback<K, V>, tree: RedBlackTree<K, V>): RedBlackTree<K, V>`
@@ -215,7 +218,7 @@ it is modified and returned as-is, instead of being cloned beforehand.
 - **returns** (_RedBlackTree<K, V>_): An updated version of the tree, with changes applied
 
 ```js
-import {updateTree} from '@collectable/core';
+import {updateTree} from '@collectable/red-black-tree';
 ```
 
 #### `update<K, V>(callback: UpdateTreeEntryCallback<K, V|undefined>, key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, V>`
@@ -232,7 +235,7 @@ modified and returned as-is, instead of being cloned beforehand.
 - **returns** (_RedBlackTree<K, V>_): An updated copy of the tree, or the same tree if the input tree was already mutable
 
 ```js
-import {update} from '@collectable/core';
+import {update} from '@collectable/red-black-tree';
 ```
 
 --------------------------------------------------------------------------------
@@ -247,7 +250,7 @@ Returns the current number of entries in the tree
 - **returns** (_number_): The number of entries in the tree
 
 ```js
-import {size} from '@collectable/core';
+import {size} from '@collectable/red-black-tree';
 ```
 
 #### `isEmpty<K, V>(tree: RedBlackTree<K, V>): boolean`
@@ -258,7 +261,7 @@ Determines whether or not the tree currently has any entries
 - **returns** (_boolean_): True if the tree is empty, otherwise false
 
 ```js
-import {isEmpty} from '@collectable/core';
+import {isEmpty} from '@collectable/red-black-tree';
 ```
 
 #### `get<K, V>(key: K, tree: RedBlackTree<K, V>): V|undefined`
@@ -270,7 +273,7 @@ Retrieves the value associated with the specified key
 - **returns** (_(V|undefined)_): The value associated with the specified key, or undefined if the key does not exist in the tree
 
 ```js
-import {get} from '@collectable/core';
+import {get} from '@collectable/red-black-tree';
 ```
 
 #### `has<K, V>(key: K, tree: RedBlackTree<K, V>): boolean`
@@ -282,7 +285,7 @@ Determines whether or not a given key exists in the tree
 - **returns** (_boolean_): True if the there is an entry for the specified key, otherwise false
 
 ```js
-import {has} from '@collectable/core';
+import {has} from '@collectable/red-black-tree';
 ```
 
 #### `iterateFromKey<K, V>(reverse: boolean, key: K, tree: RedBlackTree<K, V>): RedBlackTreeIterator<K, V>`
@@ -296,7 +299,7 @@ tree, an empty iterator is returned.
 - **returns** (_RedBlackTreeIterator<K, V>_): An iterator that retrieves each successive entry in the tree, starting from the specified key
 
 ```js
-import {iterateFromKey} from '@collectable/core';
+import {iterateFromKey} from '@collectable/red-black-tree';
 ```
 
 #### `last<K, V>(tree: RedBlackTree<K, V>): RedBlackTreeEntry<K, V>|undefined`
@@ -307,7 +310,7 @@ Retrieves the last entry in the tree.
 - **returns** (_([K, V]|undefined)_): A key/value tuple for the last entry in the tree, or undefined if the tree was empty
 
 ```js
-import {last} from '@collectable/core';
+import {last} from '@collectable/red-black-tree';
 ```
 
 #### `lastKey<K, V>(tree: RedBlackTree<K, V>): K|undefined`
@@ -318,7 +321,7 @@ Retrieves the last key in the tree.
 - **returns** (_([K, V]|undefined)_): The key of the last entry in the tree, or undefined if the tree was empty
 
 ```js
-import {lastKey} from '@collectable/core';
+import {lastKey} from '@collectable/red-black-tree';
 ```
 
 #### `lastValue<K, V>(tree: RedBlackTree<K, V>): V|undefined`
@@ -329,7 +332,7 @@ Retrieves the value of the last entry in the tree.
 - **returns** (_([K, V]|undefined)_): The value of the last entry in the tree, or undefined if the tree was empty
 
 ```js
-import {lastValue} from '@collectable/core';
+import {lastValue} from '@collectable/red-black-tree';
 ```
 
 #### `iterateFromLast<K, V>(tree: RedBlackTree<K, V>): RedBlackTreeIterator<K, V>`
@@ -342,7 +345,7 @@ a backing structure for other data structures. Do not modify the returned node.
 - **returns** (_RedBlackTreeIterator<K, V>_): An iterator for entries in the tree
 
 ```js
-import {iterateFromLast} from '@collectable/core';
+import {iterateFromLast} from '@collectable/red-black-tree';
 ```
 
 #### `at<K, V>(index: number, tree: RedBlackTree<K, V>): RedBlackTreeEntry<K, V>|undefined`
@@ -356,7 +359,7 @@ second-last, and so forth.
 - **returns** (_(RedBlackTreeEntry<K, V>|undefined)_): The tree entry at the specified index, or undefined if the index was out of range
 
 ```js
-import {at} from '@collectable/core';
+import {at} from '@collectable/red-black-tree';
 ```
 
 #### `keyAt<K, V>(index: number, tree: RedBlackTree<K, V>): K|undefined`
@@ -370,7 +373,7 @@ second-last, and so forth.
 - **returns** (_(K|undefined)_): The key at the specified index, or undefined if the index was out of range
 
 ```js
-import {keyAt} from '@collectable/core';
+import {keyAt} from '@collectable/red-black-tree';
 ```
 
 #### `valueAt<K, V>(index: number, tree: RedBlackTree<K, V>): V|undefined`
@@ -384,7 +387,7 @@ the second-last, and so forth.
 - **returns** (_(V|undefined)_): The value at the specified index, or undefined if the index was out of range
 
 ```js
-import {valueAt} from '@collectable/core';
+import {valueAt} from '@collectable/red-black-tree';
 ```
 
 #### `indexOf<K, V>(key: K, tree: RedBlackTree<K, V>): number`
@@ -396,7 +399,7 @@ Determines the index (ordinal) of the tree entry that has the specified key. If 
 - **returns** (_number_): The index of the key in the tree, or -1 if the key was not found
 
 ```js
-import {indexOf} from '@collectable/core';
+import {indexOf} from '@collectable/red-black-tree';
 ```
 
 #### `iterateFromIndex<K, V>(reverse: boolean, index: number, tree: RedBlackTree<K, V>): RedBlackTreeIterator<K, V>`
@@ -410,7 +413,7 @@ empty iterator is returned.
 - **returns** (_RedBlackTreeIterator<K, V>_): An iterator that retrieves each successive entry in the tree, starting from the specified index
 
 ```js
-import {iterateFromIndex} from '@collectable/core';
+import {iterateFromIndex} from '@collectable/red-black-tree';
 ```
 
 #### `isRedBlackTree(arg: Collection<any>): boolean`
@@ -421,7 +424,7 @@ Determines whether the input argument is an instance of a Collectable.js RedBlac
 - **returns** (_boolean_): True if the input value is a RedBlackTree, otherwise false
 
 ```js
-import {isRedBlackTree} from '@collectable/core';
+import {isRedBlackTree} from '@collectable/red-black-tree';
 ```
 
 #### `isEqual<K, V>(tree: RedBlackTree<K, V>, other: RedBlackTree<K, V>): boolean`
@@ -436,7 +439,7 @@ internal structure of a red black tree, only the actual set of entries and their
 
 
 ```js
-import {isEqual} from '@collectable/core';
+import {isEqual} from '@collectable/red-black-tree';
 ```
 
 #### `type FindOp = 'gt'|'gte'|'lt'|'lte'|'eq'`
@@ -459,7 +462,7 @@ locate is controlled by the `op` parameter.
 - **returns** (_(RedBlackTreeEntry<K, V>|undefined)_): The entry matching the specified key and operation, or undefined if not found
 
 ```js
-import {find} from '@collectable/core';
+import {find} from '@collectable/red-black-tree';
 ```
 
 #### `findKey<K, V>(op: FindOp, key: K, tree: RedBlackTree<K, V>): K|undefined`
@@ -473,7 +476,7 @@ which entry to locate is controlled by the `op` parameter.
 - **returns** (_(K|undefined)_): The key of the matched entry, or undefined if no matching entry was found
 
 ```js
-import {findKey} from '@collectable/core';
+import {findKey} from '@collectable/red-black-tree';
 ```
 
 #### `findValue<K, V>(op: FindOp, key: K, tree: RedBlackTree<K, V>): V|undefined`
@@ -487,7 +490,7 @@ which entry to locate is controlled by the `op` parameter.
 - **returns** (_(V|undefined)_): The value of the matched entry, or undefined if no matching entry was found
 
 ```js
-import {findValue} from '@collectable/core';
+import {findValue} from '@collectable/red-black-tree';
 ```
 
 #### `iterateFrom<K, V>(op: FindOp, reverse: boolean, key: K, tree: RedBlackTree<K, V>): RedBlackTreeIterator<K, V>`
@@ -503,7 +506,7 @@ determining which entry to locate is controlled by the `op` parameter.
   matched entry. If no matching entry is found, an empty iterator is returned.
 
 ```js
-import {iterateFrom} from '@collectable/core';
+import {iterateFrom} from '@collectable/red-black-tree';
 ```
 
 #### `first<K, V>(tree: RedBlackTree<K, V>): RedBlackTreeEntry<K, V>|undefined`
@@ -514,7 +517,7 @@ Retrieves the first entry in the tree, or undefined if the tree is empty.
 - **returns** (_(RedBlackTreeEntry<K, V>|undefined)_): The first entry in the tree, or undefined if the tree is empty
 
 ```js
-import {first} from '@collectable/core';
+import {first} from '@collectable/red-black-tree';
 ```
 
 #### `firstKey<K, V>(tree: RedBlackTree<K, V>): K|undefined`
@@ -525,7 +528,7 @@ Retrieves the first key in the tree, or undefined if the tree is empty.
 - **returns** (_(K|undefined)_): The first key in the tree, or undefined if the tree is empty
 
 ```js
-import {firstKey} from '@collectable/core';
+import {firstKey} from '@collectable/red-black-tree';
 ```
 
 #### `firstValue<K, V>(tree: RedBlackTree<K, V>): V|undefined`
@@ -536,7 +539,7 @@ Retrieves the value of the first entry in the tree, or undefined if the tree is 
 - **returns** (_(K|undefined)_): The value of the first entry in the tree, or undefined if the tree is empty
 
 ```js
-import {firstValue} from '@collectable/core';
+import {firstValue} from '@collectable/red-black-tree';
 ```
 
 #### `iterateFromFirst<K, V>(tree: RedBlackTree<K, V>): RedBlackTreeIterator<K, V>`
@@ -549,7 +552,7 @@ a backing structure for other data structures. Do not modify the returned node.
 - **returns** (_RedBlackTreeIterator<K, V>_): An iterator for entries in the tree
 
 ```js
-import {iterateFromFirst} from '@collectable/core';
+import {iterateFromFirst} from '@collectable/red-black-tree';
 ```
 
 --------------------------------------------------------------------------------
@@ -565,20 +568,21 @@ The array is guaranteed to be in the same order as the corresponding entries in 
 - **returns** (_RedBlackTreeEntry<K, V>[]_): An array of key/value pairs from the tree
 
 ```js
-import {arrayFrom} from '@collectable/core';
+import {arrayFrom} from '@collectable/red-black-tree';
 ```
 
-#### `arrayFrom<K, V, U>(mapper: KeyedMappingFunction<K, V, U>, tree: RedBlackTree<K, V>): U[]`
+#### `arrayFrom<K, V, U>(mapper: KeyedMapFn<K, V, U>, tree: RedBlackTree<K, V>): U[]`
 
 Maps the contents of the tree to an array of transformed values. The array is guaranteed to be in the same order as
 the corresponding entries in the tree.
 
-- **mapper** (_KeyedMappingFunction<K, V, U>_): A callback function that maps an entry in the tree to a new value
+- **mapper** (_KeyedMapFn<K, V, U>_): A callback function that maps an entry in the tree to a new value
 - **tree** (_RedBlackTree<K, V>_): The tree to read values from
 - **returns** (_U[]_): An array of transformed values; one for each entry in the tree
 
 ```js
-import {arrayFrom} from '@collectable/core';
+import {KeyedMapFn} from '@collectable/core';
+import {arrayFrom} from '@collectable/red-black-tree';
 ```
 
 #### `values<K, V>(tree: RedBlackTree<K, V>): IterableIterator<V>`
@@ -589,7 +593,7 @@ Returns a value iterator; one for each entry in the tree. The iterator is guaran
 - **returns** (_IterableIterator<V>_): An iterable iterator that will visit each value in the tree
 
 ```js
-import {values} from '@collectable/core';
+import {values} from '@collectable/red-black-tree';
 ```
 
 #### `keys<K, V>(tree: RedBlackTree<K, V>): IterableIterator<K>`
@@ -600,7 +604,7 @@ Returns a key iterator; one for each entry in the tree. The iterator is guarante
 - **returns** (_IterableIterator<K>_): An iterable iterator that will visit each key in the tree
 
 ```js
-import {keys} from '@collectable/core';
+import {keys} from '@collectable/red-black-tree';
 ```
 
 #### `unwrap<K, V>(deep: boolean, tree: RedBlackTree<K, V>): Associative<V>`
@@ -612,7 +616,8 @@ Returns the tree unwrapped as a plain JavaScript object. Keys are treated as (or
 - **returns** (_Associative<V>_): A plain JavaScript object containing entries from the tree.
 
 ```js
-import {unwrap} from '@collectable/core';
+import {Associative} from '@collectable/core';
+import {unwrap} from '@collectable/red-black-tree';
 ```
 
 --------------------------------------------------------------------------------
@@ -627,7 +632,7 @@ Returns an immutable version of the input tree.
 - **returns** (_RedBlackTree<K, V>_): An immutable copy of the input tree, or the same tree if already immutable
 
 ```js
-import {freeze} from '@collectable/core';
+import {freeze} from '@collectable/red-black-tree';
 ```
 
 #### `isFrozen<K, V>(tree: RedBlackTree<K, V>): boolean`
@@ -638,7 +643,7 @@ Determines whether or not the tree is currently immutable.
 - **returns** (_boolean_): True if the tree is currently immutable, otherwise false
 
 ```js
-import {isFrozen} from '@collectable/core';
+import {isFrozen} from '@collectable/red-black-tree';
 ```
 
 #### `thaw<K, V>(tree: RedBlackTree<K, V>): RedBlackTree<K, V>`
@@ -652,7 +657,7 @@ are applied to the same internal structures without making further copies.
 - **returns** (_RedBlackTree<K, V>_): A mutable version of the input tree, or the same tree if it was already mutable
 
 ```js
-import {thaw} from '@collectable/core';
+import {thaw} from '@collectable/red-black-tree';
 ```
 
 #### `isThawed<K, V>(tree: RedBlackTree<K, V>): boolean`
@@ -663,5 +668,5 @@ Determines whether or not the specified tree is currently mutable
 - **returns** (_boolean_): True if the tree is mutable, otherwise false
 
 ```js
-import {isThawed} from '@collectable/core';
+import {isThawed} from '@collectable/red-black-tree';
 ```
