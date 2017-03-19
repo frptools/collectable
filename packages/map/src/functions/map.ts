@@ -1,11 +1,9 @@
-import {isImmutable} from '@collectable/core';
+import {KeyedMapFn, isImmutable} from '@collectable/core';
 import {HashMap, HashMapImpl, refreeze, replace} from '../internals/HashMap';
 import {empty, reduce, set, thaw} from './index';
 
-export type MapPredicate<K, V, R> = (value: V, key: K, index: number) => R;
-
-export function map<K, V, R>(f: MapPredicate<K, V, R>, map: HashMap<K, V>): HashMap<K, R>;
-export function map<K, V, R>(f: MapPredicate<K, V, R>, map: HashMapImpl<K, V>): HashMapImpl<K, R> {
+export function map<K, V, R>(f: KeyedMapFn<K, V, R>, map: HashMap<K, V>): HashMap<K, R>;
+export function map<K, V, R>(f: KeyedMapFn<K, V, R>, map: HashMapImpl<K, V>): HashMapImpl<K, R> {
   var immutable = isImmutable(map._owner);
   var nextMap = <HashMapImpl<K, R>>thaw(empty<K, R>());
   reduce(
