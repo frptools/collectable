@@ -1,11 +1,17 @@
-import {curry2} from '@typed/curry';
+import {curry2, curry3} from '@typed/curry';
 import {HashSet} from './internals';
 import {
-  FilterPredicate,
-  ForEachPredicate,
+  FilterFn as _FilterFn,
+  ForEachFn as _ForEachFn,
+  MapFn as _MapFn,
+  ReduceFn as _ReduceFn
+} from '@collectable/core';
+import {
   UpdateSetCallback,
   add as _add,
   filter as _filter,
+  map as _map,
+  reduce as _reduce,
   forEach as _forEach,
   has as _has,
   intersect as _intersect,
@@ -18,8 +24,6 @@ import {
 } from './functions';
 
 export {
-  FilterPredicate,
-  ForEachPredicate,
   UpdateSetCallback,
   clone,
   empty,
@@ -29,8 +33,6 @@ export {
   fromArray,
   fromIterable,
   fromNativeSet,
-  map,
-  reduce,
   size,
   isEmpty,
   thaw,
@@ -46,14 +48,14 @@ export interface AddFn {
 export const add: AddFn = curry2(_add);
 
 export interface FilterFn {
-  <T>(fn: FilterPredicate<T>): (set: HashSet<T>) => HashSet<T>;
-  <T>(fn: FilterPredicate<T>, set: HashSet<T>): HashSet<T>;
+  <T>(fn: _FilterFn<T>): (set: HashSet<T>) => HashSet<T>;
+  <T>(fn: _FilterFn<T>, set: HashSet<T>): HashSet<T>;
 }
 export const filter: FilterFn = curry2(_filter);
 
 export interface ForEachFn {
-  <T>(f: ForEachPredicate<T>): (set: HashSet<T>) => HashSet<T>;
-  <T>(f: ForEachPredicate<T>, set: HashSet<T>): HashSet<T>;
+  <T>(f: _ForEachFn<T>): (set: HashSet<T>) => HashSet<T>;
+  <T>(f: _ForEachFn<T>, set: HashSet<T>): HashSet<T>;
 }
 export const forEach: ForEachFn = curry2(_forEach);
 
@@ -74,6 +76,20 @@ export interface IsEqualFn {
   <T>(set: HashSet<T>, other: HashSet<T>): boolean;
 }
 export const isEqual: IsEqualFn = curry2(_isEqual);
+
+export interface MapFn {
+  <T, R>(fn: _MapFn<T, R>): (set: HashSet<T>) => HashSet<R>;
+  <T, R>(fn: _MapFn<T, R>, set: HashSet<T>): HashSet<R>;
+}
+export const map: MapFn = curry2(_map);
+
+export interface ReduceFn {
+  <T, R>(f: _ReduceFn<T, R>, seed: R, set: HashSet<T>): R;
+  <T, R>(f: _ReduceFn<T, R>, seed: R): (set: HashSet<T>) => R;
+  <T, R>(f: _ReduceFn<T, R>): (seed: R, set: HashSet<T>) => R;
+  <T, R>(f: _ReduceFn<T, R>): (seed: R) => (set: HashSet<T>) => R;
+}
+export const reduce: ReduceFn = curry3(_reduce);
 
 export interface RemoveFn {
   <T>(value: T): (set: HashSet<T>) => HashSet<T>;

@@ -1,10 +1,8 @@
-import {isImmutable} from '@collectable/core';
+import {MapFn, isImmutable} from '@collectable/core';
 import {keys, empty as _empty, set as _set, thaw as _thaw} from '@collectable/map';
 import {HashSet, HashSetImpl, refreeze, cloneAsMutable} from '../internals';
 
-export type MapPredicate<T, R> = (value: T, index: number) => R;
-
-export function map<T, R>(fn: MapPredicate<T, R>, set: HashSet<T>): HashSet<R> {
+export function map<T, R>(fn: MapFn<T, R>, set: HashSet<T>): HashSet<R> {
   var immutable = isImmutable((<HashSetImpl<T>>set)._owner) && (set = cloneAsMutable(<HashSetImpl<T>>set), true);
   var it = keys((<HashSetImpl<T>>set)._map);
   var current: IteratorResult<T>;
