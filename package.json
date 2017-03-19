@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -39,21 +39,21 @@
     "merge2": "^1.0.3",
     "mocha": "^3.2.0",
     "rimraf": "^2.6.1",
-    "source-map-support": "^0.4.13",
+    "source-map-support": "^0.4.14",
     "tiny-preprocessor": "^1.0.0",
     "tslint": "^4.5.1",
-    "tslint-eslint-rules": "^3.5.0",
+    "tslint-eslint-rules": "^3.5.1",
     "typedoc": "^0.5.5",
     "typedoc-plugin-external-module-map": "^0.0.6",
     "typescript": "^2.2.1",
     "yargs": "^7.0.2"
   },
   "dependencies": {
-    "@collectable/core": "^2.3.0",
-    "@collectable/list": "^2.1.0",
-    "@collectable/map": "^1.2.0",
-    "@collectable/red-black-tree": "^2.0.0",
-    "@collectable/set": "^1.0.0",
+    "@collectable/core": "^3.0.0",
+    "@collectable/list": "^3.0.0",
+    "@collectable/map": "^2.0.0",
+    "@collectable/red-black-tree": "^3.0.0",
+    "@collectable/set": "^2.0.0",
     "@typed/curry": "^1.0.1"
   }
 }
