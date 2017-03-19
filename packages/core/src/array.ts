@@ -1,4 +1,4 @@
-import {MappingFunction} from './types';
+import {MapFn} from './types';
 
 export function copyArray<T>(values: T[]): T[] {
   if(values.length > 7) {
@@ -80,7 +80,7 @@ export function insertArrayElement<T>(index: number, value: T, array: T[]): T[] 
 }
 
 
-export function blockCopyMapped<T, U>(mapper: MappingFunction<T, U>, sourceValues: T[], targetValues: U[], sourceIndex: number, targetIndex: number, count: number): void {
+export function blockCopyMapped<T, U>(mapper: MapFn<T, U>, sourceValues: T[], targetValues: U[], sourceIndex: number, targetIndex: number, count: number): void {
   if(sourceValues === <any>targetValues && sourceIndex < targetIndex) {
     for(var i = sourceIndex + count - 1, j = targetIndex + count - 1, c = 0; c < count; i--, j--, c++) {
       targetValues[j] = mapper(sourceValues[i], j);
