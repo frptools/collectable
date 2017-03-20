@@ -4,7 +4,6 @@ An all-you-can-eat buffet of high-performance, [persistent](https://en.wikipedia
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/collectable.svg)](http://badge.fury.io/js/collectable)
-[![GitHub version](https://badge.fury.io/gh/frptools%2Fcollectable.svg)](https://badge.fury.io/gh/frptools%2Fcollectable)
 [![Gitter](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/FRPTools/Lobby)
 
 _Note: This library is an active work in progress. Some of the features and structures mentioned below are currently in development, or only partially-available, prior to the first full 1.0 release. See the [project board](https://github.com/frptools/collectable/projects) for information on current development status._
@@ -28,9 +27,9 @@ _Note: This library is an active work in progress. Some of the features and stru
 
 - [ **[List](/packages/list#collectablejs-immutable-list)** ] A persistent [list/vector](https://en.wikipedia.org/wiki/List_(abstract_data_type)) structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc.
 - [ **[Map](/packages/map#collectablejs-immutable-map)** ] A persistent [hash table](https://en.wikipedia.org/wiki/Associative_array), mapping keys to values. Implemented as a Clojure-style [hash array mapped trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
-- [ **Sorted Map** ] A persistent sorted [hash table](https://en.wikipedia.org/wiki/Associative_array) backed by an [immutable map](/packages/red-black-tree#collectablejs-immutable-map) and a [sorted set](/packages/red-black-tree#collectablejs-immutable-sorted-set).
+- [ **Sorted Map** ] A persistent sorted [hash map](https://en.wikipedia.org/wiki/Associative_array) backed by an [immutable map](/packages/red-black-tree#collectablejs-immutable-map) and a [sorted set](/packages/red-black-tree#collectablejs-immutable-sorted-set).
 - [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation, backed by an [immutable map](/packages/map#collectablejs-immutable-map).
-- [ **Sorted Set** ] A persistent sorted [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation backed by an [immutable red-black tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree), with the order of values defined by a custom, user-provided predicate.
+- [ **[Sorted Set](/packages/set#collectablejs-immutable-sorted-set)** ] A persistent sorted [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation backed by an [immutable red-black tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree) and an [immutable hash map](https://en.wikipedia.org/wiki/Associative_array), with customizable order-of-insertion.
 
 ### Secondary Structures
 
@@ -60,6 +59,7 @@ TypeScript type definitions are included by default.
 | [List](/packages/list#collectablejs-immutable-list)
 | [Map](/packages/map#collectablejs-immutable-map)
 | [Set](/packages/set#collectablejs-immutable-set)
+| [Sorted Set](/packages/set#collectablejs-immutable-sorted-set)
 | [Red Black Tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree)
 | [Others...](https://github.com/frptools/collectable/wiki) ]
 
