@@ -51,7 +51,7 @@ export function fromPairs<K, V>(pairs: [K, V][]|Iterable<[K, V]>, ComparatorFn =
  *                                     greater than the second, or 0 if they're the same.
  * @returns {RedBlackTree<string, V>} A tree populated with the keys and values of the input object
  */
-export function fromObject<V>(obj: Associative<V>, ComparatorFn?: ComparatorFn<any>): RedBlackTree<string, V> {
+export function fromObject<V>(obj: Associative<V>|V[], ComparatorFn?: ComparatorFn<any>): RedBlackTree<string, V> {
   const tree = createTree<string, V>(true, ComparatorFn);
   const keys = Object.keys(obj);
   for(var i = 0; i < keys.length; i++) {
