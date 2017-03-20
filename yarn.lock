@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"@collectable/core@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-3.0.0.tgz#8b34418d12b7eaef102d37f2027bc9a568054b38"
+"@collectable/core@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-3.1.0.tgz#0392846f1803d2ff442ab9fe3a91b9ddfd437fc8"
 
 "@collectable/core@latest":
   version "2.3.0"
@@ -30,9 +30,9 @@
     "@collectable/core" latest
     "@typed/curry" latest
 
-"@collectable/red-black-tree@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-3.0.0.tgz#46017531aa41b02f52942072ef48e28c559c4027"
+"@collectable/red-black-tree@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-3.1.0.tgz#546798285ca28c5374ff9a3d3ad8dfc5b1b67287"
   dependencies:
     "@collectable/core" latest
     "@typed/curry" latest
@@ -40,6 +40,13 @@
 "@collectable/set@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@collectable/set/-/set-2.0.0.tgz#f430d3ef9db207c8debd82d1f51ef387e05a7964"
+  dependencies:
+    "@collectable/core" latest
+    "@collectable/map" latest
+
+"@collectable/sorted-set@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-1.0.0.tgz#b9696fa971cbba5628233b6e955042450eabc62c"
   dependencies:
     "@collectable/core" latest
     "@collectable/map" latest
