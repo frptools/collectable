@@ -1,5 +1,6 @@
 export interface Associative<T> {
   [key: string]: T;
+  [key: number]: T;
 }
 
 export type FilterFn<T> = (value: T, index: number) => any;
