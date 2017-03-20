@@ -2,7 +2,7 @@
 
 # Immutable Sorted Set
 
-> An persistent set data structure, backed by an immutable hash map
+> An persistent sorted set data structure with user-definable sort order
 
 [![Build Status](https://travis-ci.org/frptools/collectable.svg?branch=master)](https://travis-ci.org/frptools/collectable)
 [![NPM version](https://badge.fury.io/js/%40collectable%2Fsorted-set.svg)](http://badge.fury.io/js/%40collectable%2Fsorted-set)

@@ -29,7 +29,7 @@ _Note: This library is an active work in progress. Some of the features and stru
 - [ **[Map](/packages/map#collectablejs-immutable-map)** ] A persistent [hash table](https://en.wikipedia.org/wiki/Associative_array), mapping keys to values. Implemented as a Clojure-style [hash array mapped trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
 - [ **Sorted Map** ] A persistent sorted [hash map](https://en.wikipedia.org/wiki/Associative_array) backed by an [immutable map](/packages/red-black-tree#collectablejs-immutable-map) and a [sorted set](/packages/red-black-tree#collectablejs-immutable-sorted-set).
 - [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation, backed by an [immutable map](/packages/map#collectablejs-immutable-map).
-- [ **[Sorted Set](/packages/set#collectablejs-immutable-sorted-set)** ] A persistent sorted [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation backed by an [immutable red-black tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree) and an [immutable hash map](https://en.wikipedia.org/wiki/Associative_array), with customizable order-of-insertion.
+- [ **[Sorted Set](/packages/sorted-set#collectablejs-immutable-sorted-set)** ] A persistent sorted [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation backed by an [immutable red-black tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree) and an [immutable hash map](https://en.wikipedia.org/wiki/Associative_array), with customizable order-of-insertion.
 
 ### Secondary Structures
 
@@ -59,7 +59,7 @@ TypeScript type definitions are included by default.
 | [List](/packages/list#collectablejs-immutable-list)
 | [Map](/packages/map#collectablejs-immutable-map)
 | [Set](/packages/set#collectablejs-immutable-set)
-| [Sorted Set](/packages/set#collectablejs-immutable-sorted-set)
+| [Sorted Set](/packages/sorted-set#collectablejs-immutable-sorted-set)
 | [Red Black Tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree)
 | [Others...](https://github.com/frptools/collectable/wiki) ]
 
