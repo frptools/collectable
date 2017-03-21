@@ -1,2 +1,2 @@
-export {SortedSet as SortedSet} from './internals';
+export {SortedSet} from './internals';
 export * from './functions';

@@ -1,11 +1,9 @@
-import {isImmutable} from '@collectable/core';
+import {MapFn, isImmutable} from '@collectable/core';
 import {SortedSet, SortedSetImpl, refreeze, cloneSortedSet} from '../internals';
 import {iterateValues, setItem} from '../internals';
 
-export type MapPredicate<T, R> = (value: T, index: number) => R;
-
-export function map<T, R>(fn: MapPredicate<T, R>, set: SortedSet<T>): SortedSet<R>;
-export function map(fn: MapPredicate<any, any>, set: SortedSetImpl<any>): SortedSetImpl<any> {
+export function map<T, R>(fn: MapFn<T, R>, set: SortedSet<T>): SortedSet<R>;
+export function map(fn: MapFn<any, any>, set: SortedSetImpl<any>): SortedSetImpl<any> {
   var immutable = isImmutable(set._owner);
   var nextSet = cloneSortedSet(true, set, true);
   var {
