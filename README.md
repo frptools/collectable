@@ -25,11 +25,11 @@ _Note: This library is an active work in progress. Some of the features and stru
 
 ## Data Structures
 
-- [ **[List](/packages/list#collectablejs-immutable-list)** ] A persistent [list/vector](https://en.wikipedia.org/wiki/List_(abstract_data_type)) structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation, with very fast concatenation, insertion and deletion of ranges of values, etc.
-- [ **[Map](/packages/map#collectablejs-immutable-map)** ] A persistent [hash table](https://en.wikipedia.org/wiki/Associative_array), mapping keys to values. Implemented as a Clojure-style [hash array mapped trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
-- [ **[Sorted Set](/packages/sorted-map#collectablejs-immutable-sorted-map)** ] A persistent sorted [hash map](https://en.wikipedia.org/wiki/Associative_array) backed by an [immutable map](/packages/red-black-tree#collectablejs-immutable-map) and a [sorted set](/packages/red-black-tree#collectablejs-immutable-sorted-set).
-- [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation, backed by an [immutable map](/packages/map#collectablejs-immutable-map).
-- [ **[Sorted Set](/packages/sorted-set#collectablejs-immutable-sorted-set)** ] A persistent sorted [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) implementation backed by an [immutable red-black tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree) and an [immutable hash map](https://en.wikipedia.org/wiki/Associative_array), with customizable order-of-insertion.
+- [ **[List](/packages/list#collectablejs-immutable-list)** ] A persistent [list/vector](https://en.wikipedia.org/wiki/List_(abstract_data_type)) structure based on a modified [RRB Tree](https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf) implementation.
+- [ **[Map](/packages/map#collectablejs-immutable-map)** ] A persistent [hash map](https://en.wikipedia.org/wiki/Associative_array), mapping keys to values. Implemented as a Clojure-style [hash array mapped trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
+- [ **[Sorted Map](/packages/sorted-map#collectablejs-immutable-sorted-map)** ] A persistent sorted [map](https://en.wikipedia.org/wiki/Associative_array) backed by a [red-black tree](/packages/red-black-tree#collectablejs-immutable-sorted-set) and a [hash map](/packages/map#collectablejs-immutable-map) with user-definable sort order.
+- [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)), backed by a [hash map](/packages/map#collectablejs-immutable-map).
+- [ **[Sorted Set](/packages/sorted-set#collectablejs-immutable-sorted-set)** ] A persistent sorted [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) backed by a [red-black tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree) and a [hash map](https://en.wikipedia.org/wiki/Associative_array), with user-definable sort order.
 
 ### Secondary Structures
 
