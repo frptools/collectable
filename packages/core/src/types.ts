@@ -21,5 +21,7 @@ export type KeyedForEachFn<K, V> = (value: V, key: K, index: number) => any;
 
 export type SelectorFn<T, U> = (value: T) => U;
 
+export type KeyedSelectorFn<K, V, U> = (value: V, key: K) => U;
+
 export type ComparatorFn<T> = (a: T, b: T) => number;
 
