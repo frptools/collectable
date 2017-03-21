@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"@collectable/core@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-3.1.0.tgz#0392846f1803d2ff442ab9fe3a91b9ddfd437fc8"
+"@collectable/core@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-3.2.0.tgz#f30d3b7410e0df17c07aa563038bc57b1b9376de"
 
 "@collectable/core@latest":
   version "2.3.0"
@@ -44,9 +44,16 @@
     "@collectable/core" latest
     "@collectable/map" latest
 
-"@collectable/sorted-set@^1.0.0":
+"@collectable/sorted-map@^1.0.0":
   version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-1.0.0.tgz#b9696fa971cbba5628233b6e955042450eabc62c"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-1.0.0.tgz#c3b2b72f6532ef7169d2c75bed0b23b0808eb431"
+  dependencies:
+    "@collectable/core" latest
+    "@collectable/map" latest
+
+"@collectable/sorted-set@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-1.1.0.tgz#b151056aaa003ca0fddcd5e37b6ea1111afed0d0"
   dependencies:
     "@collectable/core" latest
     "@collectable/map" latest
