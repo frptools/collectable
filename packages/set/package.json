@@ -1,6 +1,6 @@
 {
   "name": "@collectable/set",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "[Collectable.js] Immutable Set",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -17,7 +17,8 @@
   "bugs": "https://github.com/frptools/collectable/issues",
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
-    "@collectable/core": "latest",
-    "@collectable/map": "latest"
+    "@typed/curry": "^1.0.1",
+    "@collectable/core": "^3.2.2",
+    "@collectable/map": "^2.0.1"
   }
 }

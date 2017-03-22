@@ -1,6 +1,6 @@
 {
   "name": "@collectable/list",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "[Collectable.js] Immutable List",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -15,6 +15,6 @@
   "bugs": "https://github.com/frptools/collectable/issues",
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
-    "@collectable/core": "latest"
+    "@collectable/core": "^3.2.2"
   }
 }

@@ -2,52 +2,57 @@
 # yarn lockfile v1
 
 
-"@collectable/core@^3.2.0", "@collectable/core@latest":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-3.2.0.tgz#f30d3b7410e0df17c07aa563038bc57b1b9376de"
+"@collectable/core@^3.2.2":
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-3.2.2.tgz#fc9c169cc1d63cee79cd2041ffefbfbad5dee73d"
 
-"@collectable/list@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/list/-/list-3.0.0.tgz#51aa80979324aefadc097a5335d172ae448a1066"
+"@collectable/list@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@collectable/list/-/list-3.0.2.tgz#7ec879ae73d3cb8b5ef43030b9cb70be0b320487"
   dependencies:
-    "@collectable/core" latest
+    "@collectable/core" "^3.2.2"
 
-"@collectable/map@^2.0.0", "@collectable/map@latest":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/map/-/map-2.0.0.tgz#f6d30b0f4e104f87cbc47001fe4ebaf4b6a9dffa"
+"@collectable/map@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/map/-/map-2.0.1.tgz#9beb1b6a5b951442694a2e157863f668f7dfc6e3"
   dependencies:
-    "@collectable/core" latest
-    "@typed/curry" latest
+    "@collectable/core" "^3.2.2"
+    "@typed/curry" "^1.0.1"
 
-"@collectable/red-black-tree@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-3.1.0.tgz#546798285ca28c5374ff9a3d3ad8dfc5b1b67287"
+"@collectable/red-black-tree@^3.1.1":
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-3.1.1.tgz#a3c7c1108b92210385fd213885c708e926437a38"
   dependencies:
-    "@collectable/core" latest
-    "@typed/curry" latest
+    "@collectable/core" "^3.2.2"
+    "@typed/curry" "^1.0.1"
 
-"@collectable/set@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/set/-/set-2.0.0.tgz#f430d3ef9db207c8debd82d1f51ef387e05a7964"
+"@collectable/set@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/set/-/set-2.0.1.tgz#5187462ee3b645add0464c81031a0cee7a00dff7"
   dependencies:
-    "@collectable/core" latest
-    "@collectable/map" latest
+    "@collectable/core" "^3.2.2"
+    "@collectable/map" "^2.0.1"
+    "@typed/curry" "^1.0.1"
 
-"@collectable/sorted-map@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-1.1.0.tgz#b9b82741a9515e8909b25b97017079355b35ce26"
+"@collectable/sorted-map@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-1.2.1.tgz#c9fc8cc12655444720a6f58ecb4d23a75bd08665"
   dependencies:
-    "@collectable/core" latest
-    "@collectable/map" latest
+    "@collectable/core" "^3.2.2"
+    "@collectable/map" "^2.0.1"
+    "@collectable/red-black-tree" "^3.1.1"
+    "@typed/curry" "^1.0.1"
 
-"@collectable/sorted-set@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-1.1.0.tgz#b151056aaa003ca0fddcd5e37b6ea1111afed0d0"
+"@collectable/sorted-set@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-1.2.1.tgz#34187f63e6715658d5490ad7a0afdf56d704a61d"
   dependencies:
-    "@collectable/core" latest
-    "@collectable/map" latest
+    "@collectable/core" "^3.2.2"
+    "@collectable/map" "^2.0.1"
+    "@collectable/red-black-tree" "^3.1.1"
+    "@typed/curry" "^1.0.1"
 
-"@typed/curry@^1.0.1", "@typed/curry@latest":
+"@typed/curry@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@typed/curry/-/curry-1.0.1.tgz#555d4624b0cbf09e101945326d3bb9ffcaba3655"
 
@@ -315,17 +320,11 @@ debug-fabulous@0.0.X:
     lazy-debug-legacy "0.0.X"
     object-assign "4.1.0"
 
-debug@2.2.0:
+debug@2.2.0, debug@2.X:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.2.0.tgz#f87057e995b1a1f6ae6a4960664137bc56f039da"
   dependencies:
     ms "0.7.1"
-
-debug@2.X:
-  version "2.6.3"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.3.tgz#0f7eb8c30965ec08c72accfa0130c8b79984141d"
-  dependencies:
-    ms "0.7.2"
 
 decamelize@^1.1.1:
   version "1.2.0"
@@ -392,10 +391,6 @@ duplexer3@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/duplexer3/-/duplexer3-0.1.4.tgz#ee01dd1cac0ed3cbc7fdbea37dc0a8f1ce002ce2"
 
-duplexer@~0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/duplexer/-/duplexer-0.1.1.tgz#ace6ff808c1ce66b57d1ebf97977acb02334cfc1"
-
 duplexify@^3.2.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/duplexify/-/duplexify-3.5.0.tgz#1aa773002e1578457e9d9d4a50b0ccaaebcbd604"
@@ -438,18 +433,6 @@ esutils@^1.1.6:
 esutils@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/esutils/-/esutils-2.0.2.tgz#0abf4f1caa5bcb1f7a9d8acc6dea4faaa04bac9b"
-
-event-stream@^3.3.4:
-  version "3.3.4"
-  resolved "https://registry.yarnpkg.com/event-stream/-/event-stream-3.3.4.tgz#4ab4c9a0f5a54db9338b4c34d86bfce8f4b35571"
-  dependencies:
-    duplexer "~0.1.1"
-    from "~0"
-    map-stream "~0.1.0"
-    pause-stream "0.0.11"
-    split "0.3"
-    stream-combiner "~0.0.4"
-    through "~2.3.1"
 
 execa@^0.4.0:
   version "0.4.0"
@@ -585,10 +568,6 @@ for-own@^0.1.4:
   dependencies:
     for-in "^1.0.1"
 
-from@~0:
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/from/-/from-0.1.7.tgz#83c60afc58b9c56997007ed1a768b3ab303a44fe"
-
 fs-exists-sync@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/fs-exists-sync/-/fs-exists-sync-0.1.0.tgz#982d6893af918e72d08dec9e8673ff2b5a8d6add"
@@ -667,7 +646,7 @@ glob2base@^0.0.12:
   dependencies:
     find-index "^0.1.1"
 
-glob@7.0.5:
+glob@7.0.5, glob@^7.0.5:
   version "7.0.5"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.0.5.tgz#b4202a69099bbb4d292a7c1b95b6682b67ebdc95"
   dependencies:
@@ -697,7 +676,7 @@ glob@^5.0.3, glob@~5.0.0:
     once "^1.3.0"
     path-is-absolute "^1.0.0"
 
-glob@^7.0.5, glob@^7.1.1:
+glob@^7.1.1:
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.1.1.tgz#805211df04faaf1c63a3600306cdf5ade50b2ec8"
   dependencies:
@@ -843,13 +822,6 @@ gulp-tslint@^7.1.0:
     map-stream "~0.1.0"
     through "~2.3.8"
 
-gulp-typedoc@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/gulp-typedoc/-/gulp-typedoc-2.0.2.tgz#5d8034cfd3b46f5f4e1b3d4a6feddca155569953"
-  dependencies:
-    event-stream "^3.3.4"
-    gulp-util "^3.0.8"
-
 gulp-typescript@^3.1.6:
   version "3.1.6"
   resolved "https://registry.yarnpkg.com/gulp-typescript/-/gulp-typescript-3.1.6.tgz#6c67b84364cf3589a9ad6fdea2e3c0bc525c435e"
@@ -859,7 +831,7 @@ gulp-typescript@^3.1.6:
     through2 "~2.0.1"
     vinyl-fs "~2.4.3"
 
-gulp-util@^3, gulp-util@^3.0.0, gulp-util@^3.0.7, gulp-util@^3.0.8, gulp-util@~3.0.7, gulp-util@~3.0.8:
+gulp-util@^3, gulp-util@^3.0.0, gulp-util@^3.0.7, gulp-util@~3.0.7, gulp-util@~3.0.8:
   version "3.0.8"
   resolved "https://registry.yarnpkg.com/gulp-util/-/gulp-util-3.0.8.tgz#0054e1e744502e27c04c187c3ecc505dd54bbb4f"
   dependencies:
@@ -1420,10 +1392,6 @@ ms@0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.1.tgz#9cd13c03adbff25b65effde7ce864ee952017098"
 
-ms@0.7.2:
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.2.tgz#ae25cf2512b3885a1d95d7f037868d8431124765"
-
 multipipe@^0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/multipipe/-/multipipe-0.1.2.tgz#2a8f2ddf70eed564dff2d57f1e1a137d9f05078b"
@@ -1463,17 +1431,13 @@ number-is-nan@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/number-is-nan/-/number-is-nan-1.0.1.tgz#097b602b53422a522c1afb8790318336941a011d"
 
-object-assign@4.1.0:
+object-assign@4.1.0, object-assign@^4.0.0, object-assign@^4.0.1:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/object-assign/-/object-assign-4.1.0.tgz#7a3b3d0e98063d43f4c03f2e8ae6cd51a86883a0"
 
 object-assign@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/object-assign/-/object-assign-3.0.0.tgz#9bedd5ca0897949bca47e7ff408062d549f587f2"
-
-object-assign@^4.0.0, object-assign@^4.0.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/object-assign/-/object-assign-4.1.1.tgz#2109adc7965887cfc05cbbd442cac8bfbb360863"
 
 object.omit@^2.0.0:
   version "2.0.1"
@@ -1607,12 +1571,6 @@ path-type@^1.0.0:
     graceful-fs "^4.1.2"
     pify "^2.0.0"
     pinkie-promise "^2.0.0"
-
-pause-stream@0.0.11:
-  version "0.0.11"
-  resolved "https://registry.yarnpkg.com/pause-stream/-/pause-stream-0.0.11.tgz#fe5a34b0cbce12b5aa6a2b403ee2e73b602f1445"
-  dependencies:
-    through "~2.3"
 
 pify@^2.0.0:
   version "2.3.0"
@@ -1872,18 +1830,6 @@ spdx-license-ids@^1.0.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/spdx-license-ids/-/spdx-license-ids-1.2.2.tgz#c9df7a3424594ade6bd11900d596696dc06bac57"
 
-split@0.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/split/-/split-0.3.3.tgz#cd0eea5e63a211dfff7eb0f091c4133e2d0dd28f"
-  dependencies:
-    through "2"
-
-stream-combiner@~0.0.4:
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/stream-combiner/-/stream-combiner-0.0.4.tgz#4d5e433c185261dde623ca3f44c586bcf5c4ad14"
-  dependencies:
-    duplexer "~0.1.1"
-
 stream-consume@~0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/stream-consume/-/stream-consume-0.1.0.tgz#a41ead1a6d6081ceb79f65b061901b6d8f3d1d0f"
@@ -1986,7 +1932,7 @@ through2@^0.6.0, through2@^0.6.1:
     readable-stream ">=1.0.33-1 <1.1.0-0"
     xtend ">=4.0.0 <4.1.0-0"
 
-through@2, through@~2.3, through@~2.3.1, through@~2.3.8:
+through@~2.3.8:
   version "2.3.8"
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
 
