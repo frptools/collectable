@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -24,9 +24,8 @@
   "repository": "git@github.com:frptools/collectable.git",
   "devDependencies": {
     "@types/chai": "^3.4.34",
-    "@types/chalk": "^0.4.31",
     "@types/mocha": "^2.2.39",
-    "@types/node": "^7.0.5",
+    "@types/node": "^7.0.8",
     "chai": "^3.5.0",
     "gulp": "^3.9.1",
     "gulp-mocha": "^4.0.1",
@@ -43,8 +42,6 @@
     "tiny-preprocessor": "^1.0.0",
     "tslint": "^4.5.1",
     "tslint-eslint-rules": "^3.5.1",
-    "typedoc": "^0.5.5",
-    "typedoc-plugin-external-module-map": "^0.0.6",
     "typescript": "^2.2.1",
     "yargs": "^7.0.2"
   },
@@ -54,7 +51,7 @@
     "@collectable/map": "^2.0.0",
     "@collectable/red-black-tree": "^3.1.0",
     "@collectable/set": "^2.0.0",
-    "@collectable/sorted-map": "^1.0.0",
+    "@collectable/sorted-map": "^1.1.0",
     "@collectable/sorted-set": "^1.1.0",
     "@typed/curry": "^1.0.1"
   }
