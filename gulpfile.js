@@ -6,7 +6,6 @@ const mocha = require(`gulp-mocha`);
 const sourcemaps = require(`gulp-sourcemaps`);
 const plumber = require(`gulp-plumber`);
 const transform = require(`gulp-transform`);
-const typedoc = require(`gulp-typedoc`);
 const rimraf = require(`rimraf`);
 const merge = require(`merge2`);
 const argv = require(`yargs`).argv;
