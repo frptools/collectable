@@ -4,7 +4,7 @@ import {
   HashMap, emptyHashMap, thawHashMap, freezeHashMap, isHashMapThawed, cloneHashMap
 } from './named-externals';
 import {SortedMap, Entry} from './types';
-import {setItem} from './assignment';
+import {setItem} from './values';
 import {isEqual, unwrap} from '../functions';
 import {iteratePairs} from './iterate';
 

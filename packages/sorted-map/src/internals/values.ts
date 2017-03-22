@@ -1,4 +1,5 @@
 import {KeyedSelectorFn, isDefined, isUndefined, isEqual} from '@collectable/core';
+import {get} from '@collectable/map';
 import {setTreeValue, removeTreeValue, updateMapEntry} from './named-externals';
 import {Entry, KeyMap, SortedValues} from './types';
 
@@ -46,4 +47,8 @@ export function unsetItem<K, V, U>(key: K, keyMap: KeyMap<K, V, U>, sortedValues
   }
 
   return false;
+}
+
+export function getItemByKey<K, V, U>(key: K, map: KeyMap<K, V, U>): Entry<K, V, U>|undefined {
+  return get(key, map);
 }
