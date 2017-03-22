@@ -6,7 +6,6 @@ export * from './forEach';
 export * from './freeze';
 export * from './from';
 export * from './has';
-export * from './index';
 export * from './intersect';
 export * from './isEqual';
 export * from './map';
