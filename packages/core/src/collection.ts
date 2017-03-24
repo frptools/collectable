@@ -1,10 +1,13 @@
-export interface CollectionTypeInfo {
+export interface PersistentStructureTypeInfo {
   readonly type: symbol;
-  readonly indexable: boolean;
   owner(collection: any): number;
   group(collection: any): number;
   equals(other: any, collection: any): boolean;
   unwrap(collection: any): any;
+}
+
+export interface CollectionTypeInfo extends PersistentStructureTypeInfo {
+  readonly indexable: boolean;
 }
 
 export interface IndexableCollectionTypeInfo extends CollectionTypeInfo {
@@ -15,36 +18,43 @@ export interface IndexableCollectionTypeInfo extends CollectionTypeInfo {
   verifyKey(key: any, collection: any): boolean;
 }
 
-export interface Collection<T> {
+export interface PersistentStructure {
   readonly '@@type': CollectionTypeInfo;
+}
+
+export interface Collection<T> extends PersistentStructure {
   [Symbol.iterator](): IterableIterator<T>;
 }
 
+export function isPersistentStructure(value: any): value is PersistentStructure {
+  return value && typeof value === 'object' && '@@type' in value;
+}
+
 export function isCollection<T>(value: any): value is Collection<T> {
-  return value && typeof value === 'object' && '@@type' in value && Symbol.iterator in value;
+  return isPersistentStructure(value) && 'indexable' in value['@@type'];
 }
 
 export function isEqual(a: any, b: any) {
   if(a === b) return true;
-  if(!isCollection<any>(a) || !isCollection<any>(b) || a['@@type'] !== b['@@type']) return false;
+  if(!isPersistentStructure(a) || !isPersistentStructure(b) || a['@@type'] !== b['@@type']) return false;
   const type = a['@@type'];
   return type.equals(a, b);
 }
 
 const CIRCULARS = new WeakMap<any, any>();
-export function preventCircularRefs<T, U, C extends Collection<U>>(createTarget: (collection: C) => T, unwrap: (collection: C, target: T) => T, collection: C): T {
-  if(CIRCULARS.has(collection)) {
-    return CIRCULARS.get(collection);
+export function preventCircularRefs<T, U extends PersistentStructure>(createTarget: (source: U) => T, unwrap: (source: U, target: T) => T, source: U): T {
+  if(CIRCULARS.has(source)) {
+    return CIRCULARS.get(source);
   }
-  var target = createTarget(collection);
-  CIRCULARS.set(collection, target);
-  var value = unwrap(collection, target);
-  CIRCULARS.delete(collection);
+  var target = createTarget(source);
+  CIRCULARS.set(source, target);
+  var value = unwrap(source, target);
+  CIRCULARS.delete(source);
   return value;
 }
 
 export function unwrapAny(value: any): any {
-  return isCollection<any>(value) ? value['@@type'].unwrap(value) : value;
+  return isPersistentStructure(value) ? value['@@type'].unwrap(value) : value;
 }
 
 export function getGroup<T>(collection: Collection<T>): number {
