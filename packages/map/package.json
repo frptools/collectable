@@ -1,6 +1,6 @@
 {
   "name": "@collectable/map",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "[Collectable.js] Immutable Map",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -9,7 +9,9 @@
   "scripts": {
     "test-dev": "cd ../.. && mocha --require source-map-support/register --ui tdd --watch --bail .build/packages/map/tests/**/*.js"
   },
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "contributors": [
     "Nathan Ridley <axefrog@gmail.com>"
   ],
@@ -18,6 +20,6 @@
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
     "@typed/curry": "^1.0.1",
-    "@collectable/core": "^3.2.2"
+    "@collectable/core": "^3.3.0"
   }
 }
