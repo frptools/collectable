@@ -1,3 +1,4 @@
+const fs = require('fs');
 const gulp = require(`gulp`);
 const tslint = require(`tslint`);
 const gtslint = require(`gulp-tslint`);
@@ -96,6 +97,96 @@ function clean() {
   }
 }
 
+function buildPackageMap() {
+  const packagesDir = `${__dirname}/packages`;
+  const packageDirs = fs.readdirSync(packagesDir)
+    .map(name => `${packagesDir}/${name}`)
+    .filter(dir => fs.statSync(dir).isDirectory());
+  packageDirs.push(__dirname);
+  const packages = {};
+  packageDirs.forEach(dir => {
+    const filename = `${dir}/package.json`;
+    if(!fs.existsSync(filename)) return;
+    const buffer = fs.readFileSync(filename);
+    const json = buffer.toString();
+    const manifest = JSON.parse(json);
+    packages[manifest.name] = {
+      name: manifest.name,
+      version: manifest.version,
+      path: filename,
+      deps: Object.keys(manifest.dependencies || {})
+        .filter(key => key.startsWith('@collectable/'))
+        .map(key => ({
+          name: key,
+          version: manifest.dependencies[key],
+          target: void 0
+        })),
+      manifest,
+      processed: false,
+      modified: false
+    }
+  });
+
+  Object.keys(packages).forEach(key => {
+    const pkg = packages[key];
+    pkg.deps.forEach(dep => dep.target = packages[dep.name]);
+  });
+
+  return packages;
+}
+
+function bumpVersion(part, version) {
+  const parts = version.split('.').map(v => parseInt(v));
+  switch(part) {
+    case 'major':
+      parts[0]++;
+      parts[1] = 0;
+      parts[2] = 0;
+      break;
+    case 'minor':
+      parts[1]++;
+      parts[2] = 0;
+      break;
+    case 'patch':
+      parts[2]++;
+      break;
+  }
+  return parts.join('.');
+}
+
+function updatePackageVersion(pkg) {
+  if(pkg.processed) return pkg.version;
+  pkg.processed = true;
+  pkg.deps.forEach(dep => {
+    const newVersion = updatePackageVersion(dep.target);
+    const depVersion = dep.version.replace(/[0-9]+\.[0-9]+\.[0-9]+/, newVersion);
+    if(depVersion !== dep.version) {
+      console.log(`[${pkg.name}] ${dep.name}: ${dep.version} ==> ${depVersion}`);
+      dep.version = depVersion;
+      pkg.manifest.dependencies[dep.name] = depVersion;
+      pkg.modified = true;
+    }
+  });
+  if(pkg.modified) {
+    console.log(`[${pkg.name}] ${pkg.version} ==> ${bumpVersion('minor', pkg.version)}`);
+    pkg.version = bumpVersion('minor', pkg.version);
+    pkg.manifest.version = pkg.version;
+  }
+  return pkg.version;
+}
+
+function updateVersionRefs() {
+  const map = buildPackageMap();
+  Object.keys(map).forEach(key => {
+    pkg = map[key];
+    updatePackageVersion(pkg);
+    if(pkg.modified) {
+      fs.writeFileSync(pkg.path, JSON.stringify(pkg.manifest, null, 2), {encoding: 'utf8'});
+    }
+  });
+}
+
+gulp.task('update-versions', updateVersionRefs);
 gulp.task(`clean`, clean());
 gulp.task(`preprocess`, [`lint`], runPreprocessor);
 gulp.task(`compile`, [`lint`, `preprocess`], compile);
