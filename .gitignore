@@ -5,4 +5,7 @@
 .assets/working-files/
 node_modules/
 lib/
+perf/
+packages/cuckoo-filter/
+scripts/.cache.json
 *.log
