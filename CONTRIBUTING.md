@@ -4,6 +4,7 @@ Collectable is a monorepo, so there are multiple subpackages of the main package
 
 <!-- TOC -->
 
+- [Semantic Versioning](#semantic-versioning)
 - [Commits](#commits)
   - [Examples](#examples)
 - [Package Structure](#package-structure)
@@ -20,6 +21,32 @@ Collectable is a monorepo, so there are multiple subpackages of the main package
   - [Concurrent development and testing](#concurrent-development-and-testing)
 
 <!-- /TOC -->
+
+## Semantic Versioning
+
+In 2016, [André Staltz](https://github.com/staltz) published [_compatible versioning_](https://github.com/staltz/comver), a simpler, more consistent application of NPM's semantic versioning standard. Collectable.js follows André's proposal, with one minor adjustment. The third value ("patch") does have a useful purpose; sometimes there is a need to publish an update that does not affect source code at all. Examples are:
+
+- Publishing an update to the NPM registry in order to update README documentation
+- Updating package.json dependency versions where source code that uses the updated dependencies is unaffected
+- Publishing updated packages/releases after publishing a package version incorrectly due to human error
+- Anything else that requires a new package release without the need for source code changes
+
+In summary:
+
+**[MAJOR].[MINOR].[PATCH]**
+
+- **[MAJOR]** _2.3.1 --> 3.0.0_ : This release has at least one breaking change, however minor it may be
+  - Complete overhauls/reworks of the product
+  - Public API revisions where the signatures of existing functions, methods and classes are changed or removed
+  - Changes to dependencies where the changed behaviours of dependencies may indirectly break dependant projects
+- **[MINOR]** _1.0.1 --> 1.1.0_ : This release has source code changes, but none of them are breaking changes
+  - New features
+  - Bug fixes
+  - Performance improvements
+- **[PATCH]** _1.0.1 --> 1.0.2_ : No source code changes were made, but there is a need to republish the package for some reason
+  - Fixed a typo in the main README
+  - Forgot to build the project before publishing
+  - Updated minor/patch versions of dependencies without needing to touch source code
 
 ## Commits
 
@@ -48,6 +75,7 @@ TARGET(type): Message
   - `SSET`: @collectable/sorted-set
   - `SMAP`: @collectable/sorted-map
   - `RBT`: @collectable/red-black-tree
+  - `CKFL`: @collectable/cuckoo-filter
   - Others assigned as new packages become available.
 
 The `type` descriptor is a variation on the Google's pseudo-standard for semantic commit messages, which I don't like.
@@ -178,10 +206,18 @@ const FOO_TYPE: CollectionTypeInfo = {
 
   equals(other: any, collection: any): boolean {
     return equals(this, other);    // determine if two instances of your structure have the same data
-  }
+  },
 
   unwrap(collection: any): any {   // converts the instance back into a native JavaScript object or array
     return unwrap(true, list);     // you'll need to implement this yourself
+  },
+
+  owner(collection: any): number { // retrieves the current owner value stored against the collection
+    return collection._owner;      // (see "Transient mutation and batch operations" for details)
+  },
+
+  group(collection: any): number { // retrieves the current group value stored against the collection
+    return collection._group;      // (see "Transient mutation and batch operations" for details)
   }
 };
 ```
