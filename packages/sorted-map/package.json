@@ -23,5 +23,8 @@
     "@collectable/core": "^3.3.0",
     "@collectable/map": "^2.1.0",
     "@collectable/red-black-tree": "^3.2.0"
+  },
+  "collectable": {
+    "tag": "SMAP"
   }
 }

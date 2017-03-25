@@ -18,5 +18,8 @@
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
     "@collectable/core": "^3.3.0"
+  },
+  "collectable": {
+    "tag": "LIST"
   }
 }

@@ -21,5 +21,8 @@
   "dependencies": {
     "@typed/curry": "^1.0.1",
     "@collectable/core": "^3.3.0"
+  },
+  "collectable": {
+    "tag": "MAP"
   }
 }

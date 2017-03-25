@@ -13,5 +13,8 @@
   "author": "Nathan Ridley <axefrog@gmail.com>",
   "license": "MIT",
   "bugs": "https://github.com/frptools/collectable/issues",
-  "repository": "git@github.com:frptools/collectable.git"
+  "repository": "git@github.com:frptools/collectable.git",
+  "collectable": {
+    "tag": "CORE"
+  }
 }
