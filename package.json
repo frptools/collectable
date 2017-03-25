@@ -1,11 +1,11 @@
 {
   "name": "collectable",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
-  "main": "lib/index.js",
-  "module": "lib/index.js",
-  "jsnext:main": "lib/index.js",
-  "typings": "lib/index.d.ts",
+  "main": "lib/commonjs/index.js",
+  "module": "lib/module/index.js",
+  "jsnext:main": "lib/module/index.js",
+  "typings": "lib/typings/index.d.ts",
   "scripts": {
     "start": "node ./scripts/index.js",
     "build-all": "gulp build --pkg core && gulp build --pkg list && gulp build --pkg red-black-tree && gulp build --pkg map && gulp build --pkg set && gulp build --pkg sorted-map && gulp build --pkg sorted-set && gulp build",
