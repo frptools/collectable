@@ -19,10 +19,11 @@ export interface IndexableCollectionTypeInfo extends CollectionTypeInfo {
 }
 
 export interface PersistentStructure {
-  readonly '@@type': CollectionTypeInfo;
+  readonly '@@type': PersistentStructureTypeInfo;
 }
 
 export interface Collection<T> extends PersistentStructure {
+  readonly '@@type': CollectionTypeInfo;
   [Symbol.iterator](): IterableIterator<T>;
 }
 
