@@ -64,8 +64,10 @@ function updatePackageVersion(pkg, sortedPackages = []) {
   });
   if(pkg.modified) {
     pkg.selected = true;
-    pkg.version = bumpVersion('minor', pkg.version);
-    pkg.manifest.version = pkg.version;
+    if(!pkg.skip && 'npmVersion' in pkg && compareVersions(pkg.npmVersion, pkg.version) === 0) {
+      pkg.version = bumpVersion('minor', pkg.version);
+      pkg.manifest.version = pkg.version;
+    }
   }
   sortedPackages.push(pkg);
   return pkg.version;
@@ -122,12 +124,14 @@ function ensurePackageCached(promise, pkg) {
   return promise
     .then(state => {
       if(pkg.name in state.cache) {
+        pkg.npmVersion = state.cache[pkg.name].version;
         return state;
       }
       atLeastOneUpdatedFromNPM = true;
       return getVersionFromNPM(pkg.name)
         .then(version => {
           console.log(`${pkg.name} NPM version: ${version}`);
+          pkg.npmVersion = version;
           state.cache[pkg.name] = {version};
           state.modified = true;
           return state;

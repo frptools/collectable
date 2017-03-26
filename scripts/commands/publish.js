@@ -23,6 +23,7 @@ function build(args) {
               const target = cache[pkg.name];
               target.version = pkg.manifest.version;
               target.lastPublished = Date.now();
+              pkg.npmVersion = target.version;
               return writeCache(cache);
             });
         };
