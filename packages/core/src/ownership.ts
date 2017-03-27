@@ -31,7 +31,7 @@ function end(): boolean {
 }
 
 function owner(ensureMutable: true): number {
-  return ensureMutable ? _owner || -1 : _owner;
+  return ensureMutable ? -1 : _owner;
 }
 
 export const batch: Batch = <any>Object.assign(
