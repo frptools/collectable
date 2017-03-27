@@ -1,4 +1,4 @@
-import {Collection, IndexableCollectionTypeInfo, nextId, batch} from '@collectable/core';
+import {Collection, IndexableCollectionTypeInfo, nextId, batch, hashIterator} from '@collectable/core';
 import {get, has, set, update, unwrap, isEqual} from '../functions';
 import {entries} from '../functions/entries';
 import {AnyNode} from './nodes';
@@ -9,6 +9,10 @@ const MAP_TYPE: IndexableCollectionTypeInfo = {
 
   equals(other: HashMapImpl<any, any>, map: HashMapImpl<any, any>): boolean {
     return isEqual(other, map);
+  },
+
+  hash(map: HashMapImpl<any, any>): number {
+    return hashIterator(entries(map));
   },
 
   unwrap(map: HashMapImpl<any, any>): any {

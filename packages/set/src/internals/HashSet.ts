@@ -1,4 +1,4 @@
-import {Collection, CollectionTypeInfo, isDefined, nextId, batch} from '@collectable/core';
+import {Collection, CollectionTypeInfo, isDefined, nextId, batch, hashIterator} from '@collectable/core';
 import {Map, empty, set as _set, thaw, freeze, isThawed, clone, updateMap} from '@collectable/map';
 import {isEqual, unwrap} from '../functions';
 import {iterate} from './iterate';
@@ -9,6 +9,10 @@ const SET_TYPE: CollectionTypeInfo = {
 
   equals(other: any, set: HashSetImpl<any>): boolean {
     return isEqual(other, set);
+  },
+
+  hash(set: HashSetImpl<any>): number {
+    return hashIterator(iterate(set));
   },
 
   unwrap(set: HashSetImpl<any>): any {

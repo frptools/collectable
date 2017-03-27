@@ -1,4 +1,4 @@
-import {CollectionTypeInfo, ComparatorFn, SelectorFn, isDefined, nextId, batch} from '@collectable/core';
+import {CollectionTypeInfo, ComparatorFn, SelectorFn, isDefined, nextId, batch, hashIterator} from '@collectable/core';
 import {
   RedBlackTree, emptyTree, thawTree, freezeTree, isTreeThawed, cloneTree,
   Map, emptyMap, thawMap, freezeMap, isMapThawed, cloneMap
@@ -16,6 +16,10 @@ const SORTEDSET_TYPE: CollectionTypeInfo = {
 
   equals(other: any, set: SortedSetImpl<any>): boolean {
     return isEqual(other, set);
+  },
+
+  hash(set: SortedSetImpl<any>): number {
+    return hashIterator(iterateValues(set));
   },
 
   unwrap(set: SortedSetImpl<any>): any {

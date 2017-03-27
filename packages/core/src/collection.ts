@@ -3,6 +3,7 @@ export interface PersistentStructureTypeInfo {
   owner(collection: any): number;
   group(collection: any): number;
   equals(other: any, collection: any): boolean;
+  hash(collection: any): number;
   unwrap(collection: any): any;
 }
 

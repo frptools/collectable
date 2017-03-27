@@ -1,4 +1,4 @@
-import {Collection, IndexableCollectionTypeInfo, nextId, batch, isDefined} from '@collectable/core';
+import {Collection, IndexableCollectionTypeInfo, nextId, batch, isDefined, hashIterator} from '@collectable/core';
 import {Node, RedBlackTreeEntry, NONE} from './node';
 import {unwrap, iterateFromFirst, set, update, get, has, isEqual} from '../functions';
 
@@ -18,6 +18,10 @@ const REDBLACKTREE_TYPE: IndexableCollectionTypeInfo = {
 
   equals(other: RedBlackTree<any, any>, tree: RedBlackTreeImpl<any, any>): any {
     return isEqual(tree, other);
+  },
+
+  hash(tree: RedBlackTreeImpl<any, any>): number {
+    return hashIterator(iterateFromFirst(tree));
   },
 
   unwrap(tree: RedBlackTreeImpl<any, any>): any {

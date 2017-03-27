@@ -1,5 +1,5 @@
 import {log} from './debug'; // ## DEV ##
-import {Collection, IndexableCollectionTypeInfo, nextId, batch, isMutable} from '@collectable/core';
+import {Collection, IndexableCollectionTypeInfo, nextId, batch, isMutable, hashIterator} from '@collectable/core';
 import {OFFSET_ANCHOR} from './common';
 import {TreeWorker} from './traversal';
 import {View} from './view';
@@ -12,6 +12,10 @@ const LIST_TYPE: IndexableCollectionTypeInfo = {
 
   equals(other: List<any>, list: List<any>): boolean {
     return isEqual(other, list);
+  },
+
+  hash(list: List<any>): number {
+    return hashIterator(createIterator(list));
   },
 
   unwrap(list: List<any>): any {

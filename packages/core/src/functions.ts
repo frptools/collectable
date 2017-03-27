@@ -10,8 +10,20 @@ export function isNullOrUndefined<T>(value: T|null|undefined): value is null|und
   return value === void 0 || value === null;
 }
 
+export function hasValue<T>(value: T|null|undefined): value is T {
+  return value !== void 0 && value !== null;
+}
+
 export function isIterable<T>(arg: any): arg is Iterable<T> {
   return typeof arg === 'object' && arg !== null && Symbol.iterator in arg;
+}
+
+export function isObject(arg: any): arg is Object {
+  return typeof arg === 'object' && arg !== null;
+}
+
+export function isPlainObject(arg: any): arg is Object {
+  return isObject && Object.constructor === Object;
 }
 
 export function abs(value: number): number {
