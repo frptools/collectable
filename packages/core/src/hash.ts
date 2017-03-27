@@ -28,6 +28,10 @@ const OBJECT_HASH = {
   map: new WeakMap<Object, number>()
 };
 
+function randomInt() {
+  return OBJECT_HASH.pcg.integer(0x7FFFFFFF);
+}
+
 export function hashArray(arr: any[]): number {
   var h = 5381;
   for(var i = 0; i < arr.length; i++) {
@@ -77,7 +81,7 @@ export function hashObject(o: Object): number {
     h = hashPlainObject(o);
   }
   else {
-    h = opt(cache.pcg.integer(0x7FFFFFFF));
+    h = opt(randomInt());
   }
 
   cache.map.set(o, h);
@@ -88,7 +92,7 @@ export function hashMiscRef(o: Object): number {
   var cache = OBJECT_HASH;
   var h = cache.map.get(o);
   if(isDefined(h)) return h;
-  h = opt(cache.pcg.integer(0x7FFFFFFF));
+  h = opt(randomInt());
   cache.map.set(o, h);
   return h;
 }
@@ -104,6 +108,7 @@ export function hashIterator(it: Iterator<any>): number {
 }
 
 export function hashPlainObject(o: Object): number {
+  OBJECT_HASH.map.set(o, randomInt());
   var keys = Object.keys(o);
   var h = 5381;
   for(var i = 0; i < keys.length; i++) {
