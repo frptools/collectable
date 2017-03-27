@@ -2,54 +2,54 @@
 # yarn lockfile v1
 
 
-"@collectable/core@^3.7.0":
-  version "3.7.0"
-  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-3.7.0.tgz#b7de46b8000b37fe47d47619d69c8121a7f359b6"
+"@collectable/core@3.8.0":
+  version "3.8.0"
+  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-3.8.0.tgz#708f67ddadc2a81c4a8daad3e53e6ab9ba019bbd"
 
-"@collectable/list@^3.5.0":
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/@collectable/list/-/list-3.5.0.tgz#ab893198d0ad8c286b59a15dc829fe0bd4f88a93"
-  dependencies:
-    "@collectable/core" "^3.7.0"
-
-"@collectable/map@^2.5.0":
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/@collectable/map/-/map-2.5.0.tgz#f8705a62d522bcdec7adf3fa8528c36887715e8a"
-  dependencies:
-    "@collectable/core" "^3.7.0"
-    "@typed/curry" "^1.0.1"
-
-"@collectable/red-black-tree@^3.6.0":
+"@collectable/list@3.6.0":
   version "3.6.0"
-  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-3.6.0.tgz#f00e225ea8702799f4d37aaee84a6ce3d61a02e9"
+  resolved "https://registry.yarnpkg.com/@collectable/list/-/list-3.6.0.tgz#36a9c8fadc27ad3dcc8c78ef612ee5037f6c63c0"
   dependencies:
-    "@collectable/core" "^3.7.0"
+    "@collectable/core" "3.8.0"
+
+"@collectable/map@2.6.0":
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/@collectable/map/-/map-2.6.0.tgz#b0401f2cc5e4069885e5833215e9a8fc26315829"
+  dependencies:
+    "@collectable/core" "3.8.0"
     "@typed/curry" "^1.0.1"
 
-"@collectable/set@^2.5.0":
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/@collectable/set/-/set-2.5.0.tgz#6444497901bc71ad11099572dad0bbb3c2082964"
+"@collectable/red-black-tree@3.7.0":
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-3.7.0.tgz#e56490c20c9626e43aac380bd2b47e451521388b"
   dependencies:
-    "@collectable/core" "^3.7.0"
-    "@collectable/map" "^2.5.0"
+    "@collectable/core" "3.8.0"
     "@typed/curry" "^1.0.1"
 
-"@collectable/sorted-map@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-1.7.0.tgz#03e752bdc5fb8bace698ca573b432eb438be547f"
+"@collectable/set@2.6.0":
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/@collectable/set/-/set-2.6.0.tgz#cb1cce23683edfeda492a63a54555f5fdbaaea6c"
   dependencies:
-    "@collectable/core" "^3.7.0"
-    "@collectable/map" "^2.5.0"
-    "@collectable/red-black-tree" "^3.6.0"
+    "@collectable/core" "3.8.0"
+    "@collectable/map" "2.6.0"
     "@typed/curry" "^1.0.1"
 
-"@collectable/sorted-set@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-1.7.0.tgz#d754ee7c5dbc503f5b96f1d446891134613b394d"
+"@collectable/sorted-map@1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-1.8.0.tgz#d65afd338d1c6ccb44f814bdfd180dc434f78d54"
   dependencies:
-    "@collectable/core" "^3.7.0"
-    "@collectable/map" "^2.5.0"
-    "@collectable/red-black-tree" "^3.6.0"
+    "@collectable/core" "3.8.0"
+    "@collectable/map" "2.6.0"
+    "@collectable/red-black-tree" "3.7.0"
+    "@typed/curry" "^1.0.1"
+
+"@collectable/sorted-set@1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-1.8.0.tgz#83c84822af6e673cbb312927ac67c5f4a904bd02"
+  dependencies:
+    "@collectable/core" "3.8.0"
+    "@collectable/map" "2.6.0"
+    "@collectable/red-black-tree" "3.7.0"
     "@typed/curry" "^1.0.1"
 
 "@typed/curry@^1.0.1":
@@ -65,8 +65,8 @@
   resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-2.2.40.tgz#9811dd800ece544cd84b5b859917bf584a150c4c"
 
 "@types/node@^7.0.8":
-  version "7.0.11"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.11.tgz#55680189f2335f080f0aeb57871f0b9823646d89"
+  version "7.0.12"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.12.tgz#ae5f67a19c15f752148004db07cbbb372e69efc9"
 
 abbrev@1:
   version "1.1.0"
@@ -2709,8 +2709,8 @@ type-detect@^1.0.0:
   resolved "https://registry.yarnpkg.com/type-detect/-/type-detect-1.0.0.tgz#762217cc06db258ec48908a1298e8b95121e8ea2"
 
 typescript@^2.2.1:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.2.1.tgz#4862b662b988a4c8ff691cc7969622d24db76ae9"
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.2.2.tgz#606022508479b55ffa368b58fee963a03dfd7b0c"
 
 uid-number@^0.0.6:
   version "0.0.6"
