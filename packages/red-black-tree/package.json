@@ -1,6 +1,6 @@
 {
   "name": "@collectable/red-black-tree",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "[Collectable.js] Immutable Red-Black Tree",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -20,7 +20,7 @@
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
     "@typed/curry": "^1.0.1",
-    "@collectable/core": "^3.5.0"
+    "@collectable/core": "^3.6.0"
   },
   "collectable": {
     "tag": "RBT"
