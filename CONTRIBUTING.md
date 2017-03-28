@@ -93,7 +93,7 @@ The `type` descriptor is a variation on the Google's pseudo-standard for semanti
 | **test**  | -            | Implementation of new unit tests, perf tests and other types of tests
 | **build** | _chore_      | Build process, releases, package publishing, infrastructure for tools, docs, perf tests, unit tests, etc.
 
-- Capitalize the first letter following the initial colon, e.g. "MAIN(test): Fix whatever", not "MAIN(test): fix whatever".
+- Capitalize the first letter following the initial colon, e.g. "MAIN(docs): Fix whatever", not "MAIN(docs): fix whatever".
 - Bug fix commits should describe the bug, rather than the act of fixing it, as the _fix_ tag already does that job, e.g. "LIST(fix): Error when growing the tree, fixes #123", not "LIST(fix): Fix issue with tree growth, fixes #123".
 - The sole exception to the above rule is when fixing something where the _fix_ tag does not apply, e.g. "MAIN(style): Fix typo in README".
 - Write commit messages as present tense, for consistency, e.g. "Implement feature X", rather than "Implemented feature X".

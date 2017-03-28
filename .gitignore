@@ -9,4 +9,5 @@ lib/
 perf/
 packages/cuckoo-filter/
 scripts/.cache.json
+.npmrc
 *.log
