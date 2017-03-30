@@ -13,8 +13,6 @@ An all-you-can-eat buffet of high-performance, [persistent](https://en.wikipedia
 - A robust suite of **high-performance data structures** for most use cases
 - Full **ES2015 module support** so that your application bundle only need grow in size according to what you actually use
 - **Functional API**, prioritising an order of parameters best suited for currying and composition
-- Optional **pre-curried** variant of every API function
-- Optional **immutable class wrappers** for those who prefer a class-based approach at the cost of tree-shaking benefits
 - API for **deep operations** on **nested structures**
 - Deep and shallow **conversion to and from native types**, including arrays, objects, iterables, Maps and Sets
 - Complete set of **TypeScript definitions**
