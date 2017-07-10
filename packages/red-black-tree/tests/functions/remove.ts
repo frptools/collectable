@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {remove, get} from '../../src';
+import {remove, get, set, empty, thaw, size} from '../../src';
 import {RedBlackTreeImpl, Node, isNone} from '../../src/internals';
 import {createTree, getKeys, unsortedValues, verifyRedBlackAdjacencyInvariant, verifyBlackHeightInvariant} from '../test-utils';
 
@@ -18,6 +18,13 @@ suite('[RedBlackTree]', () => {
         tree = <RedBlackTreeImpl<number, string>>remove(unsortedValues[i], tree);
         assert.isUndefined(get(unsortedValues[i], tree), `The key "${unsortedValues[i]}" was not removed`);
       }
+    });
+
+    it('should yield an empty tree when removing the last element of a mutable tree', () => {
+      var tree = thaw(<RedBlackTreeImpl<number, string>>empty());
+      set(1, 'foo', tree);
+      remove(1, tree);
+      assert.strictEqual(size(tree), 0, 'The tree size was not decremented after removing the final element');
     });
 
     test('should reduce the size of the tree by one if the key was found', () => {
