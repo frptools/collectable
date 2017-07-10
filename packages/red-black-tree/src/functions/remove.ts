@@ -61,6 +61,7 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
       return createTree<K, V>(false, tree._compare);
     }
     tree._root = NONE;
+    tree._size = 0;
     return tree;
   }
 
