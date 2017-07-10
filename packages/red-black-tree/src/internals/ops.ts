@@ -136,10 +136,12 @@ export function rotateRightLeft<K, V>(upper: PathNode<K, V>, grandParent: Node<K
 export function swapNodeContents<K, V>(upper: Node<K, V>, lower: Node<K, V> /* ## DEV [[ */, tree: RedBlackTreeStructure<K, V> /* ]] ## */): void {
   log(`[swapNodeContents] upper: ${keyOf(upper)}, lower: ${keyOf(lower)}`); // ## DEV ##
   var key = upper.key;
+  var value = upper.value;
   upper.key = lower.key;
   upper.value = lower.value;
 
   lower.key = key;
+  lower.value = value;
   (<any>upper).__flag = 'swap-key'; // ## DEV ##
   (<any>lower).__flag = 'swap-key'; // ## DEV ##
   log(tree, false, `swap node contents; ${upper.key} <==> ${lower.key}`); // ## DEV ##
