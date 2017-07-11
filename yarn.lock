@@ -2,64 +2,59 @@
 # yarn lockfile v1
 
 
-"@collectable/core@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-4.0.0.tgz#51134337cc332f762fc0d7add5a2bbfe27f11c62"
+"@collectable/core@4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/core/-/core-4.0.1.tgz#5d3613437a57bee7090a2f8c06c8412f733cbf21"
   dependencies:
-    "@frptools/core" "^2.3.0"
+    "@frptools/core" "^3.0.0"
 
-"@collectable/list@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/list/-/list-4.0.0.tgz#7af2d3d1874b461b55736cc1aa9106360c1da595"
+"@collectable/list@4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/list/-/list-4.0.1.tgz#4fe59fad5a5f719569aa6f28ce120bd8fc87178a"
   dependencies:
-    "@collectable/core" "4.0.0"
-    "@frptools/core" "3.8.0"
+    "@collectable/core" "4.0.1"
 
-"@collectable/map@3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/map/-/map-3.0.0.tgz#a95fd2dcd5377c7d4ece45559de013b6bc35bab3"
+"@collectable/map@3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/map/-/map-3.0.1.tgz#f633f5fe320ab1ae0bf10f7aa9a9817bd83f78ef"
   dependencies:
-    "@collectable/core" "4.0.0"
+    "@collectable/core" "4.0.1"
 
-"@collectable/red-black-tree@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-4.0.0.tgz#9f35612a67e1b51fd5ca6be64414e20eb7c57e8f"
+"@collectable/red-black-tree@4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-4.0.1.tgz#a26034264562aa2383e3d30f188da530972f7552"
   dependencies:
-    "@collectable/core" "4.0.0"
+    "@collectable/core" "4.0.1"
 
-"@collectable/set@3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/set/-/set-3.0.0.tgz#3cff72b496076d0054718a86d8c51fde933d86cb"
+"@collectable/set@3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/set/-/set-3.0.1.tgz#d1782eaa82188f0675089df5b8e17d7a4745e29d"
   dependencies:
-    "@collectable/core" "4.0.0"
-    "@collectable/map" "3.0.0"
+    "@collectable/core" "4.0.1"
+    "@collectable/map" "3.0.1"
     "@typed/curry" "^1.0.1"
 
-"@collectable/sorted-map@2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-2.0.0.tgz#16a4f55b2901a2d645515fd10230ac9773c87dae"
+"@collectable/sorted-map@2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-2.0.1.tgz#efe519d94056c60ad4a4b4e38d08e9d5d0762e05"
   dependencies:
-    "@collectable/core" "4.0.0"
-    "@collectable/map" "3.0.0"
-    "@collectable/red-black-tree" "4.0.0"
+    "@collectable/core" "4.0.1"
+    "@collectable/map" "3.0.1"
+    "@collectable/red-black-tree" "4.0.1"
     "@typed/curry" "^1.0.1"
 
-"@collectable/sorted-set@2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-2.0.0.tgz#7a1cebe2af5b5f7ae7f5f4820371939dbdc9a3d3"
+"@collectable/sorted-set@2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-2.0.1.tgz#cae2d6f832ebd94dd0936b017160b84f9cc89e1b"
   dependencies:
-    "@collectable/core" "4.0.0"
-    "@collectable/map" "3.0.0"
-    "@collectable/red-black-tree" "4.0.0"
+    "@collectable/core" "4.0.1"
+    "@collectable/map" "3.0.1"
+    "@collectable/red-black-tree" "4.0.1"
     "@typed/curry" "^1.0.1"
 
-"@frptools/core@3.8.0":
+"@frptools/core@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@frptools/core/-/core-3.0.0.tgz#c90d1f75138cd2ad4b81ab5bc6e0074df737f8b0"
-
-"@frptools/core@^2.3.0":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@frptools/core/-/core-2.4.0.tgz#3ccb7f4f18d720f626e243eb08065512466de961"
 
 "@gulp-sourcemaps/identity-map@1.X":
   version "1.0.1"
