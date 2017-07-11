@@ -1,15 +1,15 @@
-import {removeArrayElement, insertArrayElement} from '@collectable/core';
+import {Mutation, ChangeFlag, removeArrayElement, insertArrayElement} from '@collectable/core';
 import {NOTHING} from '../constants';
 import {LeafNode} from '../LeafNode';
-import {Size, GetValueFn} from '../types';
+import {GetValueFn} from '../types';
 
 export function newCollisionList<K, V>(
-  group: number,
+  mctx: Mutation.Context,
+  change: ChangeFlag,
   hash: number,
   list: Array<LeafNode<K, V>>,
   get: GetValueFn<V>,
-  key: K,
-  size: Size): Array<LeafNode<K, V>> {
+  key: K): Array<LeafNode<K, V>> {
 
   const length = list.length;
 
@@ -25,11 +25,11 @@ export function newCollisionList<K, V>(
       }
 
       if(newValue === NOTHING) {
-        --size.value;
+        change.dec();
         return removeArrayElement(i, list);
       }
 
-      return insertArrayElement(i, new LeafNode(group, hash, key, newValue), list);
+      return insertArrayElement(i, new LeafNode(mctx, hash, key, newValue), list);
     }
   }
 
@@ -39,7 +39,7 @@ export function newCollisionList<K, V>(
     return list;
   }
 
-  ++size.value;
+  change.inc();
 
-  return insertArrayElement(length, new LeafNode(group, hash, key, newValue), list);
+  return insertArrayElement(length, new LeafNode(mctx, hash, key, newValue), list);
 }

@@ -1,10 +1,11 @@
-import {Map, fromObject, unwrap as _unwrap} from '@collectable/map';
+import {unwrap} from '@collectable/core';
+import {HashMap, fromObject} from '@collectable/map';
 import {assert} from 'chai';
-import {Set as HashSet, empty, fromArray, toArray, toNativeSet, unwrap} from '../../src';
+import {HashSetStructure, empty, fromArray, toArray, toNativeSet} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   const values = ['A', 'B', 'C', 'D', 'E'];
-  let set: HashSet<string>;
+  let set: HashSetStructure<string>;
   setup(() => {
     set = fromArray(values);
   });
@@ -30,7 +31,7 @@ suite('[Set]', () => {
   });
 
   suite('unwrap()', () => {
-    let set1: HashSet<any>, map1: Map<any, any>, map2: Map<any, any>;
+    let set1: HashSetStructure<any>, map1: HashMap.Instance<any, any>, map2: HashMap.Instance<any, any>;
     setup(() => {
       map1 = fromObject(values);
       map2 = fromObject(values);
@@ -38,19 +39,15 @@ suite('[Set]', () => {
     });
 
     test('returns an empty array if the set is empty', () => {
-      assert.strictEqual(unwrap(false, empty<string>()).length, 0);
+      assert.strictEqual(unwrap<any[]>(empty<string>()).length, 0);
     });
 
     test('returns an array containing each member of the input set', () => {
-      assert.sameMembers(unwrap(false, set), values);
+      assert.sameMembers(unwrap<any[]>(set), values);
     });
 
-    test('if called with deep=false, the returned array does not unwrap any child collections', () => {
-      assert.sameMembers(unwrap(false, set1), [map1, map2]);
-    });
-
-    test('if called with deep=true, the returned array includes recursively-unwrapped child collections', () => {
-      assert.sameDeepMembers(unwrap(true, set1), [_unwrap(true, map1), _unwrap(true, map2)]);
+    test('the returned array includes recursively-unwrapped child collections', () => {
+      assert.sameDeepMembers(unwrap<any[]>(set1), [unwrap(map1), unwrap(map2)]);
     });
   });
 });

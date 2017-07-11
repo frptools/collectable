@@ -1,8 +1,8 @@
 import {assert} from 'chai';
-import {getGroup, getOwner} from '@collectable/core';
-import {size, isEmpty, isFrozen, fromArray, fromIterable, fromNativeSet} from '../../src';
+import {isImmutable} from '@collectable/core';
+import {size, isEmpty, fromArray, fromIterable, fromNativeSet} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   const values = ['A', 'B', 'C', 'D', 'E'];
 
   suite('fromArray()', () => {
@@ -19,13 +19,7 @@ suite('[Set]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromArray(values)));
-    });
-
-    test('assigns correct group and owner', () => {
-      const set = fromArray(values);
-      assert.isAbove(getGroup(set), 0);
-      assert.strictEqual(getOwner(set), 0);
+      assert.isTrue(isImmutable(fromArray(values)));
     });
   });
 
@@ -48,13 +42,7 @@ suite('[Set]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromIterable(it)));
-    });
-
-    test('assigns correct group and owner', () => {
-      const set = fromIterable(it);
-      assert.isAbove(getGroup(set), 0);
-      assert.strictEqual(getOwner(set), 0);
+      assert.isTrue(isImmutable(fromIterable(it)));
     });
   });
 
@@ -74,13 +62,7 @@ suite('[Set]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromNativeSet(nativeSet)));
-    });
-
-    test('assigns correct group and owner', () => {
-      const set = fromNativeSet(nativeSet);
-      assert.isAbove(getGroup(set), 0);
-      assert.strictEqual(getOwner(set), 0);
+      assert.isTrue(isImmutable(fromNativeSet(nativeSet)));
     });
   });
 });

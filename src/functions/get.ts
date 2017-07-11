@@ -1,10 +1,9 @@
-import {Collection, CollectionTypeInfo, isCollection} from '@collectable/core';
-import {isIndexable} from '../internals';
+import {IndexedCollection, isIndexedCollection} from '@collectable/core';
 
-export function getIn(path: any[], collection: Collection<any>): any {
-  var i = 0, value: any = collection, type: CollectionTypeInfo;
-  while(i < path.length && isCollection(value) && (type = value['@@type'], isIndexable(type))) {
-    value = type.get(path[i++], value);
+export function getIn<R = any, K = any, V = any>(path: any[], collection: IndexedCollection<K, V>): R {
+  var i = 0, value: any = collection;
+  while(i < path.length && isIndexedCollection(value)) {
+    value = IndexedCollection.get(path[i++], value);
   }
   return value;
 }

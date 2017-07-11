@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import {empty, isEmpty, size, fromArray} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('size()', () => {
     test('returns 0 for an empty set', () => {
       assert.strictEqual(size(empty()), 0);

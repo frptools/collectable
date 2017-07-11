@@ -1,31 +1,32 @@
 import {assert} from 'chai';
-import {size, empty, isFrozen, has, set, updateTree, update, thaw, values, fromPairs} from '../../src';
-import {RedBlackTreeImpl} from '../../src/internals';
+import {isImmutable, modify} from '@collectable/core';
+import {size, emptyWithNumericKeys, has, set, updateTree, update, values, fromPairsWithNumericKeys} from '../../src';
+import {RedBlackTreeStructure} from '../../src/internals';
 import {createTree, sortedValues, arrayFrom} from '../test-utils';
 
-var tree: RedBlackTreeImpl<any, any>,
-    emptyTree: RedBlackTreeImpl<any, any>,
-    mixedTree: RedBlackTreeImpl<number, any>;
+var tree: RedBlackTreeStructure<any, any>,
+    emptyTree: RedBlackTreeStructure<any, any>,
+    mixedTree: RedBlackTreeStructure<number, any>;
 
 suite('[RedBlackTree]', () => {
   setup(() => {
-    emptyTree = <RedBlackTreeImpl<any, any>>empty();
+    emptyTree = <RedBlackTreeStructure<any, any>>emptyWithNumericKeys();
     tree = createTree();
-    mixedTree = <RedBlackTreeImpl<number, any>>fromPairs<number, any>([[2, 'X'], [4, {foo: 'bar'}], [6, 123]]);
+    mixedTree = <RedBlackTreeStructure<number, any>>fromPairsWithNumericKeys<any>([[2, 'X'], [4, {foo: 'bar'}], [6, 123]]);
   });
 
   suite('updateTree()', () => {
-    test('returns the same tree if no changes are made', () => {
-      const tree1 = updateTree(tree => {}, tree);
-      assert.strictEqual(tree1, tree);
-    });
+    // test('returns the same tree if no changes are made', () => {
+    //   const tree1 = updateTree(tree => {}, tree);
+    //   assert.strictEqual(tree1, tree);
+    // });
 
     test('treats the inner tree as mutable', () => {
       const tree1 = updateTree(tree => {
-        assert.isFalse(isFrozen(tree));
+        assert.isFalse(isImmutable(tree));
         set(1, '#1', tree);
       }, tree);
-      assert.isTrue(isFrozen(tree1));
+      assert.isTrue(isImmutable(tree1));
       assert.deepEqual(Array.from(values(tree1)), [1].concat(sortedValues).map(n => `#${n}`));
     });
   });
@@ -62,20 +63,20 @@ suite('[RedBlackTree]', () => {
       assert.notStrictEqual(mixedTree, tree1);
       assert.notStrictEqual(mixedTree, tree2);
       assert.notStrictEqual(mixedTree, tree3);
-      assert.deepEqual(arrayFrom(tree1), [[2, 'K'], [4, {foo: 'bar'}], [6, 123]]);
-      assert.deepEqual(arrayFrom(tree2), [[2, 'X'], [4, {foo: 'baz'}], [6, 123]]);
-      assert.deepEqual(arrayFrom(tree3), [[2, 'X'], [4, {foo: 'bar'}], [6, 42]]);
+      assert.deepEqual<any>(arrayFrom(tree1), [[2, 'K'], [4, {foo: 'bar'}], [6, 123]]);
+      assert.deepEqual<any>(arrayFrom(tree2), [[2, 'X'], [4, {foo: 'baz'}], [6, 123]]);
+      assert.deepEqual<any>(arrayFrom(tree3), [[2, 'X'], [4, {foo: 'bar'}], [6, 42]]);
     });
 
     test('returns the same tree, modified with the updated value, if the tree was not currently frozen', () => {
-      const tree0 = thaw(mixedTree);
+      const tree0 = modify(mixedTree);
       const tree1 = update(c => 'K', 2, tree0);
       const tree2 = update(o => ({foo: 'baz'}), 4, tree0);
       const tree3 = update(n => 42, 6, tree0);
       assert.strictEqual(tree0, tree1);
       assert.strictEqual(tree0, tree2);
       assert.strictEqual(tree0, tree3);
-      assert.deepEqual(arrayFrom(tree0), [[2, 'K'], [4, {foo: 'baz'}], [6, 42]]);
+      assert.deepEqual<any>(arrayFrom(tree0), [[2, 'K'], [4, {foo: 'baz'}], [6, 42]]);
     });
   });
 });

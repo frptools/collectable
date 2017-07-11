@@ -1,11 +1,22 @@
-import {getOwner, getGroup} from '@collectable/core';
-import {Set, isFrozen} from '../src';
+import {isMutable, isUndefined} from '@collectable/core';
+import {HashSet} from '../src';
 
-export function snapshot<T>(set: Set<T>): object {
+let _id = 0;
+const CACHE = new WeakMap<object, number>();
+function ctxid(obj: object): number {
+  var id = CACHE.get(obj);
+  if(isUndefined(id)) {
+    id = ++_id;
+    CACHE.set(obj, id);
+  }
+  return id;
+}
+
+export function snapshot<T>(set: HashSet.Instance<T>): object {
   return {
-    owner: getOwner(set),
-    group: getGroup(set),
-    frozen: isFrozen(set),
+    token: ctxid(set['@@mctx'].token),
+    context: ctxid(set['@@mctx']),
+    mutable: isMutable(set),
     values: Array.from(set)
   };
 }

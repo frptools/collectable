@@ -1,12 +1,11 @@
-import {isImmutable} from '@collectable/core';
-import {HashSet, HashSetImpl, cloneAsMutable, refreeze, isHashSet} from '../internals';
+import {modify, commit} from '@collectable/core';
+import {HashSetStructure, isHashSet} from '../internals';
 
-export type UpdateSetCallback<T> = (set: HashSet<T>) => HashSet<T>|void;
+export type UpdateSetCallback<T> = (set: HashSetStructure<T>) => HashSetStructure<T>|void;
 
-export function update<T>(callback: UpdateSetCallback<T>, set: HashSet<T>): HashSet<T>;
-export function update<T>(callback: UpdateSetCallback<T>, set: HashSetImpl<T>): HashSetImpl<T> {
-  var immutable = isImmutable(set._owner) && (set = cloneAsMutable(set), true);
+export function update<T>(callback: UpdateSetCallback<T>, set: HashSetStructure<T>): HashSetStructure<T> {
+  set = modify(set);
   var result = callback(set);
   if(isHashSet<T>(result)) set = result;
-  return immutable ? refreeze(set) : set;
+  return commit(set);
 }

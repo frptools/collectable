@@ -1,10 +1,10 @@
 import {assert} from 'chai';
-import {Set, has, fromArray} from '../../src';
+import {HashSetStructure, has, fromArray} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('has()', () => {
     const values = ['A', 'B', 'C', 'D', 'E'];
-    let set: Set<string>;
+    let set: HashSetStructure<string>;
     suiteSetup(() => {
       set = fromArray(values);
     });

@@ -1,9 +1,9 @@
-import {log, publish} from './debug'; // ## DEV ##
+import {log, publish} from './_dev'; // ## DEV ##
 import {max, isDefined, isUndefined} from '@collectable/core';
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, invertOffset, invertAnchor, normalizeIndex, verifyIndex} from './common';
 import {View} from './view';
 import {Slot, ExpansionParameters} from './slot';
-import {List, createList, getView, getOtherView, setView} from './list';
+import {ListStructure, createList, getView, getOtherView, setView} from './List';
 
 /**
  * Checks whether a list ordinal position lies within the absolute range of a slot within the list
@@ -60,7 +60,7 @@ function isAncestor<T>(upperView: View<T>, lowerView: View<T>, listSize: number)
  *
  * @memberOf ListState
  */
-function selectView<T>(list: List<T>, ordinal: number, asWriteTarget: boolean): View<T> {
+function selectView<T>(list: ListStructure<T>, ordinal: number, asWriteTarget: boolean): View<T> {
   var left = list._left, right = list._right, resolve = asWriteTarget;
   var anchor: OFFSET_ANCHOR;
   if(left.isNone()) {
@@ -122,14 +122,15 @@ export class TreeWorker<T> {
     return TreeWorker._getDefaults().defaultTemporary;
   }
 
-  static refocusView<T>(list: List<T>, view: View<T>, ordinal: number, asAltView: boolean, asWriteTarget: boolean) {
+  static refocusView<T>(list: ListStructure<T>, view: View<T>, ordinal: number, asAltView: boolean, asWriteTarget: boolean) {
+    log(`[TreeWorker.refocusView] Begin refocus view ${view.id}`); // ## DEV ##
     var worker = TreeWorker.defaultTemporary<T>().reset(list, view, list._group);
     view = worker.refocusView(ordinal, asAltView, asWriteTarget);
     worker.dispose();
     return view;
   }
 
-  static focusOrdinal<T>(list: List<T>, ordinal: number, asWriteTarget: boolean): View<T>|undefined {
+  static focusOrdinal<T>(list: ListStructure<T>, ordinal: number, asWriteTarget: boolean): View<T>|undefined {
     ordinal = verifyIndex(list._size, ordinal);
     if(ordinal === -1) return void 0;
     var view = selectView(list, ordinal, asWriteTarget);
@@ -137,23 +138,25 @@ export class TreeWorker<T> {
       : TreeWorker.refocusView<T>(list, view, ordinal, false, asWriteTarget);
   }
 
-  static focusEdge<T>(list: List<T>, edge: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
+  static focusEdge<T>(list: ListStructure<T>, edge: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
+    log(`[TreeWorker.focusEdge] Retrieving best view prior to focusing edge`); // ## DEV ##
     var view = getView(list, edge, asWriteTarget);
+    log(`[TreeWorker.focusEdge] Attempting focus edge for view ${view.id}`); // ## DEV ##
     view = view.offset > 0 || (asWriteTarget && !view.slot.isReserved() && !view.isRoot())
       ? TreeWorker.refocusView<T>(list, view, edge === OFFSET_ANCHOR.LEFT ? 0 : list._size - 1, false, asWriteTarget)
       : view;
     return view;
   }
 
-  static focusHead<T>(list: List<T>, asWriteTarget: boolean): View<T> {
+  static focusHead<T>(list: ListStructure<T>, asWriteTarget: boolean): View<T> {
     return TreeWorker.focusEdge(list, OFFSET_ANCHOR.LEFT, asWriteTarget);
   }
 
-  static focusTail<T>(list: List<T>, asWriteTarget: boolean): View<T> {
+  static focusTail<T>(list: ListStructure<T>, asWriteTarget: boolean): View<T> {
     return TreeWorker.focusEdge(list, OFFSET_ANCHOR.RIGHT, asWriteTarget);
   }
 
-  static focusView<T>(list: List<T>, ordinal: number, anchor: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
+  static focusView<T>(list: ListStructure<T>, ordinal: number, anchor: OFFSET_ANCHOR, asWriteTarget: boolean): View<T> {
     var view = getView(list, anchor, true, ordinal);
     return isViewInRange(view, ordinal, list._size) ? view
       : TreeWorker.refocusView<T>(list, view, ordinal, false, true);
@@ -178,7 +181,7 @@ export class TreeWorker<T> {
     return !this.other.isNone();
   }
 
-  reset(list: List<T>, view: View<T>, group, otherCommitMode = COMMIT_MODE.NO_CHANGE): TreeWorker<T> {
+  reset(list: ListStructure<T>, view: View<T>, group: number, otherCommitMode = COMMIT_MODE.NO_CHANGE): TreeWorker<T> {
     log(`[TreeWorker#reset] RESET WORKER for view: ${view.id} (other view: ${getOtherView(list, view.anchor).isNone() ? 'NONE' : getOtherView(list, view.anchor).id})`); // ## DEV ##
     this.list = list;
     this.current = view;
@@ -284,7 +287,7 @@ export class TreeWorker<T> {
 
       parentView = childView.parent.ensureEditable(group);
       parentSlot = parentView.slot;
-      var hasChanges = childView.hasUncommittedChanges();
+      hasChanges = childView.hasUncommittedChanges();
       log(`[TreeWorker#ascend] Child view (${childView.id}) ${hasChanges ? 'DOES have' : 'has NO'} uncommitted changes`); // ## DEV ##
 
       // If the child wasn't already reserved with a placeholder slot, and no reservation has been requested, then there is
@@ -516,7 +519,8 @@ export class TreeWorker<T> {
       view.slot.resolveChild(ordinal - offset, shift, out /* ## DEV [[ */, this.list /* ]] ## */);
       if(out.slot.isReserved()) {
         while(view !== this.current) {
-          var discarded = view, view = discarded.parent;
+          var discarded = view;
+          view = discarded.parent;
           View.pushReusableView(discarded);
         }
         return void 0;
@@ -564,7 +568,7 @@ export class TreeWorker<T> {
   }
 }
 
-export function getAtOrdinal<T>(list: List<T>, ordinal: number): T|undefined {
+export function getAtOrdinal<T>(list: ListStructure<T>, ordinal: number): T|undefined {
   ordinal = normalizeIndex(list._size, ordinal);
   var view = TreeWorker.focusOrdinal<T>(list, ordinal, false);
   if(view === void 0) return void 0;

@@ -1,8 +1,6 @@
-import {curry2} from '@typed/curry';
 import {assert} from 'chai';
-import {empty, isThawed, get, set, unwrap as _unwrap} from '../../src';
-
-const unwrap = curry2(_unwrap)(false);
+import {empty, get, set} from '../../src';
+import {isMutable, unwrap} from '@collectable/core';
 
 suite('[Map]', () => {
   suite('get()', () => {
@@ -11,7 +9,7 @@ suite('[Map]', () => {
 
       assert.strictEqual(get('x', map), 3);
 
-      assert.isFalse(isThawed(map));
+      assert.isFalse(isMutable(map));
       assert.deepEqual(unwrap(map), {x: 3});
     });
 
@@ -20,7 +18,7 @@ suite('[Map]', () => {
 
       assert.isUndefined(get('y', map));
 
-      assert.isFalse(isThawed(map));
+      assert.isFalse(isMutable(map));
       assert.deepEqual(unwrap(map), {x: 3});
     });
   });

@@ -1,5 +1,8 @@
 import {isDefined} from '@collectable/core';
-import {RedBlackTree, RedBlackTreeImpl, RedBlackTreeIterator, RedBlackTreeEntry, PathNode, BRANCH, isNone} from '../internals';
+import {
+  RedBlackTreeStructure, RedBlackTreeIterator, RedBlackTreeValueIterator, RedBlackTreeKeyIterator,
+  RedBlackTreeEntry, PathNode, BRANCH, isNone
+} from '../internals';
 
 /**
  * Retrieves the last entry in the tree.
@@ -7,11 +10,10 @@ import {RedBlackTree, RedBlackTreeImpl, RedBlackTreeIterator, RedBlackTreeEntry,
  * @export
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
- * @param {RedBlackTree<K, V>} tree The input tree
+ * @param {RedBlackTreeStructure<K, V>} tree The input tree
  * @returns {([K, V]|undefined)} A key/value tuple for the last entry in the tree, or undefined if the tree was empty
  */
-export function last<K, V>(tree: RedBlackTree<K, V>): RedBlackTreeEntry<K, V>|undefined;
-export function last<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeEntry<K, V>|undefined {
+export function last<K, V = null>(tree: RedBlackTreeStructure<K, V>): RedBlackTreeEntry<K, V>|undefined {
   if(tree._size === 0) return void 0;
   var node = tree._root;
   while(!isNone(node._right)) {
@@ -26,10 +28,10 @@ export function last<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeEntry<K, V
  * @export
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
- * @param {RedBlackTree<K, V>} tree The input tree
+ * @param {RedBlackTreeStructure<K, V>} tree The input tree
  * @returns {([K, V]|undefined)} The key of the last entry in the tree, or undefined if the tree was empty
  */
-export function lastKey<K, V>(tree: RedBlackTree<K, V>): K|undefined {
+export function lastKey<K, V = null>(tree: RedBlackTreeStructure<K, V>): K|undefined {
   var node = last(tree);
   return isDefined(node) ? node.key : void 0;
 }
@@ -40,10 +42,10 @@ export function lastKey<K, V>(tree: RedBlackTree<K, V>): K|undefined {
  * @export
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
- * @param {RedBlackTree<K, V>} tree The input tree
+ * @param {RedBlackTreeStructure<K, V>} tree The input tree
  * @returns {([K, V]|undefined)} The value of the last entry in the tree, or undefined if the tree was empty
  */
-export function lastValue<K, V>(tree: RedBlackTree<K, V>): V|undefined {
+export function lastValue<K, V = null>(tree: RedBlackTreeStructure<K, V>): V|undefined {
   var node = last(tree);
   return isDefined(node) ? node.value : void 0;
 }
@@ -56,16 +58,23 @@ export function lastValue<K, V>(tree: RedBlackTree<K, V>): V|undefined {
  * @export
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
- * @param {RedBlackTree<K, V>} tree The input tree
+ * @param {RedBlackTreeStructure<K, V>} tree The input tree
  * @returns {RedBlackTreeIterator<K, V>} An iterator for entries in the tree
  */
-export function iterateFromLast<K, V>(tree: RedBlackTree<K, V>): RedBlackTreeIterator<K, V>;
-export function iterateFromLast<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeIterator<K, V> {
+export function iterateFromLast<K, V = null>(tree: RedBlackTreeStructure<K, V>): RedBlackTreeIterator<K, V> {
   var path: PathNode<K, V> = PathNode.NONE;
   var node = tree._root;
   while(!isNone(node)) {
     path = PathNode.next(node, path, BRANCH.RIGHT);
     node = node._right;
   }
-  return new RedBlackTreeIterator<K, V>(path, true);
+  return RedBlackTreeIterator.create(path, tree._compare, true);
+}
+
+export function iterateValuesFromLast<K, V = null>(tree: RedBlackTreeStructure<K, V>): RedBlackTreeValueIterator<K, V> {
+  return new RedBlackTreeValueIterator<K, V>(iterateFromLast<K, V>(tree));
+}
+
+export function iterateKeysFromLast<K, V = null>(tree: RedBlackTreeStructure<K, V>): RedBlackTreeKeyIterator<K, V> {
+  return new RedBlackTreeKeyIterator<K, V>(iterateFromLast<K, V>(tree));
 }

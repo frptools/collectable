@@ -1,68 +1,52 @@
-export interface PersistentStructureTypeInfo {
-  readonly type: symbol;
-  owner(collection: any): number;
-  group(collection: any): number;
-  equals(other: any, collection: any): boolean;
-  hash(collection: any): number;
-  unwrap(collection: any): any;
+import {modify, commit, UpdaterFn, update as _update} from '@collectable/core';
+import {RecursiveDataStructure} from '@collectable/core';
+
+export type CollectionEntry<K, V> = [K, V]|{key: K, value: V}|K|V;
+
+export interface Collection<T, U = any> extends RecursiveDataStructure<U>, Iterable<T> {
+  readonly '@@is-collection': true;
+  readonly '@@size': number;
 }
 
-export interface CollectionTypeInfo extends PersistentStructureTypeInfo {
-  readonly indexable: boolean;
+export interface IndexedCollection<K, V, T extends CollectionEntry<K, V> = any, U = any> extends Collection<T, U> {
+  '@@get'(key: K): V|undefined;
+  '@@has'(key: K): boolean;
+  '@@set'(key: K, value: V): this;
+  '@@update'(updater: (value: V, collection: this) => any, key: K): this;
+  '@@verifyKey'(key: K): boolean;
 }
 
-export interface IndexableCollectionTypeInfo extends CollectionTypeInfo {
-  get(key: any, collection: any): any;
-  has(key: any, collection: any): boolean;
-  set(key: any, value: any, collection: any): any;
-  update(key: any, updater: (value) => any, collection: any): any;
-  verifyKey(key: any, collection: any): boolean;
-}
-
-export interface PersistentStructure {
-  readonly '@@type': PersistentStructureTypeInfo;
-}
-
-export interface Collection<T> extends PersistentStructure {
-  readonly '@@type': CollectionTypeInfo;
-  [Symbol.iterator](): IterableIterator<T>;
-}
-
-export function isPersistentStructure(value: any): value is PersistentStructure {
-  return value && typeof value === 'object' && '@@type' in value;
-}
-
-export function isCollection<T>(value: any): value is Collection<T> {
-  return isPersistentStructure(value) && 'indexable' in value['@@type'];
-}
-
-export function isEqual(a: any, b: any) {
-  if(a === b) return true;
-  if(!isPersistentStructure(a) || !isPersistentStructure(b) || a['@@type'] !== b['@@type']) return false;
-  const type = a['@@type'];
-  return type.equals(a, b);
-}
-
-const CIRCULARS = new WeakMap<any, any>();
-export function preventCircularRefs<T, U extends PersistentStructure>(createTarget: (source: U) => T, unwrap: (source: U, target: T) => T, source: U): T {
-  if(CIRCULARS.has(source)) {
-    return CIRCULARS.get(source);
+export namespace IndexedCollection {
+  export function has<K, V, T extends CollectionEntry<K, V>, U>(key: K, collection: IndexedCollection<K, V, T, U>): boolean {
+    return collection['@@has'](key);
   }
-  var target = createTarget(source);
-  CIRCULARS.set(source, target);
-  var value = unwrap(source, target);
-  CIRCULARS.delete(source);
-  return value;
+
+  export function get<K, V, T extends CollectionEntry<K, V>, U>(key: K, collection: IndexedCollection<K, V, T, U>): V|undefined {
+    return collection['@@get'](key);
+  }
+
+  export function set<K, V, T extends CollectionEntry<K, V>, U, C extends IndexedCollection<K, V, T, U>>(key: K, value: V, collection: C): C {
+    return collection['@@set'](key, value);
+  }
+
+  export function verifyKey<K, V, T extends CollectionEntry<K, V>, U, C extends IndexedCollection<K, V, T, U>>(key: K, collection: C): boolean {
+    return collection['@@verifyKey'](key);
+  }
+
+  export function update<K, V, T extends CollectionEntry<K, V>, U, C extends IndexedCollection<K, V, T, U>>(updater: UpdaterFn<C, C|void>, collection: C): C {
+    return _update(updater, collection);
+  }
+
+  export function updateEntry<K, V, T extends CollectionEntry<K, V>, U, C extends IndexedCollection<K, V, T, U>>(updater: (value: V, collection: C) => any, key: K, collection: C): C {
+    var next = modify(collection);
+    next = next['@@update'](updater, key) || next;
+    return commit(next);
+  }
+}
+export function isCollection<T, U = any>(value: object): value is Collection<T, U> {
+  return '@@is-collection' in <any>value;
 }
 
-export function unwrapAny(value: any): any {
-  return isPersistentStructure(value) ? value['@@type'].unwrap(value) : value;
-}
-
-export function getGroup<T>(collection: Collection<T>): number {
-  return collection['@@type'].group(collection);
-}
-
-export function getOwner<T>(collection: Collection<T>): number {
-  return collection['@@type'].owner(collection);
+export function isIndexedCollection<K, V, T extends CollectionEntry<K, V>, U = any>(value: object): value is IndexedCollection<K, V, T, U> {
+  return isCollection(value) && '@@verifyKey' in <any>value;
 }

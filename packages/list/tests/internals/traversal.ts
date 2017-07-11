@@ -1,12 +1,13 @@
 import {assert} from 'chai';
-import {empty, append, fromArray, get, size, thaw} from '../../src';
+import {modify} from '@collectable/core';
+import {empty, append, fromArray, get, size} from '../../src';
 import {Slot, OFFSET_ANCHOR, TreeWorker} from '../../src/internals';
 import {text, BRANCH_FACTOR, makeValues} from '../test-utils';
 
 suite('[Internals: traversal]', () => {
   test('activating the left view for the first time', () => {
     var values = makeValues(Math.pow(BRANCH_FACTOR, 3) + 1);
-    var list = thaw(empty<any>());
+    var list = modify(empty<any>());
     for(var i = 0; i < values.length; i++) {
       append(values[i], list);
     }
@@ -17,7 +18,7 @@ suite('[Internals: traversal]', () => {
 
   test('refocusing a view down a path reserved by the other view', () => {
     var values = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR + 1);
-    var list = thaw(empty<any>());
+    var list = modify(empty<any>());
     for(var i = 0; i < values.length; i++) {
       append(values[i], list);
     }

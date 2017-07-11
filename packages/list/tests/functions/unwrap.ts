@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import {empty, mapToArray, fromArray, unwrap, set} from '../../src';
+import {unwrap} from '@collectable/core';
+import {empty, mapToArray, fromArray, toArray, set} from '../../src';
 import {BRANCH_FACTOR, makeValues} from '../test-utils';
 
 function setX(values: string[]): string[] {
@@ -46,33 +47,35 @@ suite('[List]', () => {
     });
   });
 
-  suite('unwrap()', () => {
+  suite('toArray()', () => {
     test('returns an empty array if the list is empty', () => {
-      assert.deepEqual(unwrap(false, empty()), []);
-    });
-
-    test('also unwraps1 embedded collections if deep == true', () => {
-      var list = fromArray(['X', 'Y', fromArray([fromArray(['A']), 'B']), 'C']);
-      assert.deepEqual(unwrap(true, list), ['X', 'Y', [['A'], 'B'], 'C']);
+      assert.deepEqual(toArray(empty()), []);
     });
 
     test('returns an array of all values in a single-node list', () => {
       var list = fromArray(values1);
-      assert.deepEqual(unwrap(false, list), values1);
+      assert.deepEqual(toArray(list), values1);
     });
 
     test('returns an array of all values in a two-level list', () => {
-      assert.deepEqual(unwrap(false, fromArray(values2)), values2);
+      assert.deepEqual(toArray(fromArray(values2)), values2);
     });
 
     test('returns an array of all values in a three-level list', () => {
       var list = set(BRANCH_FACTOR + 1, 'X', fromArray(values3));
-      assert.deepEqual(unwrap(false, list), values3x);
+      assert.deepEqual(toArray(list), values3x);
     });
 
     test('returns an array of all values in a four-level list', () => {
       var list = set(BRANCH_FACTOR + 1, 'X', fromArray(values4));
-      assert.deepEqual(unwrap(false, list), values4x);
+      assert.deepEqual(toArray(list), values4x);
+    });
+  });
+
+  suite('unwrap()', () => {
+    test('unwraps embedded collections', () => {
+      var list = fromArray(['X', 'Y', fromArray([fromArray(['A']), 'B']), 'C']);
+      assert.deepEqual(unwrap(list), ['X', 'Y', [['A'], 'B'], 'C']);
     });
   });
 });

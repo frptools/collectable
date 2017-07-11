@@ -1,10 +1,9 @@
 import {isEqual as equals} from '@collectable/core';
 import {iterateFromFirst} from '@collectable/red-black-tree';
-import {SortedSet, SortedSetImpl} from '../internals';
+import {SortedSetStructure} from '../internals';
 import {size} from './size';
 
-export function isEqual<T>(set: SortedSet<T>, other: SortedSet<T>): boolean;
-export function isEqual<T>(set: SortedSetImpl<T>, other: SortedSetImpl<T>): boolean {
+export function isEqual<T>(set: SortedSetStructure<T>, other: SortedSetStructure<T>): boolean {
   if(set === other) return true;
   if(size(set) !== size(other) ||
      set._select !== other._select ||

@@ -1,8 +1,6 @@
-import {Collection} from '@collectable/core';
+import {HashMap} from '@collectable/map';
 import {RedBlackTree} from '@collectable/red-black-tree';
-import {HashMap} from './named-externals';
 
-export interface SortedMap<K, V> extends Collection<[K, V]> {}
 export interface Entry<K, V, U> {
   index: number;
   view: U;
@@ -10,9 +8,9 @@ export interface Entry<K, V, U> {
   value: V;
 }
 
-export type SortedMapEntry<K, V, U> = {
+export type SortedMapEntry<K, V = null, U = undefined> = {
   readonly [P in keyof Entry<K, V, U>]: Entry<K, V, U>[P];
 };
 
-export type KeyMap<K, V, U> = HashMap<K, Entry<K, V, U>>;
-export type SortedValues<K, V, U> = RedBlackTree<Entry<K, V, U>, null>;
+export type KeyMap<K, V, U> = HashMap.Instance<K, Entry<K, V, U>>;
+export type SortedValues<K, V, U> = RedBlackTree.Instance<Entry<K, V, U>, null>;

@@ -1,6 +1,6 @@
 import {assert} from 'chai';
-import {getGroup, getOwner} from '@collectable/core';
-import {size, isEmpty, isFrozen, fromIterable} from '../../src';
+import {isImmutable} from '@collectable/core';
+import {size, isEmpty, fromIterable} from '../../src';
 import {fromStringArray} from '../test-utils';
 
 suite('[SortedSet]', () => {
@@ -20,13 +20,7 @@ suite('[SortedSet]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromStringArray(values)));
-    });
-
-    test('assigns correct group and owner', () => {
-      const set = fromStringArray(values);
-      assert.isAbove(getGroup(set), 0);
-      assert.strictEqual(getOwner(set), 0);
+      assert.isTrue(isImmutable(fromStringArray(values)));
     });
   });
 
@@ -49,13 +43,7 @@ suite('[SortedSet]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromIterable(it)));
-    });
-
-    test('assigns correct group and owner', () => {
-      const set = fromIterable(it);
-      assert.isAbove(getGroup(set), 0);
-      assert.strictEqual(getOwner(set), 0);
+      assert.isTrue(isImmutable(fromIterable(it)));
     });
   });
 });

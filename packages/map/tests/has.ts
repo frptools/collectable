@@ -1,7 +1,7 @@
 import {assert} from 'chai';
-import {empty, thaw, has, set, remove} from '../src';
+import {empty, has, set, remove} from '../src';
 
-suite('[Map]', () => {
+suite('[HashMap]', () => {
   suite('has()', () => {
     test('returns true if the specified property exists', () => {
       var map = set('x', 3, empty<string, number>());
@@ -14,14 +14,14 @@ suite('[Map]', () => {
     });
 
     test('returns true after assigning a property to a mutable map', () => {
-      var map = thaw(empty<string, number>());
+      var map = empty<string, number>(true);
       assert.isFalse(has('x', map));
       set('x', 3, map);
       assert.isTrue(has('x', map));
     });
 
     test('return false after removing a property from a mutable map', () => {
-      var map = thaw(set('x', 3, empty<string, number>()));
+      var map = set('x', 3, empty<string, number>(true));
       assert.isTrue(has('x', map));
       remove('x', map);
       assert.isFalse(has('x', map));

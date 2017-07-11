@@ -1,22 +1,23 @@
 import {assert} from 'chai';
-import {arrayFrom, fromPairs, unwrap} from '../../src';
-import {RedBlackTreeImpl} from '../../src/internals';
+import {unwrap} from '@collectable/core';
+import {arrayFrom, fromPairsWithNumericKeys, fromPairsWithStringKeys, set, remove} from '../../src';
+import {RedBlackTreeStructure} from '../../src/internals';
 import {empty, createTree, sortedValues, toPair} from '../test-utils';
 
-var tree: RedBlackTreeImpl<any, any>,
-    emptyTree: RedBlackTreeImpl<any, any>,
-    deepTree: RedBlackTreeImpl<any, any>;
+var tree: RedBlackTreeStructure<any, any>,
+    emptyTree: RedBlackTreeStructure<any, any>,
+    deepTree: RedBlackTreeStructure<any, any>;
 
 suite('[RedBlackTree]', () => {
   setup(() => {
     emptyTree = empty();
     tree = createTree();
-    deepTree = <RedBlackTreeImpl<number, any>>fromPairs<number, any>([
+    deepTree = fromPairsWithNumericKeys<any>([
       [2, 'X'],
       [6, 'Y'],
-      [4, fromPairs<number, any>([
+      [4, fromPairsWithNumericKeys<any>([
         [5, 'X'],
-        [1, fromPairs([
+        [1, fromPairsWithStringKeys<any>([
           ['A', 6]
         ])],
         [3, 'B']
@@ -31,27 +32,29 @@ suite('[RedBlackTree]', () => {
     });
 
     test('returns an array of pairs of all entries in a single-node tree', () => {
-      var tree = fromPairs([[3, 5]]);
+      var tree = fromPairsWithNumericKeys([[3, 5]]);
       assert.deepEqual(arrayFrom(tree).map(toPair), [[3, 5]]);
     });
 
     test('returns an array of pairs of all entries in a populated tree', () => {
-      assert.deepEqual(arrayFrom(tree).map(toPair), sortedValues.map(n => [n, `#${n}`]));
+      assert.deepEqual<any>(arrayFrom(tree).map(toPair), sortedValues.map(n => [n, `#${n}`]));
     });
 
     test('returns an array of transformed values if a mapping function is provided', () => {
-      const map = (v, k, i) => `${k};${v};${i}`;
+      const map = (v: string, k: number, i: number) => `${k};${v};${i}`;
       const expected = sortedValues.map((v, i) => map(`#${v}`, v, i));
       assert.deepEqual(arrayFrom(map, tree), expected);
     });
   });
 
   suite('unwrap()', () => {
-    test('returns an empty array if the tree is empty', () => {
-      assert.deepEqual(unwrap(false, emptyTree), {});
+    test('returns an empty object if the tree is empty', () => {
+      assert.deepEqual(unwrap(emptyTree), {});
+      const emptiedTree = remove(3, set(3, null, emptyTree));
+      assert.deepEqual(unwrap(emptiedTree), {});
     });
 
-    test('also unwraps embedded collections if deep == true', () => {
+    test('also unwraps embedded collections', () => {
       const expected = {
         '2': 'X',
         '4': {
@@ -64,16 +67,16 @@ suite('[RedBlackTree]', () => {
         '6': 'Y',
         '10': 'C'
       };
-      assert.deepEqual(unwrap(true, deepTree), expected);
+      assert.deepEqual(unwrap(deepTree), expected);
     });
 
-    test('returns an array of all entries in a single-node tree', () => {
-      var tree = fromPairs([[3, 5]]);
-      assert.deepEqual(unwrap(false, tree), {'3': 5});
+    test('returns an containing all entries in a single-node tree', () => {
+      var tree = fromPairsWithNumericKeys([[3, 5]]);
+      assert.deepEqual(unwrap(tree), {'3': 5});
     });
 
-    test('returns an array of all entries in a populated tree', () => {
-      assert.deepEqual(unwrap(false, tree), sortedValues.reduce((o, n) => (o[n] = `#${n}`, o), {}));
+    test('returns an containing all entries in a populated tree', () => {
+      assert.deepEqual(unwrap(tree), sortedValues.reduce((o, n) => (o[n] = `#${n}`, o), <any>{}));
     });
   });
 });

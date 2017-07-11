@@ -1,9 +1,4 @@
-import {CollectionTypeInfo, IndexableCollectionTypeInfo} from '@collectable/core';
 import {fromArray, fromObject, fromMap, fromSet, fromIterable} from '../functions';
-
-export function isIndexable(type: CollectionTypeInfo): type is IndexableCollectionTypeInfo {
-  return type.indexable;
-}
 
 export function convertValue(value: any): any {
   if(value && typeof value === 'object') {

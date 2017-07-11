@@ -1,11 +1,9 @@
-import {isImmutable} from '@collectable/core';
-import {Map, size, set as setValue} from '@collectable/map';
-import {HashSet, HashSetImpl, isIterable, cloneAsMutable, refreeze} from '../internals';
+import {modify, commit} from '@collectable/core';
+import {HashMap, size, set as setValue} from '@collectable/map';
+import {HashSetStructure, isIterable} from '../internals';
 
-export function union<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSet<T>): HashSet<T>;
-export function union<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSetImpl<T>): HashSetImpl<T> {
-  var immutable = isImmutable(main._owner);
-  var outputSet = immutable ? cloneAsMutable(main) : main;
+export function union<T>(other: HashSetStructure<T>|T[]|Iterable<T>, main: HashSetStructure<T>): HashSetStructure<T> {
+  var outputSet = modify(main);
   var outputMap = outputSet._map;
 
   if(Array.isArray(other)) {
@@ -17,21 +15,23 @@ export function union<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSetImpl<T>
     }
   }
 
+  commit(outputSet);
+
   if(size(outputMap) === size(main._map)) {
     return main;
   }
 
   outputSet._map = outputMap;
-  return immutable ? refreeze(outputSet) : outputSet;
+  return outputSet;
 }
 
-function unionArray<T>(inputMap: Map<T, null>, array: T[], outputMap: Map<T, null>): void {
+function unionArray<T>(inputMap: HashMap.Instance<T, null>, array: T[], outputMap: HashMap.Instance<T, null>): void {
   for(var i = 0; i < array.length; i++) {
     setValue(array[i], null, outputMap);
   }
 }
 
-function unionIterable<T>(inputMap: Map<T, null>, it: Iterator<T>, outputMap: Map<T, null>): void {
+function unionIterable<T>(inputMap: HashMap.Instance<T, null>, it: Iterator<T>, outputMap: HashMap.Instance<T, null>): void {
   var current: IteratorResult<T>;
   while(!(current = it.next()).done) {
     setValue(current.value, null, outputMap);

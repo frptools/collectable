@@ -1,9 +1,9 @@
 import {iterator} from '../internals/primitives';
-import {HashMap, HashMapImpl} from '../internals/HashMap';
+import {HashMapStructure} from '../internals/HashMap';
 import {Leaf} from '../internals/nodes';
 
-export function values<K, V>(map: HashMap<K, V>): IterableIterator<V>;
-export function values<K, V>(map: HashMapImpl<K, V>): IterableIterator<V> {
+export function values<K, V>(map: HashMapStructure<K, V>): IterableIterator<V>;
+export function values<K, V>(map: HashMapStructure<K, V>): IterableIterator<V> {
   return iterator(map._root, nodeValues);
 }
 

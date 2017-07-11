@@ -1,23 +1,23 @@
 import {assert} from 'chai';
-import {empty as emptyTree, set, arrayFrom as arrayFromTree} from '../src';
-import {RedBlackTree, RedBlackTreeImpl, RedBlackTreeEntry, Node, isNone} from '../src/internals';
+import {emptyWithNumericKeys as emptyTree, set, arrayFrom as arrayFromTree} from '../src';
+import {RedBlackTreeStructure, RedBlackTreeEntry, Node, isNone} from '../src/internals';
 
-export function empty(): RedBlackTreeImpl<number, number> {
-  return <RedBlackTreeImpl<number, number>>emptyTree<number, number>();
+export function empty(): RedBlackTreeStructure<number, number> {
+  return <RedBlackTreeStructure<number, number>>emptyTree<number>();
 }
 
 export function toPair<K, V>(entry: RedBlackTreeEntry<K, V>): [K, V] {
   return [entry.key, entry.value];
 }
 
-export function arrayFrom<K, V>(tree: RedBlackTree<K, V>): [K, V][] {
+export function arrayFrom<K, V>(tree: RedBlackTreeStructure<K, V>): [K, V][] {
   return arrayFromTree(tree).map(toPair);
 }
 
 export const NONE = [['black', void 0]];
 
-export function represent<K, V>(treeOrNode: RedBlackTree<K, V>|Node<K, any>, set?: Set<Node<K, V>>): any[] {
-  var node = treeOrNode instanceof RedBlackTreeImpl ? treeOrNode._root : <Node<any, any>>treeOrNode;
+export function represent<K, V>(treeOrNode: RedBlackTreeStructure<K, V>|Node<K, any>, set?: Set<Node<K, V>>): any[] {
+  var node = treeOrNode instanceof RedBlackTreeStructure ? treeOrNode._root : <Node<any, any>>treeOrNode;
   if(!node || isNone(node)) return NONE;
   var value = [node._red ? 'red' : 'black', node.key];
   if(!set) set = new Set();
@@ -67,16 +67,15 @@ export const unsortedValues = [4740, 7125, 672, 6864, 7232, 8875, 7495, 8161, 70
 
 export const sortedValues = unsortedValues.slice().sort((a, b) => a - b);
 
-export function createTree(): RedBlackTreeImpl<number, string> {
-  var tree = emptyTree<number, string>();
+export function createTree(): RedBlackTreeStructure<number, string> {
+  var tree = emptyTree<string>();
   unsortedValues.forEach(n => {
     tree = set(n, `#${n}`, tree);
   });
-  return <RedBlackTreeImpl<number, string>>tree;
+  return <RedBlackTreeStructure<number, string>>tree;
 }
 
-export function verifyRedBlackAdjacencyInvariant<K, V>(tree: RedBlackTree<K, V>): void;
-export function verifyRedBlackAdjacencyInvariant<K, V>(tree: RedBlackTreeImpl<K, V>): void {
+export function verifyRedBlackAdjacencyInvariant<K, V>(tree: RedBlackTreeStructure<K, V>): void {
   function descend(node: Node<K, V>, previousWasRed: boolean): void {
     assert.isFalse(node._red && previousWasRed, 'Adjacent red nodes found, violating red-black tree invariant');
     if(!isNone(node._left)) descend(node._left, node._red);
@@ -85,8 +84,7 @@ export function verifyRedBlackAdjacencyInvariant<K, V>(tree: RedBlackTreeImpl<K,
   descend(tree._root, false);
 }
 
-export function verifyBlackHeightInvariant<K, V>(tree: RedBlackTree<K, V>): void;
-export function verifyBlackHeightInvariant<K, V>(tree: RedBlackTreeImpl<K, V>): void {
+export function verifyBlackHeightInvariant<K, V>(tree: RedBlackTreeStructure<K, V>): void {
   var measuring = true, depth = 0;
   function descend(node: Node<K, V>, count: number): void {
     if(isNone(node._left)) {

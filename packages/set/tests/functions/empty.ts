@@ -2,7 +2,7 @@ import {assert} from 'chai';
 import {empty as emptyMap} from '@collectable/map';
 import {empty, size, isSet} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('empty()', () => {
     test('returns a set with size 0', () => {
       assert.strictEqual(size(empty()), 0);

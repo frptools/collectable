@@ -1,18 +1,16 @@
-import {curry2} from '@typed/curry';
+import {unwrap, isMutable} from '@collectable/core';
 import {assert} from 'chai';
-import {empty, isThawed, updateMap, set, unwrap} from '../src';
+import {empty, updateMap, set} from '../src';
 
-const toJS = curry2(unwrap)(false);
-
-suite('[Map]', () => {
+suite('[HashMap]', () => {
   suite('updateMap()', () => {
-    // test('returns the same map if no changes are made', () => {
-    //   var map = empty();
-    //   var map1 = updateMap(m => {}, map);
-    //   var map2 = updateMap(m => m, map);
-    //   assert.strictEqual(map, map1);
-    //   assert.strictEqual(map, map2);
-    // });
+    test('returns the same map if no changes are made', () => {
+      var map = empty();
+      var map1 = updateMap(m => {}, map);
+      var map2 = updateMap(m => m, map);
+      assert.strictEqual(map, map1);
+      assert.strictEqual(map, map2);
+    });
 
     test('creates a mutable copy of the original map, then freezes and returns it', () => {
       var map = set('x', 3, empty());
@@ -21,7 +19,7 @@ suite('[Map]', () => {
       var map1 = updateMap(m => {
         set('y', 5, m);
         set('z', 7, m);
-        assert.isTrue(isThawed(m));
+        assert.isTrue(isMutable(m));
         map1a = m;
       }, map);
 
@@ -32,20 +30,18 @@ suite('[Map]', () => {
         assert.strictEqual(m, m1);
         assert.strictEqual(m, m2);
         map2a = m2;
-        assert.isTrue(isThawed(m));
+        assert.isTrue(isMutable(m));
         return m2;
       }, map1);
 
-      assert.notStrictEqual(map1, map1a);
-      assert.notStrictEqual(map2, map2a);
-      assert.isFalse(isThawed(map));
-      assert.isFalse(isThawed(map1));
-      assert.isFalse(isThawed(map2));
-      assert.isTrue(isThawed(map1a));
-      assert.isTrue(isThawed(map2a));
-      assert.deepEqual(toJS(map), {x: 3});
-      assert.deepEqual(toJS(map1), {x: 3, y: 5, z: 7});
-      assert.deepEqual(toJS(map2), {x: 9, y: 5, z: 7, k: 1});
+      assert.strictEqual(map1, map1a);
+      assert.strictEqual(map2, map2a);
+      assert.isFalse(isMutable(map));
+      assert.isFalse(isMutable(map1));
+      assert.isFalse(isMutable(map2));
+      assert.deepEqual(unwrap(map), {x: 3});
+      assert.deepEqual(unwrap(map1), {x: 3, y: 5, z: 7});
+      assert.deepEqual(unwrap(map2), {x: 9, y: 5, z: 7, k: 1});
     });
   });
 });

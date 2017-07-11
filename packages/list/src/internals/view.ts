@@ -1,8 +1,8 @@
-import {log} from './debug'; // ## DEV ##
-import {nextId} from '@collectable/core'; // ## DEV ##
+import {log} from './_dev'; // ## DEV ##
 import {abs, isUndefined} from '@collectable/core';
 import {OFFSET_ANCHOR, invertOffset, invertAnchor} from './common';
 import {Slot, emptySlot} from './slot';
+import {nextId} from './List'; // ## DEV ##
 
 export class View<T> {
   static popReusableView<T>(group: number): View<T>|undefined {
@@ -180,7 +180,7 @@ export class View<T> {
     }
   }
 
-  disposeIfInGroup(...group: number[]): void
+  disposeIfInGroup(...group: number[]): void;
   disposeIfInGroup(): void {
     for(var i = 0; i < arguments.length; i++) {
       if(this.group === arguments[i]) {
@@ -202,3 +202,14 @@ emptyLeftView.id = 0; // ## DEV ##
 var emptyRightView = new View<any>(0, 0, OFFSET_ANCHOR.RIGHT, 0, 0, 0, voidView, emptySlot);
 emptyRightView.id = 0; // ## DEV ##
 var _nextReusableView = voidView;
+
+// // ## DEV [[
+// const READONLY_VIEW_INTERCEPTOR: ProxyHandler<any> = {
+//   set(target: any, p: PropertyKey, value: any, receiver: any): boolean {
+//     throw new Error(`Attempted to write property "${p}" of read-only view`);
+//   }
+// };
+// voidView = new Proxy(voidView, READONLY_VIEW_INTERCEPTOR);
+// emptyLeftView = new Proxy(voidView, READONLY_VIEW_INTERCEPTOR);
+// emptyRightView = new Proxy(voidView, READONLY_VIEW_INTERCEPTOR);
+// // ]] ##

@@ -1,123 +1,160 @@
-import {CollectionTypeInfo, ComparatorFn, KeyedSelectorFn, isDefined, nextId, batch, hashIterator} from '@collectable/core';
 import {
-  RedBlackTree, emptyTree, thawTree, freezeTree, isTreeThawed, cloneTree,
-  HashMap, emptyHashMap, thawHashMap, freezeHashMap, isHashMapThawed, cloneHashMap
-} from './named-externals';
-import {SortedMap, Entry} from './types';
+  Mutation, Associative, IndexedCollection, ComparatorFn, KeyedSelectorFn,
+  isObject, isDefined, hashIterator, unwrap, unwrapKey
+} from '@collectable/core';
+import {RedBlackTree} from '@collectable/red-black-tree';
+import {HashMap} from '@collectable/map';
+import {Entry} from './types';
 import {setItem} from './values';
-import {isEqual, unwrap} from '../functions';
+import {isEqual, get, set, has, update} from '../functions';
 import {iteratePairs} from './iterate';
 
-type UntypedSortedMapImpl = SortedMapImpl<any, any, any>;
+type UntypedSortedMapInternal = SortedMapStructure<any, any, any>;
 type UntypedSortedMapItem = Entry<any, any, any>;
 
-const SORTEDSET_TYPE: CollectionTypeInfo = {
-  type: Symbol('Collectable.SortedMap'),
-  indexable: false,
-
-  equals(other: any, set: UntypedSortedMapImpl): boolean {
-    return isEqual(other, set);
-  },
-
-  hash(map: UntypedSortedMapImpl): number {
-    return hashIterator(iteratePairs(map));
-  },
-
-  unwrap(set: UntypedSortedMapImpl): any {
-    return unwrap(true, set);
-  },
-
-  group(set: UntypedSortedMapImpl): any {
-    return set._group;
-  },
-
-  owner(set: UntypedSortedMapImpl): any {
-    return set._owner;
-  }
-};
-
-export class SortedMapImpl<K, V, U> implements SortedMap<K, V> {
-  get '@@type'() { return SORTEDSET_TYPE; }
-
+export class SortedMapStructure<K, V, U = any> implements IndexedCollection<K, V, [K, V], Associative<V>> {
+  /** @internal */
   constructor(
-    public _owner: number,
-    public _group: number,
-    public _keyMap: HashMap<K, Entry<K, V, U>>,
-    public _sortedValues: RedBlackTree<Entry<K, V, U>, null>,
+    mctx: Mutation.Context,
+    public _indexed: HashMap.Instance<K, Entry<K, V, U>>,
+    public _sorted: RedBlackTree.Instance<Entry<K, V, U>, null>,
     public _compare: ComparatorFn<Entry<K, V, U>>,
     public _select: KeyedSelectorFn<K, V, U>|undefined,
-  ) {}
+  ) {
+    this['@@mctx'] = mctx;
+  }
+
+  /** @internal */
+  readonly '@@mctx': Mutation.Context;
+
+  /** @internal */
+  get '@@size'(): number { return this._indexed['@@size']; }
+
+  /** @internal */
+  get '@@is-collection'(): true { return true; }
+
+  /** @internal */
+  '@@clone'(mctx: Mutation.Context): SortedMapStructure<K, V, U> {
+    var sctx = Mutation.asSubordinateContext(mctx);
+    return new SortedMapStructure<K, V, U>(
+      mctx,
+      Mutation.clone(this._indexed, sctx),
+      Mutation.clone(this._sorted, sctx),
+      this._compare,
+      this._select
+    );
+  }
+
+  /** @internal */
+  '@@equals'(other: SortedMapStructure<K, V, U>): boolean {
+    return isEqual(this, other);
+  }
+
+  /** @internal */
+  '@@hash'(): number {
+    return hashIterator(iteratePairs(this));
+  }
+
+  /** @internal */
+  '@@unwrap'(): Associative<V> {
+    return unwrap(this);
+  }
+
+  /** @internal */
+  '@@unwrapInto'(target: Associative<V>): Associative<V> {
+    var it = RedBlackTree.keys(this._sorted);
+    var current: IteratorResult<Entry<K, V, U>>;
+    while(!(current = it.next()).done) {
+      var entry = current.value;
+      target[unwrapKey(entry.key)] = unwrap<any>(entry.value);
+    }
+    return target;
+  }
+
+  /** @internal */
+  '@@createUnwrapTarget'(): Associative<V> {
+    return {};
+  }
+
+  /** @internal */
+  '@@get'(key: K): V | undefined {
+    return get(key, this);
+  }
+
+  /** @internal */
+  '@@has'(key: K): boolean {
+    return has(key, this);
+  }
+
+  /** @internal */
+  '@@set'(key: K, value: V): this {
+    return <this>set(key, value, this);
+  }
+
+  /** @internal */
+  '@@update'(updater: (value: V, map: this) => any, key: K): this {
+    return <this>update(updater, key, this);
+  }
+
+  /** @internal */
+  '@@verifyKey'(key: K): boolean {
+    return true;
+  }
 
   [Symbol.iterator](): IterableIterator<[K, V]> {
     return iteratePairs(this);
   }
 }
 
-export function isSortedMap<K, V, U>(arg: any): arg is SortedMapImpl<K, V, U> {
-  return arg && arg['@@type'] === SORTEDSET_TYPE;
+export function isSortedMap<K, V, U>(arg: any): arg is SortedMapStructure<K, V, U> {
+  return isObject(arg) && arg instanceof SortedMapStructure;
 }
 
-export function cloneSortedMap<K, V, U>(mutable: boolean, set: SortedMapImpl<K, V, U>, clear = false): SortedMapImpl<K, V, U> {
-  var map: HashMap<K, Entry<K, V, any>>;
-  var tree: RedBlackTree<Entry<K, V, any>, null>;
+export function cloneSortedMap<K, V, U>(map: SortedMapStructure<K, V, U>, clear = false, mutability?: Mutation.PreferredContext): SortedMapStructure<K, V, U> {
+  var mctx = Mutation.selectContext(mutability);
+  var sctx = Mutation.asSubordinateContext(mctx);
+  var keys: HashMap.Instance<K, Entry<K, V, any>>;
+  var sorted: RedBlackTree.Instance<Entry<K, V, any>, null>;
   if(clear) {
-    map = emptyHashMap<K, Entry<K, V, any>>(mutable);
-    tree = emptyTree<Entry<K, V, any>, null>(mutable, set._compare);
+    keys = HashMap.empty<K, Entry<K, V, any>>(sctx);
+    sorted = RedBlackTree.empty<Entry<K, V, any>, null>(map._compare, sctx);
   }
   else {
-    map = mutable ? isHashMapThawed(set._keyMap) ? cloneHashMap(set._keyMap) : thawHashMap(set._keyMap) : freezeHashMap(set._keyMap);
-    tree = mutable ? isTreeThawed(set._sortedValues) ? cloneTree(set._sortedValues) : thawTree(set._sortedValues) : freezeTree(set._sortedValues);
+    keys = Mutation.clone(map._indexed, sctx);
+    sorted = Mutation.clone(map._sorted, sctx);
   }
-  return new SortedMapImpl<K, V, U>(batch.owner(mutable), nextId(), map, tree, set._compare, set._select);
+  return new SortedMapStructure<K, V, U>(mctx, keys, sorted, map._compare, map._select);
 }
 
-export function cloneAsImmutable<K, V, U>(set: SortedMapImpl<K, V, U>): SortedMapImpl<K, V, U> {
-  return cloneSortedMap(false, set);
-}
-
-export function cloneAsMutable<K, V, U>(set: SortedMapImpl<K, V, U>): SortedMapImpl<K, V, U> {
-  return cloneSortedMap(true, set);
-}
-
-export function refreeze<K, V, U>(set: SortedMapImpl<K, V, U>): SortedMapImpl<K, V, U> {
-  set._owner = 0;
-  (<any>set._sortedValues)._owner = 0;
-  (<any>set._keyMap)._owner = 0;
-  return set;
-}
-
-export function createSet<K, V, U>(mutable: boolean, values: [K, V][]|Iterable<[K, V]>, compare?: ComparatorFn<Entry<K, V, U>>, select?: KeyedSelectorFn<K, V, U>): SortedMapImpl<K, V, U> {
-
-  var set = emptySet<K, V, U>(true, <ComparatorFn<Entry<K, V, U>>>compare, <KeyedSelectorFn<K, V, U>>select);
-  var map = set._keyMap;
-  var tree = set._sortedValues;
+export function createMap<K, V, U>(values: [K, V][]|Iterable<[K, V]>, compare?: ComparatorFn<Entry<K, V, U>>, select?: KeyedSelectorFn<K, V, U>, mutability?: Mutation.PreferredContext): SortedMapStructure<K, V, U> {
+  var map = Mutation.modify(emptySortedMap<K, V, U>(compare, select, mutability));
+  var indexed = map._indexed;
+  var sorted = map._sorted;
 
   if(Array.isArray(values)) {
     for(var i = 0; i < values.length; i++) {
       var value = values[i];
-      setItem(value[0], value[1], map, tree, select);
+      setItem(value[0], value[1], indexed, sorted, select);
     }
   }
   else {
     var it = values[Symbol.iterator]();
     var current: IteratorResult<[K, V]>;
     while(!(current = it.next()).done) {
-      var value = current.value;
-      setItem(value[0], value[1], map, tree, select);
+      value = current.value;
+      setItem(value[0], value[1], indexed, sorted, select);
     }
   }
 
-  return refreeze(set);
+  return Mutation.commit(map);
 }
 
-export function extractTree<K, V, U>(set: SortedMap<K, V>): RedBlackTree<Entry<K, V, U>, null>;
-export function extractTree<K, V, U>(set: SortedMapImpl<K, V, U>): RedBlackTree<Entry<K, V, U>, null> {
-  return set._sortedValues;
+export function extractTree<K, V, U>(set: SortedMapStructure<K, V, U>): RedBlackTree.Instance<Entry<K, V, U>, null> {
+  return set._sorted;
 }
 
-export function extractMap<K, V, U>(set: SortedMap<K, V>): HashMap<K, Entry<K, V, U>>;
-export function extractMap<K, V, U>(set: SortedMapImpl<K, V, U>): HashMap<K, Entry<K, V, U>> {
-  return set._keyMap;
+export function extractMap<K, V, U>(set: SortedMapStructure<K, V, U>): HashMap.Instance<K, Entry<K, V, U>> {
+  return set._indexed;
 }
 
 const DEFAULT_COMPARATOR: ComparatorFn<UntypedSortedMapItem> = (a: UntypedSortedMapItem, b: UntypedSortedMapItem) => a.index - b.index;
@@ -131,18 +168,18 @@ function createComparatorFn<K, V, U>(compare: ComparatorFn<Entry<K, V, U>>): Com
   }, COMPARATOR_CACHE.set(compare, fn), fn);
 }
 
-export function emptySet<K, V>(mutable: boolean, compare?: ComparatorFn<Entry<K, V, any>>): SortedMapImpl<K, V, undefined>;
-export function emptySet<K, V, U>(mutable: boolean, compare?: ComparatorFn<Entry<K, V, U>>, select?: KeyedSelectorFn<K, V, U>): SortedMapImpl<K, V, U>;
-export function emptySet<K, V, U>(mutable = false, compare?: ComparatorFn<Entry<K, V, U>>, select?: KeyedSelectorFn<K, V, U>): SortedMapImpl<K, V, U> {
+export function emptySortedMap<K, V, U = any>(compare?: ComparatorFn<Entry<K, V, U>>, select?: KeyedSelectorFn<K, V, U>, mutability?: Mutation.PreferredContext): SortedMapStructure<K, V, U> {
   var comparator = isDefined(compare) ? createComparatorFn(compare) : DEFAULT_COMPARATOR;
+  var mctx = Mutation.selectContext(mutability);
 
-  if(!mutable && comparator === DEFAULT_COMPARATOR) {
-    return isDefined(EMPTY) ? EMPTY : (EMPTY = new SortedMapImpl<K, V, U>(0, 0, emptyHashMap<any, any>(), emptyTree<any, any>(), comparator, void 0));
+  if(Mutation.isImmutableContext(mctx) && comparator === DEFAULT_COMPARATOR) {
+    return isDefined(EMPTY) ? EMPTY : (EMPTY = new SortedMapStructure<K, V, U>(mctx, HashMap.empty<any, any>(), RedBlackTree.empty<any, any>(comparator), comparator, void 0));
   }
 
-  var map = emptyHashMap<K, Entry<K, V, U>>(mutable);
-  var tree = emptyTree<Entry<K, V, U>, null>(mutable, comparator);
-  return new SortedMapImpl<K, V, U>(batch.owner(mutable), nextId(), map, tree, comparator, select);
+  var sctx = Mutation.asSubordinateContext(mctx);
+  var map = HashMap.empty<K, Entry<K, V, U>>(sctx);
+  var tree = RedBlackTree.empty<Entry<K, V, U>, null>(comparator, sctx);
+  return new SortedMapStructure<K, V, U>(mctx, map, tree, comparator, select);
 }
 
-var EMPTY: UntypedSortedMapImpl;
+var EMPTY: UntypedSortedMapInternal;

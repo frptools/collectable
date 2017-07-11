@@ -1,17 +1,18 @@
-import {KeyedMapFn, isImmutable} from '@collectable/core';
-import {HashMap, HashMapImpl, refreeze, replace} from '../internals/HashMap';
-import {empty, reduce, set, thaw} from './index';
+import {Mutation, KeyedMapFn, modify} from '@collectable/core';
+import {HashMapStructure} from '../internals/HashMap';
+import {reduce, set} from './index';
 
-export function map<K, V, R>(f: KeyedMapFn<K, V, R>, map: HashMap<K, V>): HashMap<K, R>;
-export function map<K, V, R>(f: KeyedMapFn<K, V, R>, map: HashMapImpl<K, V>): HashMapImpl<K, R> {
-  var immutable = isImmutable(map._owner);
-  var nextMap = <HashMapImpl<K, R>>thaw(empty<K, R>());
+export function map<K, V, R>(f: KeyedMapFn<K, V, R>, map: HashMapStructure<K, V>): HashMapStructure<K, R>;
+export function map<K, V, R>(f: KeyedMapFn<K, V, R>, map: HashMapStructure<K, V>): HashMapStructure<K, R> {
+  // var nextMap = <HashMap<K, R>>empty<K, R>(true);
+  var nextMap = <HashMapStructure<K, R>><any>modify(map);
   reduce(
-    function(newMap: HashMapImpl<K, R>, value: V, key: K, index: number) {
+    function(newMap: HashMapStructure<K, R>, value: V, key: K, index: number) {
       return set(key, f(value, key, index), newMap);
     },
     nextMap,
     map
   );
-  return immutable ? refreeze(nextMap): replace(nextMap, <HashMapImpl<K, R>><any>map);
-};
+  return Mutation.commit(nextMap);
+  // return immutable ? refreeze(nextMap): replace(nextMap, <HashMap<K, R>><any>map);
+}

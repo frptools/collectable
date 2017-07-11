@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import {SortedSet, filter, size, has, thaw, isThawed, isFrozen} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {SortedSetStructure, filter, size, has} from '../../src';
 import {fromNumericArray} from '../test-utils';
 
 suite('[SortedSet]', () => {
@@ -28,9 +29,9 @@ suite('[SortedSet]', () => {
     });
 
     suite('if the input set is mutable', () => {
-      let set0: SortedSet<number>, set1: SortedSet<number>;
+      let set0: SortedSetStructure<number>, set1: SortedSetStructure<number>;
       suiteSetup(() => {
-        set0 = thaw(fromNumericArray(values0));
+        set0 = modify(fromNumericArray(values0));
         set1 = filter(predicate1, set0);
       });
 
@@ -39,7 +40,7 @@ suite('[SortedSet]', () => {
       });
 
       test('the input set is still mutable', () => {
-        assert.isTrue(isThawed(set0));
+        assert.isTrue(isMutable(set0));
       });
 
       test('the set size is decreased by the number of items excluded by the filter', () => {
@@ -60,7 +61,7 @@ suite('[SortedSet]', () => {
     });
 
     suite('if the input set is immutable', () => {
-      let set0: SortedSet<number>, set1: SortedSet<number>;
+      let set0: SortedSetStructure<number>, set1: SortedSetStructure<number>;
       suiteSetup(() => {
         set0 = fromNumericArray(values0);
         set1 = filter(predicate1, set0);
@@ -70,11 +71,11 @@ suite('[SortedSet]', () => {
         assert.notStrictEqual(set0, set1);
         assert.strictEqual(size(set0), values0.length);
         assert.deepEqual(Array.from(set0), values0);
-        assert.isTrue(isFrozen(set0));
+        assert.isTrue(isImmutable(set0));
       });
 
       test('a new immutable set is returned', () => {
-        assert.isTrue(isFrozen(set1));
+        assert.isTrue(isImmutable(set1));
       });
 
       test('the size of the new set equals that of the input set, minus the number of items excluded by the filter', () => {

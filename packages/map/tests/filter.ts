@@ -6,7 +6,7 @@ function pairFromNumber(n: number): [number, string] {
   return [n, `#${n}`];
 }
 
-suite('[Map]', () => {
+suite('[HashMap]', () => {
   suite('filter()', () => {
     let values0: Pair[], values1: Pair[], values2: Pair[];
     const predicate1 = (value: string, key: number) => ((key >>> 1) << 1) !== key;

@@ -1,2 +1,5 @@
+import * as HashMap from './HashMap';
+export {HashMap};
+
 export * from './functions';
-export {HashMap as Map} from './internals/HashMap';
+export {HashMapStructure} from './internals/HashMap';

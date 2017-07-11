@@ -1,7 +1,10 @@
-import {isMutable} from '@collectable/core';
-import {HashMap, HashMapImpl, cloneMap} from '../internals/HashMap';
+import {Mutation} from '@collectable/core';
+import {HashMapStructure} from '../internals/HashMap';
 
-export function clone<K, V>(map: HashMap<K, V>): HashMap<K, V>;
-export function clone<K, V>(map: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  return cloneMap(isMutable(map._owner), map);
+export function clone<K, V>(map: HashMapStructure<K, V>, context?: Mutation.PreferredContext): HashMapStructure<K, V> {
+  return new HashMapStructure(
+    Mutation.selectContext(context),
+    map._root,
+    map._size,
+  );
 }

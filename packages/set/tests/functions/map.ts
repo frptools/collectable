@@ -1,16 +1,17 @@
 import {assert} from 'chai';
-import {Set, map, size, thaw, isThawed, isFrozen, fromArray} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {HashSetStructure, map, size, fromArray} from '../../src';
 
 const toLower = (a: string) => a.toLowerCase();
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('map()', () => {
     const values = ['A', 'B', 'C', 'D', 'E'];
 
     suite('if the input set is mutable', () => {
-      let set: Set<string>;
+      let set: HashSetStructure<string>;
       setup(() => {
-        set = thaw(fromArray(values));
+        set = modify(fromArray(values));
       });
 
       test('the input set is returned', () => {
@@ -19,7 +20,7 @@ suite('[Set]', () => {
 
       test('the input set is still mutable', () => {
         map(toLower, set);
-        assert.isTrue(isThawed(set));
+        assert.isTrue(isMutable(set));
       });
 
       test('the set size remains unchanged', () => {
@@ -38,7 +39,7 @@ suite('[Set]', () => {
     });
 
     suite('if the input set is immutable', () => {
-      let set0: Set<string>, set1: Set<string>;
+      let set0: HashSetStructure<string>, set1: HashSetStructure<string>;
       setup(() => {
         set0 = fromArray(values);
         set1 = map(toLower, set0);
@@ -46,12 +47,12 @@ suite('[Set]', () => {
 
       test('the input set is not modified', () => {
         assert.strictEqual(size(set0), values.length);
-        assert.isTrue(isFrozen(set0));
+        assert.isTrue(isImmutable(set0));
         assert.sameMembers(Array.from(set0), values);
       });
 
       test('a new immutable set is returned', () => {
-        assert.isTrue(isFrozen(set1));
+        assert.isTrue(isImmutable(set1));
         assert.notStrictEqual(set0, set1);
       });
 

@@ -1,9 +1,8 @@
 import {KeyedFilterFn} from '@collectable/core';
-import {SortedMap, SortedMapImpl, Entry} from '../internals';
+import {SortedMapStructure, Entry} from '../internals';
 import {iterate} from '../internals';
 
-export function forEach<K, V>(fn: KeyedFilterFn<K, V>, map: SortedMap<K, V>): SortedMap<K, V>;
-export function forEach<K, V, U>(fn: KeyedFilterFn<K, V>, map: SortedMapImpl<K, V, U>): SortedMapImpl<K, V, U> {
+export function forEach<K, V, U = any>(fn: KeyedFilterFn<K, V>, map: SortedMapStructure<K, V, U>): SortedMapStructure<K, V, U> {
   var it = iterate(map);
   var current: IteratorResult<Entry<K, V, U>>;
   var index = 0;
@@ -13,4 +12,4 @@ export function forEach<K, V, U>(fn: KeyedFilterFn<K, V>, map: SortedMapImpl<K, 
     if(signal === false) break;
   }
   return map;
-};
+}

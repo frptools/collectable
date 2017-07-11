@@ -1,10 +1,10 @@
 import {isEqual as eq} from '@collectable/core';
 import {iterator, identity} from '../internals/primitives';
-import {HashMap, HashMapImpl} from '../internals/HashMap';
+import {HashMapStructure} from '../internals/HashMap';
 import {Leaf} from '../internals/nodes';
 
-export function isEqual<K, V>(map: HashMap<K, V>, other: HashMap<K, V>): boolean;
-export function isEqual<K, V>(map: HashMapImpl<K, V>, other: HashMapImpl<K, V>): boolean {
+export function isEqual<K, V>(map: HashMapStructure<K, V>, other: HashMapStructure<K, V>): boolean;
+export function isEqual<K, V>(map: HashMapStructure<K, V>, other: HashMapStructure<K, V>): boolean {
   if(map === other) return true;
   if(map._size !== other._size) return false;
 

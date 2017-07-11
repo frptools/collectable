@@ -1,10 +1,11 @@
 import {assert} from 'chai';
-import {Set, add, has, size, fromArray, thaw, isThawed, isFrozen} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {HashSetStructure, add, has, size, fromArray} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('add()', () => {
     suite('when the item already exists in the set', () => {
-      let set0: Set<string>, set1: Set<string>;
+      let set0: HashSetStructure<string>, set1: HashSetStructure<string>;
       setup(() => {
         set0 = fromArray(['A', 'B', 'C']);
         set1 = add('B', set0);
@@ -25,10 +26,10 @@ suite('[Set]', () => {
     });
 
     suite('when the item does not exist in the set', () => {
-      let set0: Set<string>, set1: Set<string>;
+      let set0: HashSetStructure<string>, set1: HashSetStructure<string>;
       suite('if the input set is mutable', () => {
         suiteSetup(() => {
-          set0 = thaw(fromArray(['A', 'B', 'C']));
+          set0 = modify(fromArray(['A', 'B', 'C']));
           set1 = add('D', set0);
         });
 
@@ -37,7 +38,7 @@ suite('[Set]', () => {
         });
 
         test('the input set is still mutable', () => {
-          assert.isTrue(isThawed(set1));
+          assert.isTrue(isMutable(set1));
         });
 
         test('the set size is incremented', () => {
@@ -64,11 +65,11 @@ suite('[Set]', () => {
         test('the input set is not modified', () => {
           assert.sameMembers(Array.from(set0), ['A', 'B', 'C']);
           assert.strictEqual(size(set0), 3);
-          assert.isTrue(isFrozen(set0));
+          assert.isTrue(isImmutable(set0));
         });
 
         test('a new immutable set is returned', () => {
-          assert.isTrue(isFrozen(set1));
+          assert.isTrue(isImmutable(set1));
         });
 
         test('the size of the new set is one greater than that of the input set', () => {

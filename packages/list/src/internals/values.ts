@@ -1,7 +1,7 @@
-import {isUndefined, MapFn, blockCopy, blockCopyMapped, copyArray} from '@collectable/core';
-import {isMutable, nextId} from '@collectable/core';
+import {log} from './_dev'; // ## DEV ##
+import {isMutable, isUndefined, MapFn, blockCopy, blockCopyMapped, copyArray} from '@collectable/core';
 import {CONST, OFFSET_ANCHOR, normalizeIndex, verifyIndex} from './common';
-import {List, cloneList, createList} from './list';
+import {ListStructure, cloneList, createList, nextId} from './List';
 import {View} from './view';
 import {Slot} from './slot';
 import {increaseCapacity} from './capacity';
@@ -9,7 +9,7 @@ import {sliceList} from './slice';
 import {concatLists} from './concat';
 import {TreeWorker, getLeafIndex, getAtOrdinal} from './traversal';
 
-export function setValueAtOrdinal<T>(list: List<T>, ordinal: number, value: T): void {
+export function setValueAtOrdinal<T>(list: ListStructure<T>, ordinal: number, value: T): void {
   ordinal = verifyIndex(list._size, ordinal);
   if(ordinal === -1) {
     throw new Error(`Index ${ordinal} is out of range`);
@@ -22,22 +22,23 @@ export function setValueAtOrdinal<T>(list: List<T>, ordinal: number, value: T): 
   view.slot.slots[index] = value;
 }
 
-export function appendValues<T>(list: List<T>, values: T[]): List<T> {
+export function appendValues<T>(list: ListStructure<T>, values: T[]): ListStructure<T> {
   var tail = TreeWorker.focusTail(list, true);
+  log(`[appendValues] Tail view ${tail.id} retrieved prior to appending values`); // ## DEV ##
   var innerIndex = tail.slot.size % CONST.BRANCH_FACTOR;
   increaseCapacity(list, values.length, false).populate(values, innerIndex);
   list._lastWrite = OFFSET_ANCHOR.RIGHT;
   return list;
 }
 
-export function prependValues<T>(list: List<T>, values: T[]): List<T> {
+export function prependValues<T>(list: ListStructure<T>, values: T[]): ListStructure<T> {
   TreeWorker.focusHead(list, true);
   increaseCapacity(list, values.length, true).populate(values, 0);
   list._lastWrite = OFFSET_ANCHOR.LEFT;
   return list;
 }
 
-export function insertValues<T>(list: List<T>, ordinal: number, values: T[]): List<T> {
+export function insertValues<T>(list: ListStructure<T>, ordinal: number, values: T[]): ListStructure<T> {
   ordinal = normalizeIndex(list._size, ordinal);
   if(ordinal === 0) return prependValues(list, values);
   if(ordinal >= list._size) return appendValues(list, values);
@@ -48,13 +49,13 @@ export function insertValues<T>(list: List<T>, ordinal: number, values: T[]): Li
   return concatLists(list, right);
 }
 
-export function deleteValues<T>(list: List<T>, start: number, end: number): List<T> {
+export function deleteValues<T>(list: ListStructure<T>, start: number, end: number): ListStructure<T> {
   start = normalizeIndex(list._size, start);
   end = normalizeIndex(list._size, end);
   if(start >= end) return list;
   if(start === 0 || end === list._size) {
     if(end - start === list._size) {
-      return createList<T>(isMutable(list._owner));
+      return createList<T>(isMutable(list));
     }
     if(start > 0) {
       sliceList(list, 0, start);
@@ -73,7 +74,7 @@ export function deleteValues<T>(list: List<T>, start: number, end: number): List
 
 export class ListIterator<T> implements IterableIterator<T> {
   private _index = 0;
-  constructor(private _state: List<T>) {}
+  constructor(private _state: ListStructure<T>) {}
 
   next(): IteratorResult<T> {
     if(this._index >= this._state._size) {
@@ -90,11 +91,11 @@ export class ListIterator<T> implements IterableIterator<T> {
   }
 }
 
-export function createIterator<T>(list: List<T>): IterableIterator<T> {
+export function createIterator<T>(list: ListStructure<T>): IterableIterator<T> {
   return new ListIterator(list);
 }
 
-export function arrayFrom<T>(list: List<T>): T[] {
+export function arrayFrom<T>(list: ListStructure<T>): T[] {
   var map = new Map<Slot<T>, Map<number, Slot<T>>>();
   var [root, depth] = getRoot(list, map);
   if(depth === 0) {
@@ -105,7 +106,7 @@ export function arrayFrom<T>(list: List<T>): T[] {
   return array;
 }
 
-export function mapArrayFrom<T, U>(mapper: MapFn<T, U>, list: List<T>, array: U[]): U[] {
+export function mapArrayFrom<T, U>(mapper: MapFn<T, U>, list: ListStructure<T>, array: U[]): U[] {
   var map = new Map<Slot<T>, Map<number, Slot<T>>>();
   var [root, depth] = getRoot(list, map);
   if(depth === 0) {
@@ -117,7 +118,7 @@ export function mapArrayFrom<T, U>(mapper: MapFn<T, U>, list: List<T>, array: U[
   return array;
 }
 
-function getRoot<T>(list: List<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): [Slot<T>, number] {
+function getRoot<T>(list: ListStructure<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): [Slot<T>, number] {
   var left = list._left;
   var right = list._right;
   var root: Slot<T> = <any>void 0;

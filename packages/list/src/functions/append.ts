@@ -1,6 +1,6 @@
-import {isImmutable} from '@collectable/core';
-import {log} from '../internals/debug'; // ## DEV ##
-import {CONST, OFFSET_ANCHOR, List, cloneAsMutable, appendValues, ensureImmutable} from '../internals';
+import {modify, commit} from '@collectable/core';
+import {log} from '../internals/_dev'; // ## DEV ##
+import {CONST, OFFSET_ANCHOR, ListStructure, appendValues} from '../internals';
 
 /**
  * Appends a new value to the end of a list, growing the size of the list by one.
@@ -10,8 +10,8 @@ import {CONST, OFFSET_ANCHOR, List, cloneAsMutable, appendValues, ensureImmutabl
  * @param list - The list to which the value should be appended
  * @returns A list containing the appended value
  */
-export function append<T>(value: T, list: List<T>): List<T> {
-  var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
+export function append<T>(value: T, list: ListStructure<T>): ListStructure<T> {
+  list = modify(list);
   var tail = list._right;
   var slot = tail.slot;
   log(`Begin append of value "${value}" to list of size ${list._size}`); // ## DEV ##
@@ -36,7 +36,7 @@ export function append<T>(value: T, list: List<T>): List<T> {
   else {
     appendValues(list, [value]);
   }
-  return immutable ? ensureImmutable(list, true) : list;
+  return commit(list);
 }
 
 /**
@@ -48,11 +48,11 @@ export function append<T>(value: T, list: List<T>): List<T> {
  * @param list - The list to which the values should be appended
  * @returns A list containing the appended values
  */
-export function appendArray<T>(values: T[], list: List<T>): List<T> {
+export function appendArray<T>(values: T[], list: ListStructure<T>): ListStructure<T> {
   if(values.length === 0) return list;
-  var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
+  list = modify(list);
   appendValues(list, values);
-  return immutable ? ensureImmutable(list, true) : list;
+  return commit(list);
 }
 
 /**
@@ -64,6 +64,6 @@ export function appendArray<T>(values: T[], list: List<T>): List<T> {
  * @param list - The list to which the values should be appended
  * @returns A list containing the appended values
  */
-export function appendIterable<T>(values: Iterable<T>, list: List<T>): List<T> {
+export function appendIterable<T>(values: Iterable<T>, list: ListStructure<T>): ListStructure<T> {
   return appendArray(Array.from(values), list);
 }

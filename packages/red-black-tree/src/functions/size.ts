@@ -1,4 +1,4 @@
-import {RedBlackTree, RedBlackTreeImpl} from '../internals';
+import {RedBlackTreeStructure} from '../internals';
 
 /**
  * Returns the current number of entries in the tree
@@ -6,11 +6,10 @@ import {RedBlackTree, RedBlackTreeImpl} from '../internals';
  * @export
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
- * @param {RedBlackTree<K, V>} tree The input tree
+ * @param {RedBlackTreeStructure<K, V>} tree The input tree
  * @returns {number} The number of entries in the tree
  */
-export function size<K, V>(tree: RedBlackTree<K, V>): number;
-export function size<K, V>(tree: RedBlackTreeImpl<K, V>): number {
+export function size<K, V = null>(tree: RedBlackTreeStructure<K, V>): number {
   return tree._size;
 }
 
@@ -20,10 +19,9 @@ export function size<K, V>(tree: RedBlackTreeImpl<K, V>): number {
  * @export
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
- * @param {RedBlackTree<K, V>} tree The input tree
+ * @param {RedBlackTreeStructure<K, V>} tree The input tree
  * @returns {boolean} True if the tree is empty, otherwise false
  */
-export function isEmpty<K, V>(tree: RedBlackTree<K, V>): boolean;
-export function isEmpty<K, V>(tree: RedBlackTreeImpl<K, V>): boolean {
+export function isEmpty<K, V = null>(tree: RedBlackTreeStructure<K, V>): boolean {
   return tree._size === 0;
 }

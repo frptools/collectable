@@ -1,103 +1,120 @@
-import {Collection, IndexableCollectionTypeInfo, nextId, batch, isDefined, hashIterator} from '@collectable/core';
+import {
+  Mutation,
+  ComparatorFn,
+  Associative,
+  hashIterator,
+  isDefined,
+  isUndefined,
+  isObject,
+  unwrap as _unwrap
+} from '@collectable/core';
+import {IndexedCollection} from '@collectable/core';
 import {Node, RedBlackTreeEntry, NONE} from './node';
-import {unwrap, iterateFromFirst, set, update, get, has, isEqual} from '../functions';
+import {unwrap} from './unwrap';
+import {RedBlackTreeIterator} from './iterator';
+import {iterateFromFirst, set, update, get, has, isEqual} from '../functions';
 
-export const DEFAULT_ComparatorFn: ComparatorFn<any> = function(a: any, b: any): number {
-  return a < b ? -1 : a > b ? 1 : 0;
-};
+export class RedBlackTreeStructure<K, V = null> implements IndexedCollection<K, V, RedBlackTreeEntry<K, V>, Associative<V>> {
+  /** @internal */
+  public _compare: ComparatorFn<K>;
 
-/**
- * A function that compares two keys and returns a value less than 0 if the first is smaller than the second, a value
- * greater than 0 if the second is smaller than the first, or 0 if they're equal.
- */
-export type ComparatorFn<K> = (a: K, b: K) => number;
+  /** @internal */
+  public _root: Node<K, V>;
 
-const REDBLACKTREE_TYPE: IndexableCollectionTypeInfo = {
-  type: Symbol('Collectable.RedBlackTree'),
-  indexable: true,
+  /** @internal */
+  public _size: number;
 
-  equals(other: RedBlackTree<any, any>, tree: RedBlackTreeImpl<any, any>): any {
-    return isEqual(tree, other);
-  },
+  /** @internal */
+  constructor(
+    mctx: Mutation.Context,
+    compare: ComparatorFn<K>,
+    root: Node<K, V>,
+    size: number
+  ) {
+    this['@@mctx'] = mctx;
+    this._compare = compare;
+    this._root = root;
+    this._size = size;
+  }
 
-  hash(tree: RedBlackTreeImpl<any, any>): number {
-    return hashIterator(iterateFromFirst(tree));
-  },
+  /** @internal */
+  readonly '@@mctx': Mutation.Context;
 
-  unwrap(tree: RedBlackTreeImpl<any, any>): any {
-    return unwrap(true, tree);
-  },
+  /** @internal */
+  get '@@is-collection'(): true { return true; }
 
-  group(tree: RedBlackTreeImpl<any, any>): any {
-    return tree._group;
-  },
+  /** @internal */
+  get '@@size'(): number { return this._size; }
 
-  owner(tree: RedBlackTreeImpl<any, any>): any {
-    return tree._owner;
-  },
+  /** @internal */
+  '@@clone'(mctx: Mutation.Context): RedBlackTreeStructure<K, V> {
+    return new RedBlackTreeStructure<K, V>(mctx, this._compare, this._root, this._size);
+  }
 
-  get(key: any, tree: RedBlackTreeImpl<any, any>): any {
-    return get(key, tree);
-  },
+  /** @internal */
+  '@@equals'(other: RedBlackTreeStructure<K, V>): boolean {
+    return isEqual(this, other);
+  }
 
-  has(key: any, tree: RedBlackTreeImpl<any, any>): boolean {
-    return has(key, tree);
-  },
+  /** @internal */
+  '@@hash'(): number {
+    return hashIterator(iterateFromFirst(this));
+  }
 
-  set(key: any, value: any, tree: RedBlackTreeImpl<any, any>): any {
-    return set(key, value, tree);
-  },
+  /** @internal */
+  '@@unwrap'() {
+    return _unwrap(this);
+  }
 
-  update(key: any, updater: (value) => any, tree: RedBlackTreeImpl<any, any>): any {
-    return update(updater, key, tree);
-  },
+  /** @internal */
+  '@@unwrapInto'(target: Associative<V>): Associative<V> {
+    return unwrap(this, target);
+  }
 
-  verifyKey(key: any, tree: RedBlackTreeImpl<any, any>): boolean {
+  /** @internal */
+  '@@createUnwrapTarget'(): Associative<V> {
+    return <Associative<V>>{};
+  }
+
+  /** @internal */
+  '@@get'(key: K): V | undefined {
+    return get(key, this);
+  }
+
+  /** @internal */
+  '@@has'(key: K): boolean {
+    return has(key, this);
+  }
+
+  /** @internal */
+  '@@set'(key: K, value: V): this {
+    return <this>set(key, value, this);
+  }
+
+  /** @internal */
+  '@@update'(updater: (value: V, tree: this) => any, key: K): this {
+    return <this>update(updater, key, this);
+  }
+
+  /** @internal */
+  '@@verifyKey'(key: any): boolean {
     return isDefined(key);
   }
-};
 
-export interface RedBlackTree<K, V> extends Collection<RedBlackTreeEntry<K, V>> {}
-
-export class RedBlackTreeImpl<K, V> implements RedBlackTree<K, V> {
-  readonly '@@type' = REDBLACKTREE_TYPE;
-
-  constructor(
-    public _owner: number,
-    public _group: number,
-    public _compare: ComparatorFn<K>,
-    public _root: Node<K, V>,
-    public _size: number
-  ) {}
-
-  [Symbol.iterator](): IterableIterator<RedBlackTreeEntry<K, V>> {
+  [Symbol.iterator](): RedBlackTreeIterator<K, V> {
     return iterateFromFirst(this);
   }
 }
 
-export function isRedBlackTree<K, V>(arg: any): arg is RedBlackTreeImpl<K, V> {
-  return !!arg && arg['@@type'] === REDBLACKTREE_TYPE;
+export function isRedBlackTree<K, V = any>(arg: any): arg is RedBlackTreeStructure<K, V> {
+  return isObject(arg) && arg instanceof RedBlackTreeStructure;
 }
 
-export function createTree<K, V>(mutable: boolean, ComparatorFn?: ComparatorFn<K>): RedBlackTreeImpl<K, V> {
-  return new RedBlackTreeImpl<K, V>(batch.owner(mutable), nextId(), ComparatorFn || DEFAULT_ComparatorFn, NONE, 0);
+export function createTree<K, V>(compare: ComparatorFn<K>, mutability?: Mutation.PreferredContext): RedBlackTreeStructure<K, V> {
+  return new RedBlackTreeStructure<K, V>(Mutation.selectContext(mutability), compare, NONE, 0);
 }
 
-export function cloneTree<K, V>(mutable: boolean, tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
-  return new RedBlackTreeImpl<K, V>(batch.owner(mutable), nextId(), tree._compare, tree._root, tree._size);
-}
-
-export function cloneAsMutable<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
-  return cloneTree(true, tree);
-}
-
-export function cloneAsImmutable<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
-  return cloneTree(false, tree);
-}
-
-export function doneMutating<K, V>(tree: RedBlackTreeImpl<K, V>): RedBlackTreeImpl<K, V> {
-  if(tree._owner === -1) {
-    tree._owner = 0;
-  }
-  return tree;
+export function cloneTree<K, V>(tree: RedBlackTreeStructure<K, V>, mutability?: Mutation.PreferredContext): RedBlackTreeStructure<K, V> {
+  if(isUndefined(mutability)) mutability = Mutation.isMutable(tree);
+  return new RedBlackTreeStructure<K, V>(Mutation.selectContext(mutability), tree._compare, tree._root, tree._size);
 }

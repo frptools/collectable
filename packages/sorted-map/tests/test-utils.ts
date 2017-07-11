@@ -1,15 +1,25 @@
-import {getOwner, getGroup} from '@collectable/core';
-import {SortedMap as _SortedMap, SortedMapEntry, isFrozen, fromArray as _fromArray} from '../src';
+import {SortedMapStructure as _SortedMap, SortedMapEntry, fromArray as _fromArray} from '../src';
+import {isMutable, isUndefined} from '@collectable/core';
+
+let _id = 0;
+const CACHE = new WeakMap<object, number>();
+function ctxid(obj: object): number {
+  var id = CACHE.get(obj);
+  if(isUndefined(id)) {
+    id = ++_id;
+    CACHE.set(obj, id);
+  }
+  return id;
+}
 
 export function snapshot(map: SortedMap): object {
   return {
-    owner: getOwner(map),
-    group: getGroup(map),
-    frozen: isFrozen(map),
+    token: ctxid(map['@@mctx'].token),
+    context: ctxid(map['@@mctx']),
+    mutable: isMutable(map),
     values: Array.from(map)
   };
 }
-
 export type SortedMap = _SortedMap<any, any>;
 
 export function pairsFrom(array: number[]): [number, string][];

@@ -1,6 +1,7 @@
 import {assert} from 'chai';
-import {isFrozen, isThawed, set, remove, size, clone, thaw} from '../../src';
+import {set, remove, size, clone} from '../../src';
 import {extractMap} from '../../src/internals';
+import {isImmutable, isMutable, modify} from '@collectable/core';
 import {SortedMap, fromStringArray, pairsFrom} from '../test-utils';
 
 suite('[SortedMap]', () => {
@@ -14,7 +15,7 @@ suite('[SortedMap]', () => {
 
       test('a new immutable map is returned', () => {
         assert.notStrictEqual(map0, map1);
-        assert.isTrue(isFrozen(map1));
+        assert.isTrue(isImmutable(map1));
       });
 
       test('the new map has the same size as the input map', () => {
@@ -35,13 +36,13 @@ suite('[SortedMap]', () => {
     suite('when the input map is mutable', () => {
       let map0: SortedMap, map1: SortedMap;
       setup(() => {
-        map0 = thaw(fromStringArray(['A', 'B', 'C']));
+        map0 = modify(fromStringArray(['A', 'B', 'C']));
         map1 = clone(map0);
       });
 
       test('a new mutable set is returned', () => {
-        assert.isTrue(isThawed(map0));
-        assert.isTrue(isThawed(map1));
+        assert.isTrue(isMutable(map0));
+        assert.isTrue(isMutable(map1));
         assert.notStrictEqual(map0, map1);
         assert.notStrictEqual(extractMap(map0), extractMap(map1));
       });

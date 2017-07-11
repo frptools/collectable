@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {empty as emptyMap} from '@collectable/red-black-tree';
+import {emptyWithNumericKeys} from '@collectable/red-black-tree';
 import {empty, size, isSortedSet} from '../../src';
 
 suite('[SortedSet]', () => {
@@ -20,7 +20,7 @@ suite('[SortedSet]', () => {
     });
 
     test('returns false if the argument is not an instance of a Collectable.js SortedSet class', () => {
-      assert.isFalse(isSortedSet(emptyMap()));
+      assert.isFalse(isSortedSet(emptyWithNumericKeys()));
     });
   });
 });

@@ -1,12 +1,11 @@
-import {isImmutable} from '@collectable/core';
-import {Map, empty, keys, size, has, set as setValue} from '@collectable/map';
-import {HashSet, HashSetImpl, isHashSet, isIterable, emptySet, refreeze} from '../internals';
+import {isImmutable, modify, commit} from '@collectable/core';
+import {HashMap} from '@collectable/map';
+import {HashSetStructure, isHashSet, isIterable, emptySet} from '../internals';
 
-export function intersect<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSet<T>): HashSet<T>;
-export function intersect<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSetImpl<T>): HashSetImpl<T> {
-  var immutable = isImmutable(main._owner);
-  var outputSet = immutable ? emptySet<T>(true) : main;
-  var outputMap = immutable ? outputSet._map : empty<T, null>(true);
+export function intersect<T>(other: HashSetStructure<T>|T[]|Iterable<T>, main: HashSetStructure<T>): HashSetStructure<T> {
+  var immutable = isImmutable(main);
+  var outputSet = immutable ? emptySet<T>(true) : modify(main);
+  var outputMap = immutable ? outputSet._map : HashMap.empty<T, null>(outputSet);
 
   if(isHashSet<T>(other)) {
     intersectHashSet(main._map, other._map, outputMap);
@@ -20,32 +19,32 @@ export function intersect<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSetImp
     }
   }
 
-  if(size(outputMap) === size(main._map)) {
+  if(HashMap.size(outputMap) === HashMap.size(main._map)) {
     return main;
   }
 
   outputSet._map = outputMap;
-  return immutable ? refreeze(outputSet) : outputSet;
+  return commit(outputSet);
 }
 
-function intersectHashSet<T>(a: Map<T, null>, b: Map<T, null>, outputMap: Map<T, null>): void {
-  var [inputMap, otherMap] = size(b) <= size(a) ? [b, a] : [a, b];
-  return intersectIterable(inputMap, keys(otherMap), outputMap);
+function intersectHashSet<T>(a: HashMap.Instance<T, null>, b: HashMap.Instance<T, null>, outputMap: HashMap.Instance<T, null>): void {
+  var [inputMap, otherMap] = HashMap.size(b) <= HashMap.size(a) ? [b, a] : [a, b];
+  return intersectIterable(inputMap, HashMap.keys(otherMap), outputMap);
 }
 
-function intersectArray<T>(inputMap: Map<T, null>, array: T[], outputMap: Map<T, null>): void {
+function intersectArray<T>(inputMap: HashMap.Instance<T, null>, array: T[], outputMap: HashMap.Instance<T, null>): void {
   for(var i = 0; i < array.length; i++) {
-    if(has(array[i], inputMap)) {
-      setValue(array[i], null, outputMap);
+    if(HashMap.has(array[i], inputMap)) {
+      HashMap.set(array[i], null, outputMap);
     }
   }
 }
 
-function intersectIterable<T>(inputMap: Map<T, null>, it: Iterator<T>, outputMap: Map<T, null>): void {
+function intersectIterable<T>(inputMap: HashMap.Instance<T, null>, it: Iterator<T>, outputMap: HashMap.Instance<T, null>): void {
   var current: IteratorResult<T>;
   while(!(current = it.next()).done) {
-    if(has(current.value, inputMap)) {
-      setValue(current.value, null, outputMap);
+    if(HashMap.has(current.value, inputMap)) {
+      HashMap.set(current.value, null, outputMap);
     }
   }
 }

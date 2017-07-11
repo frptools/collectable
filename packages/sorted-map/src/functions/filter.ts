@@ -1,15 +1,13 @@
-import {KeyedFilterFn, isImmutable} from '@collectable/core';
-import {SortedMap, SortedMapImpl, Entry, cloneAsMutable, refreeze} from '../internals';
+import {KeyedFilterFn, isImmutable, modify, commit} from '@collectable/core';
+import {SortedMapStructure, Entry} from '../internals';
 import {iterate, unsetItem} from '../internals';
 import {size} from './size';
 
-export function filter<K, V>(fn: KeyedFilterFn<K, V>, map: SortedMap<K, V>): SortedMap<K, V>;
-export function filter<K, V, U>(fn: KeyedFilterFn<K, V>, map: SortedMapImpl<K, V, U>): SortedMapImpl<K, V, U> {
-  var nextSet = map;
-  var immutable = isImmutable(map._owner) && (nextSet = cloneAsMutable(map), true);
+export function filter<K, V, U = any>(fn: KeyedFilterFn<K, V>, map: SortedMapStructure<K, V, U>): SortedMapStructure<K, V, U> {
+  var nextSet = modify(map);
   var {
-    _keyMap: keyMap,
-    _sortedValues: sortedValues,
+    _indexed: keyMap,
+    _sorted: sortedValues,
   } = nextSet;
 
   var it = iterate(map);
@@ -27,11 +25,13 @@ export function filter<K, V, U>(fn: KeyedFilterFn<K, V>, map: SortedMapImpl<K, V
     return map;
   }
 
-  if(immutable) {
-    return refreeze(nextSet);
+  commit(nextSet);
+
+  if(isImmutable(map)) {
+    return nextSet;
   }
 
-  map._keyMap = keyMap;
-  map._sortedValues = sortedValues;
+  map._indexed = keyMap;
+  map._sorted = sortedValues;
   return map;
-};
+}

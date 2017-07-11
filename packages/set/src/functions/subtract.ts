@@ -1,11 +1,9 @@
-import {isImmutable} from '@collectable/core';
-import {Map, size, has, remove} from '@collectable/map';
-import {HashSet, HashSetImpl, isIterable, cloneAsMutable, refreeze} from '../internals';
+import {modify, commit} from '@collectable/core';
+import {HashMap, size, has, remove} from '@collectable/map';
+import {HashSetStructure, isIterable} from '../internals';
 
-export function subtract<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSet<T>): HashSet<T>;
-export function subtract<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSetImpl<T>): HashSetImpl<T> {
-  var immutable = isImmutable(main._owner);
-  var outputSet = immutable ? cloneAsMutable(main) : main;
+export function subtract<T>(other: HashSetStructure<T>|T[]|Iterable<T>, main: HashSetStructure<T>): HashSetStructure<T> {
+  var outputSet = modify(main);
   var outputMap = outputSet._map;
 
   if(Array.isArray(other)) {
@@ -17,15 +15,17 @@ export function subtract<T>(other: HashSet<T>|T[]|Iterable<T>, main: HashSetImpl
     }
   }
 
+  commit(outputSet);
+
   if(size(outputMap) === size(main._map)) {
     return main;
   }
 
   outputSet._map = outputMap;
-  return immutable ? refreeze(outputSet) : outputSet;
+  return outputSet;
 }
 
-function subtractArray<T>(inputMap: Map<T, null>, omissions: T[], outputMap: Map<T, null>): void {
+function subtractArray<T>(inputMap: HashMap.Instance<T, null>, omissions: T[], outputMap: HashMap.Instance<T, null>): void {
   for(var i = 0; i < omissions.length; i++) {
     if(has(omissions[i], inputMap)) {
       remove(omissions[i], outputMap);
@@ -33,7 +33,7 @@ function subtractArray<T>(inputMap: Map<T, null>, omissions: T[], outputMap: Map
   }
 }
 
-function subtractIterable<T>(inputMap: Map<T, null>, omissions: Iterator<T>, outputMap: Map<T, null>): void {
+function subtractIterable<T>(inputMap: HashMap.Instance<T, null>, omissions: Iterator<T>, outputMap: HashMap.Instance<T, null>): void {
   var current: IteratorResult<T>;
   while(!(current = omissions.next()).done) {
     if(has(current.value, inputMap)) {

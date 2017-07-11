@@ -1,11 +1,12 @@
 import {assert} from 'chai';
-import {Set, isFrozen, isThawed, fromArray, add, remove, size, clone, thaw} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {HashSetStructure, fromArray, add, remove, size, clone} from '../../src';
 import {extractMap} from '../../src/internals';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('clone()', () => {
     suite('when the input set is immutable', () => {
-      let set0: Set<string>, set1: Set<string>;
+      let set0: HashSetStructure<string>, set1: HashSetStructure<string>;
       setup(() => {
         set0 = fromArray(['A', 'B', 'C']);
         set1 = clone(set0);
@@ -13,7 +14,7 @@ suite('[Set]', () => {
 
       test('a new immutable set is returned', () => {
         assert.notStrictEqual(set0, set1);
-        assert.isTrue(isFrozen(set1));
+        assert.isTrue(isImmutable(set1));
       });
 
       test('the new set has the same size as the input set', () => {
@@ -32,15 +33,15 @@ suite('[Set]', () => {
     });
 
     suite('when the input set is mutable', () => {
-      let set0: Set<string>, set1: Set<string>;
+      let set0: HashSetStructure<string>, set1: HashSetStructure<string>;
       setup(() => {
-        set0 = thaw(fromArray(['A', 'B', 'C']));
+        set0 = modify(fromArray(['A', 'B', 'C']));
         set1 = clone(set0);
       });
 
       test('a new mutable set is returned', () => {
-        assert.isTrue(isThawed(set0));
-        assert.isTrue(isThawed(set1));
+        assert.isTrue(isMutable(set0));
+        assert.isTrue(isMutable(set1));
         assert.notStrictEqual(set0, set1);
         assert.notStrictEqual(extractMap(set0), extractMap(set1));
       });

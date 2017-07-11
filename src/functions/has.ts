@@ -1,10 +1,9 @@
-import {Collection, CollectionTypeInfo, isCollection} from '@collectable/core';
-import {isIndexable} from '../internals';
+import {IndexedCollection, isIndexedCollection} from '@collectable/core';
 
-export function hasIn(path: any[], collection: Collection<any>): boolean {
-  var i = 0, value: any = collection, type: CollectionTypeInfo;
-  while(i < path.length && isCollection(value) && (type = value['@@type'], isIndexable(type))) {
-    if(!type.has(path[i++], value)) return false;
+export function hasIn(path: any[], collection: IndexedCollection<any, any>): boolean {
+  var i = 0, value: any = collection;
+  while(i < path.length && isIndexedCollection(value)) {
+    if(!IndexedCollection.has(path[i++], value)) return false;
   }
   return true;
 }

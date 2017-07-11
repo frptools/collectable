@@ -1,95 +1,89 @@
-import {Collection, IndexableCollectionTypeInfo, nextId, batch, hashIterator} from '@collectable/core';
-import {get, has, set, update, unwrap, isEqual} from '../functions';
+import {IndexedCollection} from '@collectable/core';
+import {Mutation, Associative, hashIterator, isObject, unwrap} from '@collectable/core';
+import {get, has, set, update, isEqual} from '../functions';
 import {entries} from '../functions/entries';
 import {AnyNode} from './nodes';
+import {unwrapInto} from './primitives';
 
-const MAP_TYPE: IndexableCollectionTypeInfo = {
-  type: Symbol('Collectable.Map'),
-  indexable: true,
-
-  equals(other: HashMapImpl<any, any>, map: HashMapImpl<any, any>): boolean {
-    return isEqual(other, map);
-  },
-
-  hash(map: HashMapImpl<any, any>): number {
-    return hashIterator(entries(map));
-  },
-
-  unwrap(map: HashMapImpl<any, any>): any {
-    return unwrap(true, map);
-  },
-
-  group(map: HashMapImpl<any, any>): any {
-    return map._group;
-  },
-
-  owner(map: HashMapImpl<any, any>): any {
-    return map._owner;
-  },
-
-  get(key: any, map: HashMapImpl<any, any>): any {
-    return get(key, map);
-  },
-
-  has(key: any, map: HashMapImpl<any, any>): boolean {
-    return has(key, map);
-  },
-
-  set(key: any, value: any, map: HashMapImpl<any, any>): any {
-    return set(key, value, map);
-  },
-
-  update(key: any, updater: (value) => any, map: HashMapImpl<any, any>): any {
-    return update(key, updater, map);
-  },
-
-  verifyKey(key: any, map: HashMapImpl<any, any>): boolean {
-    return true;
-  },
-};
-
-export interface HashMap<K, V> extends Collection<[K, V]> {}
-
-export class HashMapImpl<K, V> implements HashMap<K, V> {
-  get '@@type'() { return MAP_TYPE; }
-
+export class HashMapStructure<K, V> implements IndexedCollection<K, V, [K, V], Associative<V>> {
+  /** @internal */
   constructor(
-    public _owner: number,
-    public _group: number,
+    mctx: Mutation.Context,
     public _root: AnyNode<K, V>,
-    public _size: number
-  ) {}
+    public _size: number,
+  ) {
+    this['@@mctx'] = mctx;
+  }
+
+  /** @internal */
+  get '@@is-collection'(): true { return true; }
+
+  /** @internal */
+  get '@@size'(): number { return this._size; }
+
+  /** @internal */
+  readonly '@@mctx': Mutation.Context;
+
+  /** @internal */
+  '@@clone'(mctx: Mutation.Context): HashMapStructure<K, V> {
+    return new HashMapStructure<K, V>(mctx, this._root, this._size);
+  }
+
+  /** @internal */
+  '@@equals'(other: HashMapStructure<K, V>): boolean {
+    return isEqual(this, other);
+  }
+
+  /** @internal */
+  '@@hash'(): number {
+    return hashIterator(entries(this));
+  }
+
+  /** @internal */
+  '@@unwrap'(): Associative<V> {
+    return unwrap<Associative<V>>(this);
+  }
+
+  /** @internal */
+  '@@unwrapInto'(target: Associative<V>): Associative<V> {
+    return unwrapInto(target, this);
+  }
+
+  /** @internal */
+  '@@createUnwrapTarget'(): Associative<V> {
+    return {};
+  }
+
+  /** @internal */
+  '@@get'(key: K): V | undefined {
+    return get(key, this);
+  }
+
+  /** @internal */
+  '@@has'(key: K): boolean {
+    return has(key, this);
+  }
+
+  /** @internal */
+  '@@set'(key: K, value: V): this {
+    return <this>set(key, value, this);
+  }
+
+  /** @internal */
+  '@@update'(updater: (value: V, map: this) => any, key: K): this {
+    return <this>update<K, V>(updater, key, this);
+  }
+
+  /** @internal */
+  '@@verifyKey'(key: K): boolean {
+    return true;
+  }
 
   public [Symbol.iterator](): IterableIterator<[K, V]> {
-    return entries<K, V>(this);
+    return entries<K, V>(<HashMapStructure<K, V>>this);
   }
 }
 
-export function isHashMap<K, V>(arg: any): arg is HashMapImpl<K, V> {
-  return !!arg && arg['@@type'] === MAP_TYPE;
-}
-
-export function cloneMap<K, V>(mutable: boolean, tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  return new HashMapImpl<K, V>(batch.owner(mutable), nextId(), tree._root, tree._size);
-}
-
-export function cloneAsMutable<K, V>(tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  return cloneMap(true, tree);
-}
-
-export function cloneAsImmutable<K, V>(tree: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  return cloneMap(false, tree);
-}
-
-export function refreeze<K, V>(map: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  map._owner = 0;
-  return map;
-}
-
-export function replace<K, V>(source: HashMapImpl<K, V>, target: HashMapImpl<K, V>): HashMapImpl<K, V> {
-  target._owner = source._owner;
-  target._group = source._group;
-  target._size = source._size;
-  target._root = source._root;
-  return target;
+export function isHashMap<K, V>(arg: any): arg is HashMapStructure<K, V> {
+  return isObject(arg) && arg instanceof HashMapStructure;
 }

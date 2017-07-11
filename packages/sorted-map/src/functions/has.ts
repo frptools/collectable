@@ -1,6 +1,6 @@
-import {SortedMap, SortedMapImpl, hashMapHas} from '../internals';
+import {SortedMapStructure} from '../internals';
+import {has as _has} from '@collectable/map';
 
-export function has<K, V>(key: K, map: SortedMap<K, V>): boolean;
-export function has<K, V, U>(key: K, map: SortedMapImpl<K, V, U>): boolean {
-  return hashMapHas(key, map._keyMap);
+export function has<K, V, U = any>(key: K, map: SortedMapStructure<K, V, U>): boolean {
+  return _has(key, map._indexed);
 }

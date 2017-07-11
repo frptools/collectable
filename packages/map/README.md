@@ -46,23 +46,11 @@ const map = fromObject({foo: 'bar'}); // => <{foo: 'bar'}>
 const pojo = unwrap(list); // => {foo: 'bar'}
 ```
 
-Pre-curried versions of all functions are available by appending `/curried` to the import path, like so, with non-curryable functions exported from the same path also, for convenience:
-
-```ts
-import {empty, set} from '@collectable/map/curried';
-
-const setFoo = set('foo');
-const map = setFoo('bar', empty()); // => <{foo: 'bar'}>
-
-const setFooBar = set('foo', 'bar');
-const map = setFooBar(empty()); // => <{foo: 'bar'}>
-```
-
 Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to use what you need while excluding anything else from the final build.
 
 ## API
 
-All map-manipulation functions are available from module `@collectable/map`. A pre-curried version of the same API is available from module `@collectable/map/curried`.
+All map-manipulation functions are available from module `@collectable/map`.
 
 ----
 

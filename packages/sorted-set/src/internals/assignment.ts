@@ -1,5 +1,6 @@
 import {SelectorFn, isDefined, isUndefined} from '@collectable/core';
-import {setTreeValue, removeTreeValue, updateMapEntry} from './named-externals';
+import {set, remove} from '@collectable/red-black-tree';
+import {update} from '@collectable/map';
 import {SortedSetItem, ValueMap, Sorted} from './types';
 
 var _nextIndex = 0;
@@ -7,7 +8,7 @@ var _nextIndex = 0;
 export function setItem<T>(value: T, map: ValueMap<T>, tree: Sorted<T>, select: SelectorFn<T, any>|undefined): boolean {
   var entry: SortedSetItem<T>|undefined;
 
-  updateMapEntry(arg => {
+  update(arg => {
     if(isUndefined(arg)) {
       return entry = {
         index: ++_nextIndex,
@@ -18,7 +19,7 @@ export function setItem<T>(value: T, map: ValueMap<T>, tree: Sorted<T>, select: 
   }, value, map);
 
   if(isDefined(entry)) {
-    setTreeValue<SortedSetItem<T>, null>(entry, null, tree);
+    set<SortedSetItem<T>, null>(entry, null, tree);
     return true;
   }
 
@@ -28,13 +29,13 @@ export function setItem<T>(value: T, map: ValueMap<T>, tree: Sorted<T>, select: 
 export function unsetItem<T>(value: T, map: ValueMap<T>, tree: Sorted<T>): boolean {
   var entry: SortedSetItem<T>|undefined;
 
-  updateMapEntry(arg => {
+  update(arg => {
     if(isDefined(arg)) entry = arg;
     return void 0;
   }, value, map);
 
   if(isDefined(entry)) {
-    removeTreeValue(entry, tree);
+    remove(entry, tree);
     return true;
   }
 

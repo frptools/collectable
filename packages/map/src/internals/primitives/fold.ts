@@ -1,10 +1,10 @@
-import {HashMapImpl} from '../HashMap';
+import {HashMapStructure} from '../HashMap';
 import {NodeType} from '../nodes';
 
 export function fold<K, V, R>(
   f: (accum: R, value: V, key: K, index: number) => R,
   seed: R,
-  map: HashMapImpl<K, V>,
+  map: HashMapStructure<K, V>,
   cancelOnFalse = false): R {
 
   const node = map._root;

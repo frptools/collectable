@@ -1,12 +1,10 @@
-import {FilterFn, isImmutable} from '@collectable/core';
-import {SortedSet, SortedSetImpl, cloneAsMutable, refreeze} from '../internals';
+import {FilterFn, isImmutable, modify, commit} from '@collectable/core';
+import {SortedSetStructure} from '../internals';
 import {iterateValues, unsetItem} from '../internals';
 import {size} from './size';
 
-export function filter<T>(fn: FilterFn<T>, set: SortedSet<T>): SortedSet<T>;
-export function filter<T>(fn: FilterFn<T>, set: SortedSetImpl<T>): SortedSetImpl<T> {
-  var nextSet = set;
-  var immutable = isImmutable(set._owner) && (nextSet = cloneAsMutable(set), true);
+export function filter<T>(fn: FilterFn<T>, set: SortedSetStructure<T>): SortedSetStructure<T> {
+  var nextSet = modify(set);
   var {
     _map: map,
     _tree: tree,
@@ -26,11 +24,13 @@ export function filter<T>(fn: FilterFn<T>, set: SortedSetImpl<T>): SortedSetImpl
     return set;
   }
 
-  if(immutable) {
-    return refreeze(nextSet);
+  commit(nextSet);
+
+  if(isImmutable(set)) {
+    return nextSet;
   }
 
   set._map = map;
   set._tree = tree;
   return set;
-};
+}

@@ -1,17 +1,17 @@
-import {isImmutable} from '@collectable/core';
-import {List, cloneAsMutable, insertValues, ensureImmutable} from '../internals';
+import {modify, commit} from '@collectable/core';
+import {ListStructure, insertValues} from '../internals';
 
-export function insert<T>(index: number, value: T, list: List<T>): List<T> {
+export function insert<T>(index: number, value: T, list: ListStructure<T>): ListStructure<T> {
   return insertArray(index, [value], list);
 }
 
-export function insertArray<T>(index: number, values: T[], list: List<T>): List<T> {
+export function insertArray<T>(index: number, values: T[], list: ListStructure<T>): ListStructure<T> {
   if(values.length === 0) return list;
-  var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
+  list = modify(list);
   insertValues(list, index, values);
-  return immutable ? ensureImmutable(list, true) : list;
+  return commit(list);
 }
 
-export function insertIterable<T>(index: number, values: Iterable<T>, list: List<T>): List<T> {
+export function insertIterable<T>(index: number, values: Iterable<T>, list: ListStructure<T>): ListStructure<T> {
   return insertArray(index, Array.from(values), list);
 }

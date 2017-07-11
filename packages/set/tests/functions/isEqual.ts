@@ -1,15 +1,15 @@
 import {assert} from 'chai';
-import {Set, isEqual, fromArray} from '../../src';
+import {HashSetStructure, isEqual, fromArray} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('isEqual()', () => {
     const values0 = ['A', 'B', 'C', 'D', 'E'];
     const values2 = ['A', 'B', 'C', 'D'];
     const values3 = ['x', 'A', 'B', 'C', 'D', 'E'];
-    let set0: Set<string>,
-        set1: Set<string>,
-        set2: Set<string>,
-        set3: Set<string>;
+    let set0: HashSetStructure<string>,
+        set1: HashSetStructure<string>,
+        set2: HashSetStructure<string>,
+        set3: HashSetStructure<string>;
     suiteSetup(() => {
       set0 = fromArray(values0);
       set1 = fromArray(values0.slice()); // ensure the implementation doesn't retain the same array internally

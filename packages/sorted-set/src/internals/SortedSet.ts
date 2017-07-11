@@ -1,94 +1,112 @@
-import {CollectionTypeInfo, ComparatorFn, SelectorFn, isDefined, nextId, batch, hashIterator} from '@collectable/core';
 import {
-  RedBlackTree, emptyTree, thawTree, freezeTree, isTreeThawed, cloneTree,
-  Map, emptyMap, thawMap, freezeMap, isMapThawed, cloneMap
-} from './named-externals';
-import {SortedSet, SortedSetItem} from './types';
+  Mutation,
+  Collection,
+  ComparatorFn,
+  SelectorFn,
+  isDefined,
+  isObject,
+  hashIterator,
+  unwrap,
+} from '@collectable/core';
+import {HashMapStructure, size as mapSize, keys as mapKeys, empty as emptyMap} from '@collectable/map';
+import {RedBlackTreeStructure, empty as emptyTree} from '@collectable/red-black-tree';
+import {SortedSetItem} from './types';
 import {setItem} from './assignment';
-import {isEqual, unwrap} from '../functions';
+import {isEqual} from '../functions';
 import {iterateValues} from './iterate';
 
 export type MapKey<V, K> = (value: V) => K;
 
-const SORTEDSET_TYPE: CollectionTypeInfo = {
-  type: Symbol('Collectable.SortedSet'),
-  indexable: false,
-
-  equals(other: any, set: SortedSetImpl<any>): boolean {
-    return isEqual(other, set);
-  },
-
-  hash(set: SortedSetImpl<any>): number {
-    return hashIterator(iterateValues(set));
-  },
-
-  unwrap(set: SortedSetImpl<any>): any {
-    return unwrap(true, set);
-  },
-
-  group(set: SortedSetImpl<any>): any {
-    return set._group;
-  },
-
-  owner(set: SortedSetImpl<any>): any {
-    return set._owner;
-  }
-};
-
-export class SortedSetImpl<T> implements SortedSet<T> {
-  get '@@type'() { return SORTEDSET_TYPE; }
-
+export class SortedSetStructure<T> implements Collection<T, T[]> {
+  /** @internal */
   constructor(
-    public _owner: number,
-    public _group: number,
-    public _map: Map<T, SortedSetItem<T>>,
-    public _tree: RedBlackTree<SortedSetItem<T>, null>,
+    mctx: Mutation.Context,
+    public _map: HashMapStructure<T, SortedSetItem<T>>,
+    public _tree: RedBlackTreeStructure<SortedSetItem<T>, null>,
     public _compare: ComparatorFn<SortedSetItem<T>>,
     public _select: ((value: T) => any)|undefined,
-  ) {}
+  ) {
+    this['@@mctx'] = mctx;
+  }
+
+  /** @internal */
+  readonly '@@mctx': Mutation.Context;
+
+  /** @internal */
+  get '@@is-collection'(): true { return true; }
+  get '@@size'(): number { return this._map._size; }
+
+  /** @internal */
+  '@@clone'(mctx: Mutation.Context): SortedSetStructure<T> {
+    const sctx = Mutation.asSubordinateContext(mctx);
+    return new SortedSetStructure<T>(
+      mctx,
+      Mutation.clone(this._map, sctx),
+      Mutation.clone(this._tree, sctx),
+      this._compare,
+      this._select
+    );
+  }
+
+  /** @internal */
+  '@@equals'(other: SortedSetStructure<T>): boolean {
+    return isEqual(this, other);
+  }
+
+  /** @internal */
+  '@@hash'(): number {
+    return hashIterator(iterateValues(this));
+  }
+
+  /** @internal */
+  '@@unwrap'(): T[] {
+    return unwrap(this);
+  }
+
+  /** @internal */
+  '@@unwrapInto'(target: T[]): T[] {
+    var it = mapKeys(this._map);
+    var current: IteratorResult<T>;
+    var i = 0;
+    while(!(current =  it.next()).done) {
+      target[i++] = unwrap<T>(current.value);
+    }
+    return target;
+  }
+
+  /** @internal */
+  '@@createUnwrapTarget'(): T[] {
+    return new Array<T>(mapSize(this._map));
+  }
 
   [Symbol.iterator](): IterableIterator<T> {
     return iterateValues<T>(this);
   }
 }
 
-export function isSortedSet<T>(arg: any): arg is SortedSetImpl<T> {
-  return arg && arg['@@type'] === SORTEDSET_TYPE;
+export function isSortedSet<T>(arg: any): arg is SortedSetStructure<T> {
+  return isObject(arg) && arg instanceof SortedSetStructure;
 }
 
-export function cloneSortedSet<T>(mutable: boolean, set: SortedSetImpl<T>, clear = false): SortedSetImpl<T> {
-  var map: Map<T, SortedSetItem<T>>;
-  var tree: RedBlackTree<SortedSetItem<T>, null>;
+export function cloneSortedSet<T>(mutable: boolean, set: SortedSetStructure<T>, clear = false): SortedSetStructure<T> {
+  var mctx = Mutation.selectContext(mutable);
+  var sctx = Mutation.asSubordinateContext(mctx);
+  var map: HashMapStructure<T, SortedSetItem<T>>;
+  var tree: RedBlackTreeStructure<SortedSetItem<T>, null>;
   if(clear) {
-    map = emptyMap<T, SortedSetItem<T>>(mutable);
-    tree = emptyTree<SortedSetItem<T>, null>(mutable, set._compare);
+    map = emptyMap<T, SortedSetItem<T>>(sctx);
+    tree = emptyTree<SortedSetItem<T>, null>(set._compare, sctx);
   }
   else {
-    map = mutable ? isMapThawed(set._map) ? cloneMap(set._map) : thawMap(set._map) : freezeMap(set._map);
-    tree = mutable ? isTreeThawed(set._tree) ? cloneTree(set._tree) : thawTree(set._tree) : freezeTree(set._tree);
+    map = Mutation.clone(set._map, sctx);
+    tree = Mutation.clone(set._tree, sctx);
   }
-  return new SortedSetImpl<T>(batch.owner(mutable), nextId(), map, tree, set._compare, set._select);
+  return new SortedSetStructure<T>(mctx, map, tree, set._compare, set._select);
 }
 
-export function cloneAsImmutable<T>(set: SortedSetImpl<T>): SortedSetImpl<T> {
-  return cloneSortedSet(false, set);
-}
-
-export function cloneAsMutable<T>(set: SortedSetImpl<T>): SortedSetImpl<T> {
-  return cloneSortedSet(true, set);
-}
-
-export function refreeze<T>(set: SortedSetImpl<T>): SortedSetImpl<T> {
-  set._owner = 0;
-  (<any>set._tree)._owner = 0;
-  (<any>set._map)._owner = 0;
-  return set;
-}
-
-export function createSet<T>(mutable: boolean, values: T[]|Iterable<T>, compare?: ComparatorFn<T>): SortedSetImpl<T>;
-export function createSet<T, K>(mutable: boolean, values: T[]|Iterable<T>, compare?: ComparatorFn<K>, select?: SelectorFn<T, K>): SortedSetImpl<T>;
-export function createSet<T, K>(mutable: boolean, values: T[]|Iterable<T>, compare?: ComparatorFn<K>|ComparatorFn<T>, select?: SelectorFn<T, K>): SortedSetImpl<T> {
-
+export function createSet<T>(mutable: boolean, values: T[]|Iterable<T>, compare?: ComparatorFn<T>): SortedSetStructure<T>;
+export function createSet<T, K>(mutable: boolean, values: T[]|Iterable<T>, compare?: ComparatorFn<K>, select?: SelectorFn<T, K>): SortedSetStructure<T>;
+export function createSet<T, K>(mutable: boolean, values: T[]|Iterable<T>, compare?: ComparatorFn<K>|ComparatorFn<T>, select?: SelectorFn<T, K>): SortedSetStructure<T> {
   var set = emptySet<T, K>(true, <ComparatorFn<K>>compare, <SelectorFn<T, K>>select);
   var map = set._map;
   var tree = set._tree;
@@ -106,16 +124,14 @@ export function createSet<T, K>(mutable: boolean, values: T[]|Iterable<T>, compa
     }
   }
 
-  return refreeze(set);
+  return Mutation.commit(set);
 }
 
-export function extractTree<T>(set: SortedSet<T>): RedBlackTree<SortedSetItem<T>, null>;
-export function extractTree<T>(set: SortedSetImpl<T>): RedBlackTree<SortedSetItem<T>, null> {
+export function extractTree<T>(set: SortedSetStructure<T>): RedBlackTreeStructure<SortedSetItem<T>, null> {
   return set._tree;
 }
 
-export function extractMap<T>(set: SortedSet<T>): Map<T, SortedSetItem<T>>;
-export function extractMap<T>(set: SortedSetImpl<T>): Map<T, SortedSetItem<T>> {
+export function extractMap<T>(set: SortedSetStructure<T>): HashMapStructure<T, SortedSetItem<T>> {
   return set._map;
 }
 
@@ -138,21 +154,23 @@ function createValueComparatorFn<T>(compare: ComparatorFn<T>): ComparatorFn<Sort
   }, COMPARATOR_CACHE.set(compare, fn), fn);
 }
 
-export function emptySet<T>(mutable: boolean, compare?: ComparatorFn<T>): SortedSetImpl<T>;
-export function emptySet<T, K>(mutable: boolean, compare?: ComparatorFn<K>, select?: SelectorFn<T, K>): SortedSetImpl<T>;
-export function emptySet<T, K>(mutable = false, compare?: ComparatorFn<K>|ComparatorFn<T>, select?: SelectorFn<T, K>): SortedSetImpl<T> {
+export function emptySet<T>(mutable: boolean|Mutation.Context, compare?: ComparatorFn<T>): SortedSetStructure<T>;
+export function emptySet<T, K>(mutable: boolean|Mutation.Context, compare?: ComparatorFn<K>, select?: SelectorFn<T, K>): SortedSetStructure<T>;
+export function emptySet<T, K>(mutable: boolean|Mutation.Context = false, compare?: ComparatorFn<K>|ComparatorFn<T>, select?: SelectorFn<T, K>): SortedSetStructure<T> {
   var comparator: ComparatorFn<SortedSetItem<T>>
     = isDefined(select) ? createViewComparatorFn<T, K>(<ComparatorFn<K>>compare)
     : isDefined(compare) ? createValueComparatorFn<T>(<ComparatorFn<T>>compare)
     : DEFAULT_COMPARATOR;
 
   if(!mutable && comparator === DEFAULT_COMPARATOR) {
-    return isDefined(EMPTY) ? EMPTY : (EMPTY = new SortedSetImpl<T>(0, 0, emptyMap<any, any>(), emptyTree<any, any>(), comparator, void 0));
+    return isDefined(EMPTY) ? EMPTY : (EMPTY = new SortedSetStructure<T>(Mutation.immutable(), emptyMap<any, any>(), emptyTree<any, any>(comparator), comparator, void 0));
   }
 
-  var map = emptyMap<T, SortedSetItem<T>>(mutable);
-  var tree = emptyTree<SortedSetItem<T>, null>(mutable, comparator);
-  return new SortedSetImpl<T>(batch.owner(mutable), nextId(), map, tree, comparator, select);
+  var mctx = Mutation.isMutationContext(mutable) ? mutable : Mutation.selectContext(mutable);
+  var sctx = Mutation.asSubordinateContext(mctx);
+  var map = emptyMap<T, SortedSetItem<T>>(sctx);
+  var tree = emptyTree<SortedSetItem<T>, null>(comparator, sctx);
+  return new SortedSetStructure<T>(mctx, map, tree, comparator, select);
 }
 
-var EMPTY: SortedSetImpl<any>;
+var EMPTY: SortedSetStructure<any>;

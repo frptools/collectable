@@ -26,7 +26,7 @@ suite('[List]', () => {
       var it = list[Symbol.iterator]();
       assert.deepEqual(it.next(), {value: 'X', done: false});
       assert.deepEqual(it.next(), {value: 'Y', done: false});
-      assert.deepEqual(it.next(), {value: void 0, done: true});
+      assert.deepEqual(it.next(), {value: <any>void 0, done: true});
     });
 
     test('traverses multiple leaf nodes', () => {

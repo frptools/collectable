@@ -1,6 +1,7 @@
-import {List, createList, appendValues, ensureImmutable} from '../internals';
+import {commit} from '@collectable/core';
+import {ListStructure, createList, appendValues} from '../internals';
 
-export function fromArray<T>(values: T[]): List<T> {
+export function fromArray<T>(values: T[]): ListStructure<T> {
   if(!Array.isArray(values)) {
     throw new Error('First argument must be an array of values');
   }
@@ -8,13 +9,13 @@ export function fromArray<T>(values: T[]): List<T> {
   if(values.length > 0) {
     appendValues(state, values);
   }
-  return ensureImmutable(state, true);
+  return commit(state);
 }
 
-export function fromIterable<T>(values: Iterable<T>): List<T> {
+export function fromIterable<T>(values: Iterable<T>): ListStructure<T> {
   return fromArray(Array.from(values));
 }
 
-export function fromArgs<T>(...values: T[]): List<T> {
+export function fromArgs<T>(...values: T[]): ListStructure<T> {
   return fromArray(values);
 }

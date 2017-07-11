@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import {set, has, size, thaw, isThawed, isFrozen} from '../../src';
+import {isMutable, isImmutable, modify} from '@collectable/core';
+import {set, has, size} from '../../src';
 import {SortedMap, fromStringArray, pairsFrom} from '../test-utils';
 
 suite('[SortedMap]', () => {
@@ -29,7 +30,7 @@ suite('[SortedMap]', () => {
       let map0: SortedMap, map1: SortedMap;
       suite('if the input map is mutable', () => {
         suiteSetup(() => {
-          map0 = thaw(fromStringArray(['A', 'B', 'D']));
+          map0 = modify(fromStringArray(['A', 'B', 'D']));
           map1 = set('C', 'C'.charCodeAt(0), map0);
         });
 
@@ -38,7 +39,7 @@ suite('[SortedMap]', () => {
         });
 
         test('the input map is still mutable', () => {
-          assert.isTrue(isThawed(map1));
+          assert.isTrue(isMutable(map1));
         });
 
         test('the map size is incremented', () => {
@@ -63,11 +64,11 @@ suite('[SortedMap]', () => {
         test('the input map is not modified', () => {
           assert.deepEqual(Array.from(map0), pairsFrom(['A', 'B', 'D']));
           assert.strictEqual(size(map0), 3);
-          assert.isTrue(isFrozen(map0));
+          assert.isTrue(isImmutable(map0));
         });
 
         test('a new immutable map is returned', () => {
-          assert.isTrue(isFrozen(map1));
+          assert.isTrue(isImmutable(map1));
         });
 
         test('the size of the new map is one greater than that of the input map', () => {

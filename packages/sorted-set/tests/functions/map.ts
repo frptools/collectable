@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import {SortedSet, map, size, thaw, isThawed, isFrozen} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {SortedSetStructure, map, size} from '../../src';
 import {fromStringArray} from '../test-utils';
 
 const toLower = (a: string) => a.toLowerCase();
@@ -9,9 +10,9 @@ suite('[SortedSet]', () => {
     const values = ['A', 'B', 'C', 'D', 'E'];
 
     suite('if the input set is mutable', () => {
-      let set: SortedSet<string>;
+      let set: SortedSetStructure<string>;
       setup(() => {
-        set = thaw(fromStringArray(values));
+        set = modify(fromStringArray(values));
       });
 
       test('the input set is returned', () => {
@@ -20,7 +21,7 @@ suite('[SortedSet]', () => {
 
       test('the input set is still mutable', () => {
         map(toLower, set);
-        assert.isTrue(isThawed(set));
+        assert.isTrue(isMutable(set));
       });
 
       test('the set size remains unchanged', () => {
@@ -39,7 +40,7 @@ suite('[SortedSet]', () => {
     });
 
     suite('if the input set is immutable', () => {
-      let set0: SortedSet<string>, set1: SortedSet<string>;
+      let set0: SortedSetStructure<string>, set1: SortedSetStructure<string>;
       setup(() => {
         set0 = fromStringArray(values);
         set1 = map(toLower, set0);
@@ -47,12 +48,12 @@ suite('[SortedSet]', () => {
 
       test('the input set is not modified', () => {
         assert.strictEqual(size(set0), values.length);
-        assert.isTrue(isFrozen(set0));
+        assert.isTrue(isImmutable(set0));
         assert.deepEqual(Array.from(set0), values);
       });
 
       test('a new immutable set is returned', () => {
-        assert.isTrue(isFrozen(set1));
+        assert.isTrue(isImmutable(set1));
         assert.notStrictEqual(set0, set1);
       });
 

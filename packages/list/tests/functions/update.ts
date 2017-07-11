@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import {empty, fromArray, appendArray, isFrozen, set, updateList, update, thaw} from '../../src';
+import {isImmutable, modify} from '@collectable/core';
+import {empty, fromArray, appendArray, set, updateList, update} from '../../src';
 import {arrayFrom} from '../../src/internals';
 
 suite('[List]', () => {
@@ -13,11 +14,11 @@ suite('[List]', () => {
     test('treats the inner list as mutable', () => {
       const list = empty<string>();
       const list1 = updateList(list => {
-        assert.isFalse(isFrozen(list));
+        assert.isFalse(isImmutable(list));
         appendArray(['X', 'Y', 'Z'], list);
         set(1, 'K', list);
       }, list);
-      assert.isTrue(isFrozen(list1));
+      assert.isTrue(isImmutable(list1));
       assert.deepEqual(arrayFrom(list1), ['X', 'K', 'Z']);
     });
   });
@@ -44,7 +45,7 @@ suite('[List]', () => {
     });
 
     test('returns the same list, modified with the updated value, if the list was not currently frozen', () => {
-      const list = thaw(fromArray(['X', {foo: 'bar'}, 123]));
+      const list = modify(fromArray(['X', {foo: 'bar'}, 123]));
       const list1 = update(0, c => 'K', list);
       const list2 = update(1, o => ({foo: 'baz'}), list);
       const list3 = update(2, n => 42, list);

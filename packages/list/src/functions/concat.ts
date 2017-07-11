@@ -1,25 +1,24 @@
-import {publish} from '../internals/debug'; // ## DEV ##
-import {isImmutable} from '@collectable/core';
-import {List, cloneAsMutable, concatLists, ensureImmutable} from '../internals';
+import {publish} from '../internals/_dev'; // ## DEV ##
+import {modify, commit} from '@collectable/core';
+import {ListStructure, concatLists} from '../internals';
 
-export function concat<T>(left: List<T>, right: List<T>): List<T> {
+export function concat<T>(left: ListStructure<T>, right: ListStructure<T>): ListStructure<T> {
   publish([left, right], true, 'pre-concat'); // ## DEV ##
   if(left._size === 0) return right;
   if(right._size === 0) return left;
-  var immutable = isImmutable(left._owner) && (left = cloneAsMutable(left), true);
-  left = concatLists(left, cloneAsMutable(right));
-  return immutable ? ensureImmutable(left, true) : left;
+  left = concatLists(modify(left), modify(right));
+  return commit(left);
 }
 
-export function concatLeft<T>(right: List<T>, left: List<T>): List<T> {
+export function concatLeft<T>(right: ListStructure<T>, left: ListStructure<T>): ListStructure<T> {
   return concat(left, right);
 }
 
-export function concatAll<T>(lists: List<T>[]): List<T> {
-  var list: List<T> = lists[0];
-  var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
+export function concatAll<T>(lists: ListStructure<T>[]): ListStructure<T> {
+  var list: ListStructure<T> = lists[0];
+  list = modify(list);
   for(var i = 1; i < lists.length; i++) {
-    list = concatLists(list, cloneAsMutable(lists[i]));
+    list = concatLists(list, modify(lists[i]));
   }
-  return immutable ? ensureImmutable(list, true) : list;
+  return commit(list);
 }

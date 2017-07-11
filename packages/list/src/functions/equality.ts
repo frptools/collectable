@@ -1,7 +1,7 @@
-import {List} from '../internals';
+import {ListStructure} from '../internals';
 import {size, iterate} from '../functions';
 
-export function isEqual<T>(list: List<T>, other: List<T>): boolean {
+export function isEqual<T>(list: ListStructure<T>, other: ListStructure<T>): boolean {
   if(list === other) return true;
   if(size(list) !== size(other)) return false;
   var ita = iterate(list), itb = iterate(other);

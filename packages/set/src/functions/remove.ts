@@ -1,11 +1,10 @@
-import {isImmutable} from '@collectable/core';
-import {remove as _remove, has} from '@collectable/map';
-import {HashSet, HashSetImpl, refreeze, cloneAsMutable} from '../internals';
+import {modify, commit} from '@collectable/core';
+import {HashMap} from '@collectable/map';
+import {HashSetStructure} from '../internals';
 
-export function remove<T>(value: T, set: HashSet<T>): HashSet<T>;
-export function remove<T>(value: T, set: HashSetImpl<T>): HashSetImpl<T> {
-  if(!has(value, set._map)) return set;
-  var immutable = isImmutable(set._owner) && (set = cloneAsMutable(set), true);
-  _remove(value, set._map);
-  return immutable ? refreeze(set) : set;
+export function remove<T>(value: T, set: HashSetStructure<T>): HashSetStructure<T> {
+  if(!HashMap.has(value, set._map)) return set;
+  set = modify(set);
+  HashMap.remove(value, set._map);
+  return commit(set);
 }

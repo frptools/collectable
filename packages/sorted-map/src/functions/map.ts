@@ -1,14 +1,12 @@
-import {KeyedMapFn, isImmutable} from '@collectable/core';
-import {SortedMap, SortedMapImpl, Entry, refreeze, cloneSortedMap} from '../internals';
+import {KeyedMapFn, isImmutable, commit} from '@collectable/core';
+import {SortedMapStructure, Entry, cloneSortedMap} from '../internals';
 import {iterate, setItem} from '../internals';
 
-export function map<K, V, R>(fn: KeyedMapFn<K, V, R>, map: SortedMap<K, V>): SortedMap<K, R>;
-export function map<K, V, U, R>(fn: KeyedMapFn<K, V, R>, map: SortedMapImpl<K, V, U>): SortedMapImpl<K, R, U> {
-  var immutable = isImmutable(map._owner);
-  var nextMap = cloneSortedMap<K, any, U>(true, map, true);
+export function map<K, V, R, U = any>(fn: KeyedMapFn<K, V, R>, map: SortedMapStructure<K, V, U>): SortedMapStructure<K, R, U> {
+  var nextMap = cloneSortedMap<K, any, U>(map, true, true);
   var {
-    _keyMap: keyMap,
-    _sortedValues: sortedValues,
+    _indexed: keyMap,
+    _sorted: sortedValues,
     _select: select
   } = nextMap;
 
@@ -20,11 +18,13 @@ export function map<K, V, U, R>(fn: KeyedMapFn<K, V, R>, map: SortedMapImpl<K, V
     setItem(value.key, fn(value.value, value.key, index++), keyMap, sortedValues, select);
   }
 
-  if(immutable) {
-    return refreeze(nextMap);
+  commit(nextMap);
+
+  if(isImmutable(map)) {
+    return nextMap;
   }
 
-  map._keyMap = keyMap;
-  map._sortedValues = sortedValues;
-  return <SortedMapImpl<K, any, U>>map;
-};
+  map._indexed = keyMap;
+  map._sorted = sortedValues;
+  return <SortedMapStructure<K, any, U>>map;
+}

@@ -1,8 +1,9 @@
+import {MutationContext} from '@collectable/core';
 import {ChildNode, ChildrenNodes} from '../types';
 import {ArrayNode} from '../ArrayNode';
 
 export function toArrayNode<K, V>(
-  group: number,
+  mctx: MutationContext,
   fragment: number,
   child: ChildNode<K, V>,
   bitmap: number,
@@ -21,5 +22,5 @@ export function toArrayNode<K, V>(
 
   array[fragment] = child;
 
-  return new ArrayNode(group, count + 1, array);
+  return new ArrayNode(mctx, count + 1, array);
 }

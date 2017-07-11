@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import {empty, fromArray, values} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('values()', () => {
     test('returns an empty iterable if the input list is empty', () => {
       const set = empty();

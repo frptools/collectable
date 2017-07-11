@@ -1,9 +1,9 @@
 import {ReduceFn} from '@collectable/core';
-import {SortedSet, SortedSetImpl} from '../internals';
+import {SortedSetStructure} from '../internals';
 import {iterateValues} from '../internals';
 
-export function reduce<T, R>(fn: ReduceFn<T, R>, seed: R, set: SortedSet<T>): R;
-export function reduce<T, R>(fn: ReduceFn<T, R>, seed: R, set: SortedSetImpl<T>): R {
+
+export function reduce<T, R>(fn: ReduceFn<T, R>, seed: R, set: SortedSetStructure<T>): R {
   var it = iterateValues(set);
   var current: IteratorResult<any>;
   var index = 0;

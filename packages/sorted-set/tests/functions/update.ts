@@ -1,13 +1,14 @@
 import {assert} from 'chai';
-import {SortedSet, update, thaw, isThawed, isFrozen, clone} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {SortedSetStructure, update, clone} from '../../src';
 import {fromStringArray} from '../test-utils';
 
 suite('[SortedSet]', () => {
   suite('update()', () => {
-    let set: SortedSet<string>;
+    let set: SortedSetStructure<string>;
     suite('if the input set is mutable', () => {
       setup(() => {
-        set = thaw(fromStringArray(['A', 'B', 'C']));
+        set = modify(fromStringArray(['A', 'B', 'C']));
       });
 
       test('the input set is passed to the predicate', () => {
@@ -31,7 +32,7 @@ suite('[SortedSet]', () => {
 
       test('if the input set is returned, it is still mutable', () => {
         const result = update(s => s, set);
-        assert.isTrue(isThawed(result));
+        assert.isTrue(isMutable(result));
       });
     });
 
@@ -51,20 +52,20 @@ suite('[SortedSet]', () => {
       });
 
       test('the mutable set argument is made immutable and returned, if the predicate returns nothing', () => {
-        var inner: SortedSet<string> = <any>void 0;
+        var inner: SortedSetStructure<string> = <any>void 0;
         const result = update(s => {
-          assert.isTrue(isThawed(s));
+          assert.isTrue(isMutable(s));
           inner = s;
         }, set);
         assert.strictEqual(result, inner);
-        assert.isTrue(isFrozen(result));
+        assert.isTrue(isImmutable(result));
       });
 
       test('if the predicate returns a set instance other than the original argument, an immutable clone of it is returned', () => {
         const result = update(s => {
-          return thaw(fromStringArray(['X', 'Y']));
+          return modify(fromStringArray(['X', 'Y']));
         }, set);
-        assert.isTrue(isFrozen(result));
+        assert.isTrue(isImmutable(result));
         assert.deepEqual(Array.from(result), ['X', 'Y']);
       });
     });

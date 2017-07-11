@@ -1,17 +1,17 @@
-import {Associative, Collection, batch, MappableIterator, isCollection} from '@collectable/core';
+import {Associative, Collection, MappableIterator, isCollection, isIterable, commit} from '@collectable/core';
 import {convertPair, convertValue} from '../internals';
-import {List, fromIterable as listFromIterable} from '@collectable/list';
-import {Map as HashMap, empty, fromIterable as mapFromIterable, set} from '@collectable/map';
-import {Set as HashSet, fromIterable as setFromIterable} from '@collectable/set';
+import {List} from '@collectable/list';
+import {HashMap} from '@collectable/map';
+import {HashSet} from '@collectable/set';
 
 export type NativeCollection<T> = T[]|Associative<T>|Map<any, T>|Set<T>;
 
-export function from<T>(obj: Associative<T>): HashMap<string, T>;
-export function from<T>(array: T[]): List<T>;
-export function from<T>(iterable: Iterable<T>): List<T>;
-export function from<T>(set: Set<T>): HashSet<T>;
-export function from<K, V>(map: Map<K, V>): HashMap<K, V>;
-export function from<T extends Collection<any>>(collection: T): T;
+export function from<T>(obj: Associative<T>): HashMap.Instance<string, T>;
+export function from<T>(array: T[]): List.Instance<T>;
+export function from<T>(iterable: Iterable<T>): List.Instance<T>;
+export function from<T>(set: Set<T>): HashSet.Instance<T>;
+export function from<K, V>(map: Map<K, V>): HashMap.Instance<K, V>;
+export function from<T extends Collection<any, any>>(collection: T): T;
 export function from<T>(value: NativeCollection<T>|Collection<T>): Collection<any> {
   if(value) {
     switch(typeof value) {
@@ -19,7 +19,7 @@ export function from<T>(value: NativeCollection<T>|Collection<T>): Collection<an
         if(Array.isArray(value)) return fromArray(value);
         if(value instanceof Set) return fromSet(value);
         if(value instanceof Map) return fromMap(value);
-        if(Symbol.iterator in value) return fromIterable(<Iterable<T>>value);
+        if(isIterable<T>(value)) return fromIterable(value);
         if(isCollection(value)) return value;
         return fromObject(value);
 
@@ -31,30 +31,28 @@ export function from<T>(value: NativeCollection<T>|Collection<T>): Collection<an
   throw new Error('No collection type could be determined for the argument');
 }
 
-export function fromObject(value: Object): HashMap<any, any> {
+export function fromObject(value: Object): HashMap.Instance<any, any> {
   var keys = Object.keys(value);
-  batch.start();
-  var map = empty<any, any>();
+  var map = HashMap.empty<any, any>(true);
   for(var i = 0; i < keys.length; i++) {
     var key = keys[i];
-    set(key, convertValue(value[key]), map);
+    HashMap.set(key, convertValue(value[key]), map);
   }
-  batch.end();
-  return map;
+  return commit(map);
 }
 
-export function fromArray<T>(array: T[]): List<T> {
-  return listFromIterable(new MappableIterator<T, T>(array, convertValue));
+export function fromArray<T>(array: T[]): List.Instance<T> {
+  return List.fromIterable(new MappableIterator<T, T>(array, convertValue));
 }
 
-export function fromMap<K, V>(map: Map<K, V>): HashMap<K, V> {
-  return mapFromIterable(new MappableIterator<[K, V], [K, V]>(map.entries(), convertPair));
+export function fromMap<K, V>(map: Map<K, V>): HashMap.Instance<K, V> {
+  return HashMap.fromIterable(new MappableIterator<[K, V], [K, V]>(map.entries(), convertPair));
 }
 
-export function fromSet<T>(set: Set<T>): HashSet<T> {
-  return setFromIterable(new MappableIterator<T, T>(set, convertValue));
+export function fromSet<T>(set: Set<T>): HashSet.Instance<T> {
+  return HashSet.fromIterable(new MappableIterator<T, T>(set, convertValue));
 }
 
-export function fromIterable<T>(iterable: Iterable<T>): List<T> {
-  return listFromIterable(new MappableIterator<T, T>(iterable, convertValue));
+export function fromIterable<T>(iterable: Iterable<T>): List.Instance<T> {
+  return List.fromIterable(new MappableIterator<T, T>(iterable, convertValue));
 }

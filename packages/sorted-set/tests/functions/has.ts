@@ -1,11 +1,11 @@
 import {assert} from 'chai';
-import {SortedSet, has} from '../../src';
+import {SortedSetStructure, has} from '../../src';
 import {fromStringArray} from '../test-utils';
 
 suite('[SortedSet]', () => {
   suite('has()', () => {
     const values = ['A', 'B', 'C', 'D', 'E'];
-    let set: SortedSet<string>;
+    let set: SortedSetStructure<string>;
     suiteSetup(() => {
       set = fromStringArray(values);
     });

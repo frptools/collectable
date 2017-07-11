@@ -1,28 +1,30 @@
 import {assert} from 'chai';
-import {empty, freeze, isFrozen, thaw} from '../../src';
+import {commit, isImmutable, modify} from '@collectable/core';
+import {empty} from '../../src';
 
 suite('[SortedMap]', () => {
-  suite('freeze()', () => {
+  suite('commit()', () => {
     test('if the input map is already immutable, it is returned unmodified', () => {
       const set = empty();
-      assert.strictEqual(freeze(set), set);
+      assert.strictEqual(commit(set), set);
     });
 
-    test('if the input map is mutable, an immutable clone is returned', () => {
-      const set = thaw(empty());
-      assert.notStrictEqual(freeze(set), set);
+    test('if the input map is mutable, it is frozen and then returned', () => {
+      const set = modify(empty());
+      assert.strictEqual(commit(set), set);
+      assert.isTrue(isImmutable(set));
     });
   });
 
-  suite('isFrozen()', () => {
+  suite('isImmutable()', () => {
     test('returns true if the input map is immutable', () => {
       const set = empty();
-      assert.isTrue(isFrozen(set));
+      assert.isTrue(isImmutable(set));
     });
 
     test('returns false if the input map is mutable', () => {
-      const set = thaw(empty());
-      assert.isFalse(isFrozen(set));
+      const set = modify(empty());
+      assert.isFalse(isImmutable(set));
     });
   });
 });

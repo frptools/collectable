@@ -1,6 +1,6 @@
 import {KeyedReduceFn} from '@collectable/core';
 import {reduce as _reduce} from '@collectable/map';
-import {HashSet, HashSetImpl} from '../internals';
+import {HashSetStructure} from '../internals';
 
 export type ReducePredicate<T, R> = (accum: R, value: T, index: number) => R;
 
@@ -10,7 +10,6 @@ function reduceMap<K, R>(pred: ReducePredicate<K, R>): KeyedReduceFn<K, null, R>
   };
 }
 
-export function reduce<T, R>(f: ReducePredicate<T, R>, seed: R, set: HashSet<T>): R;
-export function reduce<T, R>(f: ReducePredicate<T, R>, seed: R, set: HashSetImpl<T>): R {
+export function reduce<T, R>(f: ReducePredicate<T, R>, seed: R, set: HashSetStructure<T>): R {
   return _reduce(reduceMap(f), seed, set._map);
 }

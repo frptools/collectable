@@ -1,7 +1,6 @@
-import {isMutable} from '@collectable/core';
-import {HashSet, HashSetImpl, cloneSet} from '../internals';
+import {Mutation} from '@collectable/core';
+import {HashSetStructure, cloneHashSet} from '../internals';
 
-export function clone<T>(set: HashSet<T>): HashSet<T>;
-export function clone<T>(set: HashSetImpl<T>): HashSetImpl<T> {
-  return cloneSet(isMutable(set._owner), set);
+export function clone<T>(set: HashSetStructure<T>, mutability?: Mutation.PreferredContext): HashSetStructure<T> {
+  return cloneHashSet(set, mutability);
 }

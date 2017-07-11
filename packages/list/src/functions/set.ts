@@ -1,8 +1,8 @@
-import {List, cloneAsMutable, ensureImmutable, setValueAtOrdinal} from '../internals';
-import {isImmutable} from '@collectable/core';
+import {modify, commit} from '@collectable/core';
+import {ListStructure, setValueAtOrdinal} from '../internals';
 
-export function set<T>(index: number, value: T, list: List<T>): List<T> {
-  var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
+export function set<T>(index: number, value: T, list: ListStructure<T>): ListStructure<T> {
+  list = modify(list);
   setValueAtOrdinal(list, index, value);
-  return immutable ? ensureImmutable(list, true) : list;
+  return commit(list);
 }

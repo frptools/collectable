@@ -1,6 +1,7 @@
-import {log, publish} from './debug'; // ## DEV ##
-import {List} from './list'; // ## DEV ##
-import {nextId, abs, max, copyArray} from '@collectable/core';
+import {log, publish} from './_dev'; // ## DEV ##
+import {ListStructure} from './List'; // ## DEV ##
+import {nextId} from './List'; // ## DEV ##
+import {abs, max, copyArray} from '@collectable/core';
 import {CONST, COMMIT_MODE} from './common';
 
 export type ChildSlotOutParams<T> = {
@@ -18,7 +19,9 @@ export class Slot<T> {
     public recompute: number, // the number of child slots for which the sum must be recalculated
     public subcount: number, // the total number of slots belonging to immediate child slots
     public slots: (Slot<T>|T)[]
-  ) {}
+  ) {
+    log(`[Slot] Construct slot with group ${group} and size ${size}`); // ## DEV ##
+  }
 
   static empty<T>(): Slot<T> {
     return emptySlot;
@@ -92,7 +95,7 @@ export class Slot<T> {
     this.slots.length = actual.slots.length;
   }
 
-  resolveChild(ordinal: number, shift: number, out: ChildSlotOutParams<T> /* ## DEV [[ */, list: List<T> /* ]] ## */): boolean {
+  resolveChild(ordinal: number, shift: number, out: ChildSlotOutParams<T> /* ## DEV [[ */, list: ListStructure<T> /* ]] ## */): boolean {
     log(`[Slot#resolveChild (slot:${this.id})] ordinal: ${ordinal}, shift: ${shift}, recompute: ${this.recompute}`); // ## DEV ##
     if(shift === 0) {
       if(ordinal >= this.slots.length) return false;
@@ -216,9 +219,10 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
     step = -1;
   }
 
+  var c: number;
   if(isLeaf) {
     if(copySlots) {
-      for(var c = 0; c < amount; srcIndex += step, destIndex += step, c++) {
+      for(c = 0; c < amount; srcIndex += step, destIndex += step, c++) {
         destSlots[destIndex] = srcSlots[srcIndex];
       }
     }
@@ -227,7 +231,7 @@ function adjustSlotBounds<T>(src: Slot<T>, dest: Slot<T>, padLeft: number, padRi
   else {
     if(copySlots || padRight < 0) {
       var subcount = 0, size = 0;
-      for(var c = 0; c < amount; srcIndex += step, destIndex += step, c++) {
+      for(c = 0; c < amount; srcIndex += step, destIndex += step, c++) {
         var slot = <Slot<T>>srcSlots[srcIndex];
         subcount += slot.slots.length;
         size += slot.size;
@@ -267,4 +271,20 @@ export class ExpansionParameters {
   }
 }
 
-export var emptySlot = new Slot<any>(nextId(), 0, 0, -1, 0, []);
+var _emptySlot: Slot<any> = new Slot<any>(0, 0, 0, -1, 0, []);
+
+// ## DEV [[
+function createReadOnlyInterceptor(msg: (p: PropertyKey) => string): ProxyHandler<any> {
+  return {
+    set(target: any, p: PropertyKey, value: any, receiver: any): boolean {
+      throw new Error(msg(p));
+    }
+  };
+}
+const READONLY_SLOTS_INTERCEPTOR = createReadOnlyInterceptor(p => `Attempted to write property "${p}" of emptySlot.slots`);
+const READONLY_SLOT_INTERCEPTOR = createReadOnlyInterceptor(p => `Attempted to write property "${p}" of emptySlot`);
+_emptySlot.slots = new Proxy(_emptySlot.slots, READONLY_SLOTS_INTERCEPTOR);
+_emptySlot = new Proxy(_emptySlot, READONLY_SLOT_INTERCEPTOR);
+// ]] ##
+
+export var emptySlot = _emptySlot;

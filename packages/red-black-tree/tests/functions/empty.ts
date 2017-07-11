@@ -1,17 +1,17 @@
 import {assert} from 'chai';
-import {empty, size, isRedBlackTree} from '../../src';
+import {emptyWithNumericKeys, size, isRedBlackTree} from '../../src';
 
 suite('[RedBlackTree]', () => {
-  suite('empty()', () => {
+  suite('emptyWithNumericKeys()', () => {
     test('returns a tree of size 0', () => {
-      const tree = empty<number, number>();
+      const tree = emptyWithNumericKeys<number>();
       assert.strictEqual(size(tree), 0);
     });
   });
 
   suite('isRedBlackTree()', () => {
     test('returns true if the argument is a valid RedBlackTree instance', () => {
-      const tree = empty<number, number>();
+      const tree = emptyWithNumericKeys<number>();
       assert.isTrue(isRedBlackTree(tree));
     });
     test('returns false if the argument is not a valid RedBlackTree instance', () => {

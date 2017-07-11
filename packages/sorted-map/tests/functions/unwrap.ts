@@ -1,6 +1,7 @@
-import {RedBlackTree, fromObject, unwrap as _unwrap} from '@collectable/red-black-tree';
 import {assert} from 'chai';
-import {empty, fromArray, toArray, toNativeMap, unwrap} from '../../src';
+import {RedBlackTreeStructure, fromObject} from '@collectable/red-black-tree';
+import {unwrap} from '@collectable/core';
+import {empty, fromArray, toArray, toNativeMap} from '../../src';
 import {SortedMap, fromStringArray, pairsFrom} from '../test-utils';
 
 suite('[SortedMap]', () => {
@@ -31,27 +32,23 @@ suite('[SortedMap]', () => {
   });
 
   suite('unwrap()', () => {
-    let map1: SortedMap, tree1: RedBlackTree<any, any>, tree2: RedBlackTree<any, any>;
+    let map1: SortedMap, tree1: RedBlackTreeStructure<any, any>, tree2: RedBlackTreeStructure<any, any>;
     setup(() => {
       tree1 = fromObject<string>(values);
       tree2 = fromObject<string>(values);
-      map1 = fromArray<string, RedBlackTree<any, any>>([['A', tree1], ['B', tree2]]);
+      map1 = fromArray<string, RedBlackTreeStructure<any, any>>([['A', tree1], ['B', tree2]]);
     });
 
     test('returns an empty object if the map is empty', () => {
-      assert.deepEqual(unwrap(false, empty<string, number>()), {});
+      assert.deepEqual(unwrap(empty<string, number>()), {});
     });
 
     test('returns an array containing each member of the input map', () => {
-      assert.deepEqual(unwrap(false, map), values.reduce((o, v) => (o[v] = v.charCodeAt(0), o), {}));
+      assert.deepEqual(unwrap(map), values.reduce((o, v) => (o[v] = v.charCodeAt(0), o), <any>{}));
     });
 
-    test('if called with deep=false, the returned array does not unwrap any child collections', () => {
-      assert.deepEqual(unwrap(false, map1), {A: tree1, B: tree2});
-    });
-
-    test('if called with deep=true, the returned array includes recursively-unwrapped child collections', () => {
-      assert.deepEqual(unwrap(true, map1), {A: _unwrap(true, tree1), B: _unwrap(true, tree2)});
+    test('the returned array includes recursively-unwrapped child collections', () => {
+      assert.deepEqual(unwrap(map1), {A: unwrap(tree1), B: unwrap(tree2)});
     });
   });
 });

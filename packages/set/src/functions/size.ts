@@ -1,13 +1,11 @@
 import {size as _size} from '@collectable/map';
-import {HashSet, HashSetImpl} from '../internals';
+import {HashSetStructure} from '../internals';
 
-export function size<T>(set: HashSet<T>): number;
-export function size<T>(set: HashSetImpl<T>): number {
+export function size<T>(set: HashSetStructure<T>): number {
   return _size(set._map);
 }
 
-export function isEmpty<T>(set: HashSet<T>): boolean;
-export function isEmpty<T>(set: HashSetImpl<T>): boolean {
+export function isEmpty<T>(set: HashSetStructure<T>): boolean {
   return _size(set._map) === 0;
 }
 

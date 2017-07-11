@@ -1,6 +1,6 @@
 import {assert} from 'chai';
 import {empty, fromArray, concat, concatAll, concatLeft} from '../../src';
-import {arrayFrom} from '../../src/internals';
+import {arrayFrom} from '../../src//internals';
 import {BRANCH_FACTOR, makeValues} from '../test-utils';
 
 suite('[List]', () => {

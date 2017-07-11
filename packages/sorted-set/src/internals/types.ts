@@ -1,8 +1,5 @@
-import {Collection} from '@collectable/core';
-import {Map} from '@collectable/map';
-import {RedBlackTree} from '@collectable/red-black-tree';
-
-export interface SortedSet<T> extends Collection<T> {}
+import {HashMapStructure} from '@collectable/map';
+import {RedBlackTreeStructure} from '@collectable/red-black-tree';
 
 export interface SortedSetItem<T> {
   index: number;
@@ -10,5 +7,5 @@ export interface SortedSetItem<T> {
   value: T;
 }
 
-export type ValueMap<T> = Map<T, SortedSetItem<T>>;
-export type Sorted<T> = RedBlackTree<SortedSetItem<T>, null>;
+export type ValueMap<T> = HashMapStructure<T, SortedSetItem<T>>;
+export type Sorted<T> = RedBlackTreeStructure<SortedSetItem<T>, null>;

@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {empty, skip, skipLast, take, takeLast, slice, fromArray/*, get*/} from '../../src';
+import {empty, skip, skipLast, take, takeLast, slice, fromArray} from '../../src';
 import {arrayFrom} from '../../src/internals';
 
 suite('[List]', () => {

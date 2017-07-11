@@ -1,11 +1,9 @@
-import {isImmutable} from '@collectable/core';
-import {SortedSet, SortedSetImpl, refreeze, cloneAsMutable, unsetItem} from '../internals';
+import {commit, modify} from '@collectable/core';
+import {SortedSetStructure, unsetItem} from '../internals';
 
-export function remove<T>(value: T, set: SortedSet<T>): SortedSet<T>;
-export function remove<T>(value: T, set: SortedSetImpl<T>): SortedSetImpl<T> {
-  var nextSet = set;
-  var immutable = isImmutable(set._owner) && (nextSet = cloneAsMutable(set), true);
-  return unsetItem(value, nextSet._map, nextSet._tree)
-    ? immutable ? refreeze(nextSet) : nextSet
-    : set;
+export function remove<T>(value: T, set: SortedSetStructure<T>): SortedSetStructure<T> {
+  var nextSet = modify(set);
+  const modified = unsetItem(value, nextSet._map, nextSet._tree);
+  commit(nextSet);
+  return modified ? nextSet : set;
 }

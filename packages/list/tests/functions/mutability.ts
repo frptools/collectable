@@ -1,22 +1,18 @@
 import {assert} from 'chai';
-import {fromArray, freeze, thaw, set, take, append, appendArray, isFrozen} from '../../src';
+import {modify, commit} from '@collectable/core';
+import {fromArray, set, take, append, appendArray} from '../../src';
 import {arrayFrom} from '../../src/internals';
 
 suite('[List]', () => {
-  suite('freeze()', () => {
+  suite('commit()', () => {
     test('should return the same list if already frozen', () => {
       const list = fromArray(['X', 'Y', 'Z']);
-      assert.strictEqual(freeze(list), list);
-    });
-
-    test('should return a new list if not frozen', () => {
-      const list = thaw(fromArray(['X', 'Y', 'Z']));
-      assert.notStrictEqual(freeze(list), list);
+      assert.strictEqual(commit(list), list);
     });
 
     test('should cause common operations to avoid mutating the input list', () => {
       const values = ['X', 'Y', 'Z'];
-      const list = freeze(thaw(fromArray(values)));
+      const list = commit(modify(fromArray(values)));
       const list1 = append('K', list);
       const list2 = set(1, 'K', list);
       const list3 = take(2, list);
@@ -30,20 +26,20 @@ suite('[List]', () => {
     });
   });
 
-  suite('thaw()', () => {
+  suite('modify()', () => {
     test('should return the same list if already unfrozen', () => {
-      const list = thaw(fromArray(['X', 'Y', 'Z']));
-      assert.strictEqual(thaw(list), list);
+      const list = modify(fromArray(['X', 'Y', 'Z']));
+      assert.strictEqual(modify(list), list);
     });
 
     test('should return a new list if frozen', () => {
       const list = fromArray(['X', 'Y', 'Z']);
-      assert.notStrictEqual(thaw(list), list);
+      assert.notStrictEqual(modify(list), list);
     });
 
     test('should cause common operations to directly mutate the input list', () => {
       const values = ['X', 'Y', 'Z'];
-      const list = thaw(fromArray(values));
+      const list = modify(fromArray(values));
       const list1 = appendArray(['A', 'B', 'C', 'D', 'E', 'F'], list);
       const list2 = set(5, 'K', list);
       const list3 = take(6, list);
@@ -51,20 +47,6 @@ suite('[List]', () => {
       assert.strictEqual(list, list2);
       assert.strictEqual(list, list3);
       assert.deepEqual(arrayFrom(list), ['X', 'Y', 'Z', 'A', 'B', 'K']);
-    });
-  });
-
-  suite('isFrozen()', () => {
-    test('should return true if the list is frozen', () => {
-      const list = fromArray(['X', 'Y', 'Z']);
-      assert.isTrue(isFrozen(list));
-      assert.isTrue(isFrozen(freeze(thaw(list))));
-    });
-
-    test('should return false if the list is unfrozen', () => {
-      const list = thaw(fromArray(['X', 'Y', 'Z']));
-      assert.isFalse(isFrozen(list));
-      assert.isFalse(isFrozen(thaw(freeze(list))));
     });
   });
 });

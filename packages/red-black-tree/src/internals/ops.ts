@@ -1,5 +1,5 @@
-import {log} from './debug'; // ## DEV ##
-import {RedBlackTreeImpl} from './RedBlackTree';
+import {log} from './_dev'; // ## DEV ##
+import {RedBlackTreeStructure} from './RedBlackTree';
 import {BRANCH, Node, isNone} from './node';
 import {PathNode} from './path';
 
@@ -12,7 +12,7 @@ function describe<K, V>(node: Node<K, V>): string {
 }
 // ]] ##
 
-function writeBack<K, V>(upper: PathNode<K, V>, lower: Node<K, V>, tree: RedBlackTreeImpl<K, V>): void {
+function writeBack<K, V>(upper: PathNode<K, V>, lower: Node<K, V>, tree: RedBlackTreeStructure<K, V>): void {
   if(upper.isActive()) {
     setChild(upper.next, upper.node, lower);
   }
@@ -21,7 +21,7 @@ function writeBack<K, V>(upper: PathNode<K, V>, lower: Node<K, V>, tree: RedBlac
   }
 }
 
-export function rotateLeft<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTreeImpl<K, V>): Node<K, V> {
+export function rotateLeft<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTreeStructure<K, V>): Node<K, V> {
   const pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(upper.isActive()) (<any>upper.node).__flag = 'rotate-upper'; // ## DEV ##
   (<any>parent).__flag = 'rotate'; // ## DEV ##
@@ -47,7 +47,7 @@ export function rotateLeft<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, chil
   return child;
 }
 
-export function rotateRight<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTreeImpl<K, V>): Node<K, V> {
+export function rotateRight<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTreeStructure<K, V>): Node<K, V> {
   const pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(upper.isActive()) (<any>upper.node).__flag = 'rotate-upper'; // ## DEV ##
   (<any>parent).__flag = 'rotate'; // ## DEV ##
@@ -73,7 +73,7 @@ export function rotateRight<K, V>(upper: PathNode<K, V>, parent: Node<K, V>, chi
   return child;
 }
 
-export function rotateLeftRight<K, V>(upper: PathNode<K, V>, grandParent: Node<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTreeImpl<K, V>): Node<K, V> {
+export function rotateLeftRight<K, V>(upper: PathNode<K, V>, grandParent: Node<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTreeStructure<K, V>): Node<K, V> {
   const gk = keyOf(grandParent), pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(upper.isActive()) (<any>upper.node).__flag = 'rotate-upper'; // ## DEV ##
   (<any>grandParent).__flag = 'rotate'; // ## DEV ##
@@ -103,7 +103,7 @@ export function rotateLeftRight<K, V>(upper: PathNode<K, V>, grandParent: Node<K
   return child;
 }
 
-export function rotateRightLeft<K, V>(upper: PathNode<K, V>, grandParent: Node<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTreeImpl<K, V>): Node<K, V> {
+export function rotateRightLeft<K, V>(upper: PathNode<K, V>, grandParent: Node<K, V>, parent: Node<K, V>, child: Node<K, V>, tree: RedBlackTreeStructure<K, V>): Node<K, V> {
   const gk = keyOf(grandParent), pk = keyOf(parent), ck = keyOf(child); // ## DEV ##
   if(upper.isActive()) (<any>upper.node).__flag = 'rotate-upper'; // ## DEV ##
   (<any>grandParent).__flag = 'rotate'; // ## DEV ##
@@ -133,7 +133,7 @@ export function rotateRightLeft<K, V>(upper: PathNode<K, V>, grandParent: Node<K
   return child;
 }
 
-export function swapNodeContents<K, V>(upper: Node<K, V>, lower: Node<K, V> /* ## DEV [[ */, tree: RedBlackTreeImpl<K, V> /* ]] ## */): void {
+export function swapNodeContents<K, V>(upper: Node<K, V>, lower: Node<K, V> /* ## DEV [[ */, tree: RedBlackTreeStructure<K, V> /* ]] ## */): void {
   log(`[swapNodeContents] upper: ${keyOf(upper)}, lower: ${keyOf(lower)}`); // ## DEV ##
   var key = upper.key;
   upper.key = lower.key;
@@ -147,7 +147,7 @@ export function swapNodeContents<K, V>(upper: Node<K, V>, lower: Node<K, V> /* #
   delete (<any>lower).__flag; // ## DEV ##
 }
 
-export function swapNodeColors<K, V>(upper: Node<K, V>, lower: Node<K, V> /* ## DEV [[ */, tree: RedBlackTreeImpl<K, V> /* ]] ## */): void {
+export function swapNodeColors<K, V>(upper: Node<K, V>, lower: Node<K, V> /* ## DEV [[ */, tree: RedBlackTreeStructure<K, V> /* ]] ## */): void {
   log(`[swapNodeColors] upper: ${keyOf(upper)}, lower: ${keyOf(lower)}`); // ## DEV ##
   (<any>upper).__red = upper._red; // ## DEV ##
   (<any>lower).__red = lower._red; // ## DEV ##

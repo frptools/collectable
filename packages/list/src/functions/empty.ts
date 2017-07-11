@@ -1,8 +1,8 @@
 import {isDefined} from '@collectable/core';
-import {List, createList} from '../internals';
+import {ListStructure, createList} from '../internals';
 
-var EMPTY: List<any>|undefined;
+var EMPTY: ListStructure<any>|undefined;
 
-export function empty<T>(): List<T> {
+export function empty<T>(): ListStructure<T> {
   return isDefined(EMPTY) ? EMPTY : (EMPTY = createList<any>(false));
 }

@@ -1,11 +1,11 @@
-import {log, publish} from './debug'; // ## DEV ##
+import {log, publish} from './_dev'; // ## DEV ##
 import {COMMIT_MODE, OFFSET_ANCHOR, invertOffset, normalizeIndex} from './common';
-import {List, getView, setView} from './list';
+import {ListStructure, getView, setView} from './List';
 import {View} from './view';
 import {ExpansionParameters} from './slot';
 import {TreeWorker, isViewInRange} from './traversal';
 
-export function sliceList<T>(list: List<T>, start: number, end: number): void {
+export function sliceList<T>(list: ListStructure<T>, start: number, end: number): void {
   publish(list, false, `Begin slice (using state id: ${list.id}, size ${list._size}) from indices ${start} to ${end}`); // ## DEV ##
   start = normalizeIndex(list._size, start);
   end = normalizeIndex(list._size, end);
@@ -32,7 +32,7 @@ export function sliceList<T>(list: List<T>, start: number, end: number): void {
   sliceInternal(list, start, end);
 }
 
-function sliceInternal<T>(list: List<T>, start: number, end: number): void {
+function sliceInternal<T>(list: ListStructure<T>, start: number, end: number): void {
   log(`[sliceInternal] Slice state (of size ${list._size}) from indices ${start} to ${end}`); // ## DEV ##
   var doneLeft = start === 0,
       doneRight = end === list._size,
@@ -113,8 +113,9 @@ function sliceInternal<T>(list: List<T>, start: number, end: number): void {
     if(areSame) right = left;
   }
 
+  var leftOffset: number;
   if(areSame) {
-    var leftOffset = left.anchor === OFFSET_ANCHOR.LEFT ? left.offset : invertOffset(left.offset, left.slot.size, list._size);
+    leftOffset = left.anchor === OFFSET_ANCHOR.LEFT ? left.offset : invertOffset(left.offset, left.slot.size, list._size);
     if(leftOffset === start) {
       doneLeft = true;
     }
@@ -127,7 +128,7 @@ function sliceInternal<T>(list: List<T>, start: number, end: number): void {
   publish(list, false, `Views prepared and ready for slicing`); // ## DEV ##
 
   var rightBound = doneRight ? 0 : calculateRightEnd(right, list._size);
-  var leftOffset = getOffset(left, OFFSET_ANCHOR.LEFT, list._size);
+  leftOffset = getOffset(left, OFFSET_ANCHOR.LEFT, list._size);
   var truncateLeft = doneLeft || start <= leftOffset ? 0 : leftOffset - start;
   var truncateRight = doneRight || end >= rightBound ? 0 : end - rightBound;
   var isRoot = (doneLeft ? right : left).isRoot();

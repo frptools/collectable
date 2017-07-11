@@ -48,7 +48,7 @@ function lazyVisit <K, V, R>(node: AnyNode<K, V>, f: (leaf: Leaf<K, V>) => R, k:
     default:
       return continuation(k);
   }
-};
+}
 
 function lazyVisitChildren<K, V, R>(
   length: number,
@@ -65,7 +65,7 @@ function lazyVisitChildren<K, V, R>(
   }
 
   return continuation(k);
-};
+}
 
 function notEmptyNode<K, V>(node: AnyNode<K, V>): boolean {
   return node && node.type !== NodeType.EMPTY;

@@ -28,13 +28,7 @@ An all-you-can-eat buffet of high-performance, [persistent](https://en.wikipedia
 - [ **[Sorted Map](/packages/sorted-map#collectablejs-immutable-sorted-map)** ] A persistent sorted [map](https://en.wikipedia.org/wiki/Associative_array) backed by a [red-black tree](/packages/red-black-tree#collectablejs-immutable-sorted-set) and a [hash map](/packages/map#collectablejs-immutable-map) with user-definable sort order.
 - [ **[Set](/packages/set#collectablejs-immutable-set)** ] A persistent [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)), backed by a [hash map](/packages/map#collectablejs-immutable-map).
 - [ **[Sorted Set](/packages/sorted-set#collectablejs-immutable-sorted-set)** ] A persistent sorted [set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) backed by a [red-black tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree) and a [hash map](https://en.wikipedia.org/wiki/Associative_array), with user-definable sort order.
-
-### Secondary Structures
-
-These structures are less common in application code and usually used as building blocks for other algorithms and data structures:
-
 - [ **[Red Black Tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree)** ] A persistent [red-black tree](https://en.wikipedia.org/wiki/Red%E2%80%93black_tree), providing a balanced binary search tree which maps keys to values.
-- [ **Cuckoo Filter** ] A persistent [cuckoo filter](https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf), used for efficient determination of probable set membership.
 
 See the [road map](https://github.com/frptools/collectable/wiki) for information on further development and plans for additional features and data structures.
 
@@ -73,21 +67,12 @@ const list = fromArray(['X', 'Y']);
 const array = unwrap(list);
 ```
 
-Pre-curried versions of functions for a given data structure are available by appending `/curried` to the import path, like so:
-
-```ts
-import {fromArray, append} from '@collectable/list/curried';
-
-const two = fromArray(['X', 'Y']); // => [X, Y]
-const addZ = append('Z');
-const three = addZ(two); // => [X, Y, Z]
-```
-
 To combine multiple data structures effectively, import [universal methods](/docs/index.md) from the main package and collection-specific methods from other relevant packages as needed:
 
 ```js
 import {from, updateIn, setIn} from 'collectable';
-import {append} from '@collectable/list/curried';
+import {append} from '@collectable/list';
+import {curry2} from '@typed/list';
 
 const input = {
   foo: 'abc',
@@ -96,7 +81,7 @@ const input = {
 const map0 = from(input); // <{foo: 'abc', xyz: <[3, [5, 6], 7, 9]>}>
 const map1 = updateIn(['xyz', 1, 0], n => 4, map0); // <{foo: 'abc', xyz: <[3, [4, 6], 7, 9]>}>
 const map2 = setIn(['foo', 'bar'], x => 'baz', map1); // <{foo: <{bar: 'baz'}>, xyz: ...>
-const map3 = updateIn(['xyz', 1], append(42)); // <{..., xyz: <[3, [5, 6, 42], 7, 9]>}>
+const map3 = updateIn(['xyz', 1], curry2(append)(42)); // <{..., xyz: <[3, [5, 6, 42], 7, 9]>}>
 ```
 
 Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to take the whole package as a dependency while excluding anything you don't use from the final build.

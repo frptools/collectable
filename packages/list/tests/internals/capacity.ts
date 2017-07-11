@@ -1,8 +1,8 @@
 import {assert} from 'chai';
-import {List, createList} from '../../src/internals';
-import {appendValues, prependValues, arrayFrom} from '../../src/internals';
-import {getAtOrdinal} from '../../src/internals';
-import {concatLists} from '../../src/internals';
+import {
+  ListStructure, createList, appendValues, prependValues,
+  arrayFrom, getAtOrdinal, concatLists
+} from '../../src/internals';
 
 import {
   BRANCH_FACTOR,
@@ -30,7 +30,7 @@ const values_h2_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 2) + BRANCH_FACTOR +
 const values_h3_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 3) + BRANCH_FACTOR + 1);
 const values_h4_pBF_p1 = makeValues(Math.pow(BRANCH_FACTOR, 4) + BRANCH_FACTOR + 1);
 
-function makeList(values: any[], initialSize: number, usePrepend: boolean): List<any> {
+function makeList(values: any[], initialSize: number, usePrepend: boolean): ListStructure<any> {
   const list = createList<any>(true);
   if(initialSize > 0) {
     appendValues(list, values.slice(0, initialSize));
@@ -150,7 +150,7 @@ suite('[Internals: capacity]', () => {
       test('when appending', () => {
         const n0 = BRANCH_FACTOR - 1;
         const n1 = BRANCH_FACTOR - 2;
-        var list0: List<any>;
+        var list0: ListStructure<any>;
         concatLists(list0 = makeList(makeValues(n0), 1, false), makeList(makeValues(n1, n0), 1, false));
         appendValues(list0, ['X', 'Y', 'Z', 'K']);
         const root = rootSlot(list0);
@@ -164,7 +164,7 @@ suite('[Internals: capacity]', () => {
       test('when appending', () => {
         const n0 = BRANCH_FACTOR - 1;
         const n1 = Math.pow(BRANCH_FACTOR, 2) - n0 - 1;
-        var list0: List<any>;
+        var list0: ListStructure<any>;
         concatLists(list0 = makeList(makeValues(n0), 1, false), makeList(makeValues(n1, n0), 1, false));
         appendValues(list0, ['X']);
         const root = rootSlot(list0);
@@ -210,7 +210,7 @@ suite('[Internals: capacity]', () => {
       for(var i = 0; i < values.length; i++) {
         appendValues(list, [values[i]]);
       }
-      for(var i = 0; i < values.length; i++) {
+      for(i = 0; i < values.length; i++) {
         assert.strictEqual(getAtOrdinal(list, i), values[i], `incorrect value at index ${i}`);
       }
     });
@@ -251,7 +251,7 @@ suite('[Internals: capacity]', () => {
       for(var i = 0; i < values.length; i++) {
         prependValues(list, [values[i]]);
       }
-      for(var i = 0; i < values.length; i++) {
+      for(i = 0; i < values.length; i++) {
         assert.strictEqual(getAtOrdinal(list, i), values[values.length - i - 1], `incorrect value at index ${i}`);
       }
     });

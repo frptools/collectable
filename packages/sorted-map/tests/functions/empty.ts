@@ -1,6 +1,6 @@
 import {assert} from 'chai';
-import {empty as emptyMap} from '@collectable/red-black-tree';
 import {empty, size, isSortedMap} from '../../src';
+import {empty as emptyMap} from '@collectable/map';
 
 suite('[SortedMap]', () => {
   suite('empty()', () => {
@@ -14,7 +14,7 @@ suite('[SortedMap]', () => {
     });
   });
 
-  suite('isSet()', () => {
+  suite('isSortedMap()', () => {
     test('returns true if the argument is an instance of a Collectable.js SortedMap class', () => {
       assert.isTrue(isSortedMap(empty()));
     });

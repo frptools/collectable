@@ -46,7 +46,7 @@ suite('[Internals: concatenation]', () => {
           offset += size;
         }
         for(i = 0; i < 4; i++) {
-          var size = i > 1 ? small : large;
+          size = i > 1 ? small : large;
           rightSlots.push(makeStandardSlot(size, level, offset));
           offset += size;
         }
@@ -95,7 +95,7 @@ suite('[Internals: concatenation]', () => {
           offset += size;
         }
         for(i = 0; i < BRANCH_FACTOR - 2; i++) {
-          var size = i > 1 ? large : small;
+          size = i > 1 ? large : small;
           rightSlots.push(makeStandardSlot(size, level, offset));
           offset += size;
         }

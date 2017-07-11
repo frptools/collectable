@@ -1,3 +1,5 @@
+import {Mutation, ChangeFlag} from '@collectable/core';
+
 export type AnyNode<K, V>
   = Empty<K, V>
   | Leaf<K, V>
@@ -5,27 +7,22 @@ export type AnyNode<K, V>
   | Indexed<K, V>
   | ListNode<K, V>;
 
-export interface Size {
-  value: number;
-}
-
 export type GetValueFn<V> = (value?: V) => V;
 
 export type Modify<K, V> =
-  (group: number,
+  (owner: Mutation.PersistentStructure,
+   change: ChangeFlag,
    shift: number,
    get: GetValueFn<V>,
    hash: number,
-   key: K,
-   size: Size) => AnyNode<K, V>;
+   key: K) => AnyNode<K, V>;
 
 export type ChildNode<K, V> =
   Empty<K, V> | Leaf<K, V>;
 
 export type ChildrenNodes<K, V> = Array<ChildNode<K, V>>;
 
-export interface Node<K, V> {
-  group: number;
+export interface Node<K, V> extends Mutation.PersistentStructure {
   type: NodeType;
   modify: Modify<K, V>;
 }

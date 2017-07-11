@@ -1,4 +1,5 @@
-import {log} from '../internals/debug'; // ## DEV ##
+import {log} from '../internals/_dev'; // ## DEV ##
+import {RedBlackTreeStructure} from './RedBlackTree';
 import {rotateLeft, rotateRight, rotateLeftRight, rotateRightLeft, updateCount} from './ops';
 import {PathNode} from './path';
 import {
@@ -9,7 +10,7 @@ import {
   checkInvalidNilAssignment, // ## DEV ##
 } from './node';
 
-export function rebalance<K, V>(tail: PathNode<K, V>, node: Node<K, V>, parent: Node<K, V>, tree: any): void {
+export function rebalance<K, V>(tail: PathNode<K, V>, node: Node<K, V>, parent: Node<K, V>, tree: RedBlackTreeStructure<K, V>): void {
   var p: PathNode<K, V> = tail;
   var loopCounter = 0; // ## DEV ##
   var done = false;
@@ -30,7 +31,7 @@ export function rebalance<K, V>(tail: PathNode<K, V>, node: Node<K, V>, parent: 
     }
     else if(parent._red) {
       var pp = p.parent, grandParent = pp.node;
-      var uncle = pp.next === BRANCH.LEFT ? editRightChild(tree._group, grandParent) : editLeftChild(tree._group, grandParent);
+      var uncle = pp.next === BRANCH.LEFT ? editRightChild(tree, grandParent) : editLeftChild(tree, grandParent);
       if(uncle._red) {
         uncle._red = false;
         parent._red = false;

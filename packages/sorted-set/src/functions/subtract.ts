@@ -1,10 +1,9 @@
-import {isImmutable} from '@collectable/core';
-import {SortedSet, SortedSetImpl, isIterable, refreeze, cloneSortedSet, unsetItem} from '../internals';
+import {isImmutable, commit} from '@collectable/core';
+import {SortedSetStructure, isIterable, cloneSortedSet, unsetItem} from '../internals';
 import {size} from '.';
 
-export function subtract<T>(other: SortedSet<T>|T[]|Iterable<T>, main: SortedSet<T>): SortedSet<T>;
-export function subtract<T>(other: SortedSetImpl<T>|T[]|Iterable<T>, main: SortedSetImpl<T>): SortedSetImpl<T> {
-  var immutable = isImmutable(main._owner);
+export function subtract<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: SortedSetStructure<T>): SortedSetStructure<T> {
+  var immutable = isImmutable(main);
   var outputSet = cloneSortedSet(true, main);
 
   if(other && typeof other === 'object') {
@@ -18,7 +17,7 @@ export function subtract<T>(other: SortedSetImpl<T>|T[]|Iterable<T>, main: Sorte
       return main;
     }
     if(immutable) {
-      main = refreeze(outputSet);
+      main = commit(outputSet);
     }
     else {
       main._map = outputSet._map;
@@ -28,14 +27,14 @@ export function subtract<T>(other: SortedSetImpl<T>|T[]|Iterable<T>, main: Sorte
   return main;
 }
 
-function subtractArray<T>(inputSet: SortedSetImpl<T>, outputSet: SortedSetImpl<T>, omissions: T[]): void {
+function subtractArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, omissions: T[]): void {
   var {_map: map, _tree: tree} = outputSet;
   for(var i = 0; i < omissions.length; i++) {
     unsetItem(omissions[i], map, tree);
   }
 }
 
-function subtractIterable<T>(inputSet: SortedSetImpl<T>, outputSet: SortedSetImpl<T>, omissions: Iterator<T>): void {
+function subtractIterable<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, omissions: Iterator<T>): void {
   var {_map: map, _tree: tree} = outputSet;
   var current: IteratorResult<T>;
   while(!(current = omissions.next()).done) {

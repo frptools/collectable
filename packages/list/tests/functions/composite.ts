@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import {empty, append, prepend, get, unwrap} from '../../src';
+import {unwrap} from '@collectable/core';
+import {empty, append, prepend, get} from '../../src';
 import {BRANCH_FACTOR} from '../test-utils';
 
 suite('[List: composite operations]', () => {
@@ -14,7 +15,7 @@ suite('[List: composite operations]', () => {
       var index = values.length >>> 1;
       assert.strictEqual(get(index, list), values[index]);
     }
-    assert.deepEqual(unwrap(false, list), values);
+    assert.deepEqual(unwrap(list), values);
   });
 
   test(`(append(1) + prepend(1)) x ${m >>> 1}`, function() {
@@ -27,7 +28,7 @@ suite('[List: composite operations]', () => {
       list = prepend(i.toString(), list);
       values.unshift(i.toString());
     }
-    assert.deepEqual(unwrap(false, list), values);
+    assert.deepEqual(unwrap(list), values);
   });
 
   test(`(append(1) + prepend(1) + (get(mid) x 2)) x ${m >>> 1}`, function() {
@@ -47,7 +48,7 @@ suite('[List: composite operations]', () => {
         assert.strictEqual(get(-offset, list), values[values.length - offset], `get(${-offset}), size:${list._size}`);
       }
     }
-    assert.deepEqual(unwrap(false, list), values);
+    assert.deepEqual(unwrap(list), values);
   });
 
   test(`(append(1) + prepend(1) + get(mid)) x ${m >>> 1}`, function() {
@@ -71,6 +72,6 @@ suite('[List: composite operations]', () => {
         assert.strictEqual(leftActual, leftExpected, `get(${-offset}), size:${list._size}`);
       }
     }
-    assert.deepEqual(unwrap(false, list), values);
+    assert.deepEqual(unwrap(list), values);
   });
 });

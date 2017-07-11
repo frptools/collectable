@@ -1,9 +1,9 @@
 import {assert} from 'chai';
-import {Set, fromArray, forEach} from '../../src';
+import {HashSetStructure, fromArray, forEach} from '../../src';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   suite('forEach()', () => {
-    let set: Set<number>, values: number[];
+    let set: HashSetStructure<number>, values: number[];
     suiteSetup(() => {
       values = [1, 2, 3, 5, 8, 13, 21, 34, 55];
       set = fromArray(values);

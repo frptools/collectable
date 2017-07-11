@@ -1,7 +1,7 @@
 import {keys} from '@collectable/map';
-import {HashSetImpl} from './HashSet';
+import {HashSetStructure} from './HashSet';
 
-export function iterate<T>(set: HashSetImpl<T>): IterableIterator<T> {
+export function iterate<T>(set: HashSetStructure<T>): IterableIterator<T> {
   return keys(set._map);
 }
 

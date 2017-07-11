@@ -1,7 +1,8 @@
 import {assert} from 'chai';
-import {size, isEmpty, isFrozen, fromArray, fromIterable, fromNativeMap, fromObject} from '../src';
+import {isImmutable} from '@collectable/core';
+import {size, isEmpty, fromArray, fromIterable, fromNativeMap, fromObject} from '../src';
 
-suite('[Map]', () => {
+suite('[HashMap]', () => {
   const pairs: [string, string][] = [['A', 'a'], ['B', 'b'], ['C', 'c'], ['D', 'd'], ['E', 'e']];
 
   suite('fromArray()', () => {
@@ -18,7 +19,7 @@ suite('[Map]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromArray(pairs)));
+      assert.isTrue(isImmutable(fromArray(pairs)));
     });
   });
 
@@ -41,7 +42,7 @@ suite('[Map]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromIterable(it)));
+      assert.isTrue(isImmutable(fromIterable(it)));
     });
   });
 
@@ -61,19 +62,19 @@ suite('[Map]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromNativeMap(it)));
+      assert.isTrue(isImmutable(fromNativeMap(it)));
     });
   });
 
   suite('fromObject()', () => {
-    const obj = pairs.reduce((o, [k, v]) => (o[k] = v, o), {});
+    const obj = pairs.reduce((o, [k, v]) => (o[k] = v, o), <any>{});
 
     test('returns an empty set if the input set is empty', () => {
       assert.isTrue(isEmpty(fromObject({})));
     });
 
     test('returns a set containing the same items from the input set', () => {
-      assert.sameDeepMembers(Array.from(fromObject(obj)), pairs);
+      assert.sameDeepMembers<any>(Array.from(fromObject(obj)), pairs);
     });
 
     test('the returned set has the same size as the input set', () => {
@@ -81,7 +82,7 @@ suite('[Map]', () => {
     });
 
     test('the returned set is frozen', () => {
-      assert.isTrue(isFrozen(fromObject(obj)));
+      assert.isTrue(isImmutable(fromObject(obj)));
     });
   });
 });

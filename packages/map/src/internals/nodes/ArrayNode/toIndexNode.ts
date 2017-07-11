@@ -1,7 +1,8 @@
+import {MutationContext} from '@collectable/core';
 import {NodeType, AnyNode} from '../types';
 import {IndexedNode} from '../IndexedNode';
 
-export function toIndexNode<K, V>(group: number, count: number, index: number, children: Array<AnyNode<K, V>>): IndexedNode<K, V> {
+export function toIndexNode<K, V>(mctx: MutationContext, count: number, index: number, children: Array<AnyNode<K, V>>): IndexedNode<K, V> {
   const newChildren = new Array(count - 1);
   let g = 0;
   let bitmap = 0;
@@ -15,5 +16,5 @@ export function toIndexNode<K, V>(group: number, count: number, index: number, c
     }
   }
 
-  return new IndexedNode<K, V>(group, bitmap, newChildren);
+  return new IndexedNode<K, V>(mctx, bitmap, newChildren);
 }

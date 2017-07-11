@@ -1,12 +1,12 @@
-import {isImmutable} from '@collectable/core';
-import {List, cloneAsMutable, deleteValues, ensureImmutable} from '../internals';
+import {modify, commit} from '@collectable/core';
+import {ListStructure, deleteValues} from '../internals';
 
-export function remove<T>(index: number, list: List<T>): List<T> {
+export function remove<T>(index: number, list: ListStructure<T>): ListStructure<T> {
   return removeRange(index, index + 1, list);
 }
 
-export function removeRange<T>(start: number, end: number, list: List<T>): List<T> {
-  var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
+export function removeRange<T>(start: number, end: number, list: ListStructure<T>): ListStructure<T> {
+  list = modify(list);
   list = deleteValues(list, start, end);
-  return immutable ? ensureImmutable(list, true) : list;
+  return commit(list);
 }

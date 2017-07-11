@@ -1,9 +1,9 @@
-import {isImmutable} from '@collectable/core';
-import {log} from '../internals/debug'; // ## DEV ##
-import {CONST, OFFSET_ANCHOR, List, cloneAsMutable, prependValues, ensureImmutable} from '../internals';
+import {log} from '../internals/_dev'; // ## DEV ##
+import {modify, commit} from '@collectable/core';
+import {CONST, OFFSET_ANCHOR, ListStructure, prependValues} from '../internals';
 
-export function prepend<T>(value: T, list: List<T>): List<T> {
-  var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
+export function prepend<T>(value: T, list: ListStructure<T>): ListStructure<T> {
+  list = modify(list);
   var head = list._left;
   var slot = head.slot;
   log(`Begin prepend of value "${value}" to list of size ${list._size}`); // ## DEV ##
@@ -28,16 +28,16 @@ export function prepend<T>(value: T, list: List<T>): List<T> {
   else {
     prependValues(list, [value]);
   }
-  return immutable ? ensureImmutable(list, true) : list;
+  return commit(list);
 }
 
-export function prependArray<T>(values: T[], list: List<T>): List<T> {
+export function prependArray<T>(values: T[], list: ListStructure<T>): ListStructure<T> {
   if(values.length === 0) return list;
-  var immutable = isImmutable(list._owner) && (list = cloneAsMutable(list), true);
+  list = modify(list);
   prependValues(list, values);
-  return immutable ? ensureImmutable(list, true) : list;
+  return commit(list);
 }
 
-export function prependIterable<T>(values: Iterable<T>, list: List<T>): List<T> {
+export function prependIterable<T>(values: Iterable<T>, list: ListStructure<T>): ListStructure<T> {
   return prependArray(Array.from(values), list);
 }

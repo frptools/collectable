@@ -1,13 +1,13 @@
-import {log, publish} from './debug'; // ## DEV ##
-import {nextId, concatArray} from '@collectable/core';
+import {log, publish} from './_dev'; // ## DEV ##
+import {concatArray} from '@collectable/core';
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, concatSlotsToNewArray} from './common';
 import {TreeWorker} from './traversal';
 import {compact} from './compact';
 import {Slot} from './slot';
 import {View} from './view';
-import {List, cloneList, setView} from './list';
+import {ListStructure, cloneList, setView, nextId} from './List';
 
-export function concatLists<T>(leftList: List<T>, rightList: List<T>): List<T> {
+export function concatLists<T>(leftList: ListStructure<T>, rightList: ListStructure<T>): ListStructure<T> {
   if(leftList._size === 0) {
     return rightList;
   }

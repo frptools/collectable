@@ -1,12 +1,13 @@
 import {assert} from 'chai';
-import {SortedSet, isFrozen, isThawed, add, remove, size, clone, thaw} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {SortedSetStructure, add, remove, size, clone} from '../../src';
 import {extractMap} from '../../src/internals';
 import {fromStringArray} from '../test-utils';
 
 suite('[SortedSet]', () => {
   suite('clone()', () => {
     suite('when the input set is immutable', () => {
-      let set0: SortedSet<string>, set1: SortedSet<string>;
+      let set0: SortedSetStructure<string>, set1: SortedSetStructure<string>;
       setup(() => {
         set0 = fromStringArray(['A', 'B', 'C']);
         set1 = clone(set0);
@@ -14,7 +15,7 @@ suite('[SortedSet]', () => {
 
       test('a new immutable set is returned', () => {
         assert.notStrictEqual(set0, set1);
-        assert.isTrue(isFrozen(set1));
+        assert.isTrue(isImmutable(set1));
       });
 
       test('the new set has the same size as the input set', () => {
@@ -33,15 +34,15 @@ suite('[SortedSet]', () => {
     });
 
     suite('when the input set is mutable', () => {
-      let set0: SortedSet<string>, set1: SortedSet<string>;
+      let set0: SortedSetStructure<string>, set1: SortedSetStructure<string>;
       setup(() => {
-        set0 = thaw(fromStringArray(['A', 'B', 'C']));
+        set0 = modify(fromStringArray(['A', 'B', 'C']));
         set1 = clone(set0);
       });
 
       test('a new mutable set is returned', () => {
-        assert.isTrue(isThawed(set0));
-        assert.isTrue(isThawed(set1));
+        assert.isTrue(isMutable(set0));
+        assert.isTrue(isMutable(set1));
         assert.notStrictEqual(set0, set1);
         assert.notStrictEqual(extractMap(set0), extractMap(set1));
       });

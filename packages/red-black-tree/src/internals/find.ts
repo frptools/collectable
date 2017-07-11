@@ -1,9 +1,9 @@
-import {isUndefined} from '@collectable/core';
-import {RedBlackTreeImpl, ComparatorFn} from './RedBlackTree';
+import {ComparatorFn, isUndefined} from '@collectable/core';
+import {RedBlackTreeStructure} from './RedBlackTree';
 import {Node, NONE, BRANCH, isNone} from './node';
 import {PathNode} from './path';
 
-export function findNodeByKey<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): Node<K, V>|undefined {
+export function findNodeByKey<K, V>(key: K, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
   var node = tree._root,
       compare = tree._compare,
       found = false;
@@ -88,7 +88,7 @@ export function findPathToNodeByKey<K, V>(key: K, node: Node<K, V>, compare: Com
   return path;
 }
 
-export function findMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, key: K, tree: RedBlackTreeImpl<K, V>): Node<K, V>|undefined {
+export function findMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, key: K, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
   var node = tree._root,
       compare = tree._compare,
       found = NONE,
@@ -211,7 +211,7 @@ export function findPathToMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, k
   return found;
 }
 
-export function findByIndex<K, V>(index: number, tree: RedBlackTreeImpl<K, V>): Node<K, V>|undefined {
+export function findByIndex<K, V>(index: number, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
   var node = tree._root;
   var i = node._left._count;
   var loopCounter = 0; // ## DEV ##
@@ -257,4 +257,56 @@ export function findPathToIndex<K, V>(index: number, node: Node<K, V>): PathNode
     }
   }
   return PathNode.next(node, path, BRANCH.NONE);
+}
+
+function leftOf<K, V>(node: Node<K, V>): Node<K, V> {
+  return node._left;
+}
+
+function rightOf<K, V>(node: Node<K, V>): Node<K, V> {
+  return node._right;
+}
+
+export function findNext<K, V>(compare: ComparatorFn<K>, reversed: boolean, inclusive: boolean, key: K, current: PathNode<K, V>): PathNode<K, V>|undefined {
+  const [alreadyVisited, findPath, childOf] = reversed
+    ? [BRANCH.LEFT, findPathToMaxNodeLeftOfKey, leftOf]
+    : [BRANCH.RIGHT, findPathToMinNodeRightOfKey, rightOf];
+
+  if(inclusive && compare(key, current.node.key) === 0) {
+    inclusive = false;
+  }
+
+  let found: PathNode<K, V>|undefined, tentativeParentMatch = false;
+  while(current.isActive() && isUndefined(found)) {
+    const parent = current.parent;
+    if(!parent.isNone()) { // check if the parent is in the direction we want to go
+      let c = compare(key, parent.node.key);
+      if(reversed) c = -c;
+      if(c >= 0) { // the parent matches or precedes the search key
+        current = current.release();
+        current.next = alreadyVisited; // keep a record of the already-traversed branch for iteration purposes
+        if(inclusive && c === 0) {
+          found = current;
+        }
+        continue;
+      }
+      else {
+        tentativeParentMatch = true;
+      }
+    }
+
+    const child = childOf(current.node);
+    if(!isNone(child)) {
+      found = findPath(inclusive, key, child, current, compare);
+    }
+    if(isUndefined(found)) {
+      current = current.release();
+      if(tentativeParentMatch) {
+        found = current;
+      }
+    }
+
+    current.next = alreadyVisited; // keep a record of the already-traversed branch for iteration purposes
+  }
+  return found;
 }

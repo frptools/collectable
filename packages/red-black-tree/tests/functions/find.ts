@@ -1,10 +1,10 @@
 import {assert} from 'chai';
 import {RedBlackTreeEntry, find, findKey, findValue, iterateFrom} from '../../src';
-import {RedBlackTreeImpl} from '../../src/internals';
+import {RedBlackTreeStructure} from '../../src/internals';
 import {empty, createTree, sortedValues} from '../test-utils';
 
-var tree: RedBlackTreeImpl<number, string>,
-    emptyTree: RedBlackTreeImpl<any, any>;
+var tree: RedBlackTreeStructure<number, string>,
+    emptyTree: RedBlackTreeStructure<any, any>;
 
 suite('[RedBlackTree]', () => {
   setup(() => {

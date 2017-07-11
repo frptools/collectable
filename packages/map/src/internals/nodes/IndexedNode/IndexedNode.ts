@@ -1,5 +1,5 @@
-import {blockCopy, replaceArrayElement, removeArrayElement, insertArrayElement} from '@collectable/core';
-import {Indexed, AnyNode, NodeType, ChildrenNodes, ChildNode, Size, GetValueFn} from '../types';
+import {Mutation, ChangeFlag, copyArray, blockCopy, replaceArrayElement, removeArrayElement, insertArrayElement} from '@collectable/core';
+import {Indexed, AnyNode, NodeType, ChildrenNodes, ChildNode, GetValueFn} from '../types';
 import {empty} from '../EmptyNode';
 import {
   SIZE,
@@ -11,34 +11,42 @@ import {
 import {toArrayNode} from './toArrayNode';
 
 export class IndexedNode<K, V> implements Indexed<K, V> {
+  public readonly '@@mctx': Mutation.Context;
   public type: NodeType.INDEX = NodeType.INDEX;
 
   constructor(
-    public group: number,
+    mctx: Mutation.Context,
     public mask: number,
     public children: ChildrenNodes<K, V>
-  ) {}
+  ) {
+    this['@@mctx'] = mctx;
+  }
+
+  public '@@clone'(mctx: Mutation.Context): IndexedNode<K, V> {
+    return new IndexedNode<K, V>(mctx, this.mask, copyArray(this.children));
+  }
 
   public modify(
-    group: number,
+    owner: Mutation.PersistentStructure,
+    change: ChangeFlag,
     shift: number,
     get: GetValueFn<V>,
     hash: number,
-    key: K,
-    size: Size): AnyNode<K, V> {
+    key: K): AnyNode<K, V> {
 
-    const mutate = group === this.group;
     const {mask, children} = this;
     const fragment: number = hashFragment(shift, hash);
     const bit: number = toBitmap(fragment);
     const index: number = bitmapToIndex(mask, bit);
     const exists: boolean = Boolean(mask & bit);
     const current: AnyNode<K, V> = exists ? children[index] : empty<K, V>();
-    const child = current.modify(group, shift + SIZE, get, hash, key, size) as ChildNode<K, V>;
+    const child = current.modify(owner, change, shift + SIZE, get, hash, key) as ChildNode<K, V>;
 
     if(current === child) {
       return this;
     }
+
+    change.confirmed = true;
 
     if(exists && child.type === NodeType.EMPTY) {
       const bitmap = mask & ~bit;
@@ -51,22 +59,22 @@ export class IndexedNode<K, V> implements Indexed<K, V> {
         return children[index ^ 1];
       }
 
-      if(mutate) {
-        this.mask = bitmap;
+      if(Mutation.isMutable(this)) {
         blockCopy(children, children, index + 1, index, children.length - index - 1);
         children.length--;
+        this.mask = bitmap;
         return this;
       }
 
-      return new IndexedNode(group, bitmap, removeArrayElement(index, children));
+      return new IndexedNode(Mutation.getSubordinateContext(owner), bitmap, removeArrayElement(index, children));
     }
 
     if(!exists && child.type !== NodeType.EMPTY) {
       if(children.length >= MAX_INDEX_NODE) {
-        return toArrayNode(group, fragment, child, mask, children);
+        return toArrayNode<K, V>(Mutation.getSubordinateContext(owner), fragment, child, mask, children);
       }
 
-      if(mutate) {
+      if(Mutation.isMutable(this)) {
         this.mask = mask | bit;
         children.length++;
         blockCopy(children, children, index, index + 1, children.length - index);
@@ -74,15 +82,15 @@ export class IndexedNode<K, V> implements Indexed<K, V> {
         return this;
       }
 
-      return new IndexedNode(group, mask | bit, insertArrayElement(index, child, children));
+      return new IndexedNode(Mutation.getSubordinateContext(owner), mask | bit, insertArrayElement(index, child, children));
     }
 
-    if(mutate) {
+    if(Mutation.isMutable(this)) {
       children[index] = child;
       return this;
     }
 
-    return new IndexedNode<K, V>(group, mask, replaceArrayElement(index, child, children));
+    return new IndexedNode<K, V>(Mutation.getSubordinateContext(owner), mask, replaceArrayElement(index, child, children));
   }
 }
 

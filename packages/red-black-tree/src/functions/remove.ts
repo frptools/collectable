@@ -1,8 +1,7 @@
-import {log} from '../internals/debug'; // ## DEV ##
-import {isImmutable} from '@collectable/core';
+import {Mutation} from '@collectable/core';
+import {log} from '../internals/_dev'; // ## DEV ##
 import {
-  RedBlackTree,
-  RedBlackTreeImpl,
+  RedBlackTreeStructure,
   createTree,
   findPath,
   findSuccessor,
@@ -10,9 +9,6 @@ import {
   BRANCH,
   NONE,
   isNone,
-  editable,
-  cloneAsMutable,
-  doneMutating,
   swapNodeContents,
   swapNodeColors,
   editLeftChild,
@@ -31,35 +27,35 @@ import {
  * @template K The type of keys in the tree
  * @template V The type of values in the tree
  * @param {K} key The key of the entry to be removed
- * @param {RedBlackTree<K, V>} tree The tree to be updated
- * @returns {RedBlackTree<K, V>} An updated copy of the tree, or the same tree if the input tree was already mutable
+ * @param {RedBlackTreeStructure<K, V>} tree The tree to be updated
+ * @returns {RedBlackTreeStructure<K, V>} An updated copy of the tree, or the same tree if the input tree was already mutable
  */
-export function remove<K, V>(key: K, tree: RedBlackTree<K, V>): RedBlackTree<K, V>;
-export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree<K, V> {
-  log(`[remove (#${key})] Begin removal operation.`); // ## DEV ##
+export function remove<K, V = null>(key: K, tree: RedBlackTreeStructure<K, V>): RedBlackTreeStructure<K, V> {
+  log(`[remove (${key})] Begin removal operation.`); // ## DEV ##
 
   if(tree._size === 0) {
-    log(`[remove (#${key})] Tree size is zero. No changes were applied.`); // ## DEV ##
+    log(`[remove (${key})] Tree size is zero. No changes were applied.`); // ## DEV ##
     return tree;
   }
 
   var originalTree = tree;
-  var immutable = isImmutable(tree._owner) && (tree = <RedBlackTreeImpl<K, V>>cloneAsMutable(tree), true);
-  tree._root = editable(tree._group, tree._root);
-  var p: PathNode<K, V> = findPath(key, tree._root, tree._compare, tree._group);
+  tree = Mutation.modify(tree);
+  Mutation.modifyProperty(tree, '_root');
+  var p: PathNode<K, V> = findPath(tree, key, tree._root, tree._compare);
 
   if(p.next !== BRANCH.NONE) {
     PathNode.release(p, tree._root);
-    log(`[remove (#${key})] Key not found. No changes were applied.`); // ## DEV ##
+    log(`[remove (${key})] Key not found. No changes were applied.`); // ## DEV ##
     return originalTree;
   }
 
   if(tree._size === 1) {
     PathNode.release(p, tree._root);
-    log(`[remove (#${key})] This is the last item in the tree. Returning an empty tree.`); // ## DEV ##
-    if(immutable) {
-      return createTree<K, V>(false, tree._compare);
+    log(`[remove (${key})] This is the last item in the tree. Returning an empty tree.`); // ## DEV ##
+    if(tree !== originalTree) {
+      return createTree<K, V>(tree._compare);
     }
+    tree._size = 0;
     tree._root = NONE;
     return tree;
   }
@@ -72,21 +68,21 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
   if(hasRight || hasLeft) {
     if(hasRight) {
       if(hasLeft) {
-        p = findSuccessor(tree._compare, p, tree._group);
-        log(`[remove (#${key})] Case 3/4. Node has two children. Successor is ${p.node._red ? 'red' : 'black'} node ${p.node.key}.`); // ## DEV ##
+        p = findSuccessor(tree, p);
+        log(`[remove (${key})] Case 3/4. Node has two children. Successor is ${p.node._red ? 'red' : 'black'} node ${p.node.key}.`); // ## DEV ##
         swapNodeContents(p.node, current /* ## DEV [[ */, tree /* ]] ## */);
         current = p.node;
         checkInvalidNilAssignment(); // ## DEV ##
       }
-      log(`[remove (#${key})] Case 1. Node has only a right child. Will replace current with right.`); // ## DEV ##
+      log(`[remove (${key})] Case 1. Node has only a right child. Will replace current with right.`); // ## DEV ##
       debt = current._red ? 0 : 1;
-      current = editRightChild(tree._group, current);
+      current = editRightChild(tree, current);
       checkInvalidNilAssignment(); // ## DEV ##
     }
     else if(hasLeft) {
-      log(`[remove (#${key})] Case 2. Node has only a left child. Will replace current with left.`); // ## DEV ##
+      log(`[remove (${key})] Case 2. Node has only a left child. Will replace current with left.`); // ## DEV ##
       debt = current._red ? 0 : 1;
-      current = editLeftChild(tree._group, current);
+      current = editLeftChild(tree, current);
       checkInvalidNilAssignment(); // ## DEV ##
     }
   }
@@ -94,6 +90,11 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
     debt = current._red ? 0 : 1;
     current = NONE;
   }
+
+  if(p.parent.isNone()) {
+    tree._root = current;
+  }
+
   p.replace(current);
   if(current._red && p.parent.node._red) {
     current._red = false;
@@ -119,21 +120,20 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
       const iterationMessage = `C: ${current.key||'NIL'}, P: ${p.isNone() ? 'NIL' : p.node.key}, S: ${(branch === BRANCH.LEFT ? parent._right.key : parent._left.key) ||'NIL'}`;
       // ]] ##
 
-
       if(p.isNone()) {
         p.node._red = false;
         updateCount(p.node);
         debt--;
       }
       else if(branch === BRANCH.LEFT) {
-        if((sibling = editRightChild(tree._group, parent))._red) {
+        if((sibling = editRightChild(tree, parent))._red) {
           log(`[remove (${key})] Case 1a. Sibling (${sibling.key}) is red.`); // ## DEV ##
           log(tree, false, `[#${loopCounter}: Case 1a] ${iterationMessage}`); // ## DEV ##
           swapNodeColors(parent, sibling /* ## DEV [[ */, tree /* ]] ## */);
           rotateLeft(gp, parent, sibling, tree);
           p.node = sibling;
           gp = p;
-          p = PathNode.next(parent, p, BRANCH.LEFT /* ## DEV [[ */, tree /* ]] ## */);
+          p = PathNode.next(parent, p, BRANCH.LEFT);
         }
 
 
@@ -163,7 +163,7 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
           if(!sibling._right._red && left._red) {
             log(`[remove (${key})] Case 3a. Sibling ${sibling.key}'s left child (${left.key}) is red.`); // ## DEV ##
             log(tree, false, `[#${loopCounter}: Case 3a] ${iterationMessage}`); // ## DEV ##
-            left = editLeftChild(tree._group, sibling);
+            left = editLeftChild(tree, sibling);
             p.next = BRANCH.RIGHT;
             swapNodeColors(sibling, left /* ## DEV [[ */, tree /* ]] ## */);
             rotateRight(p, sibling, left, tree);
@@ -173,7 +173,7 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
 
           log(`[remove (${key})] Case 4a. Sibling's right child (${right.key}) is red.`); // ## DEV ##
           log(tree, false, `[#${loopCounter}: Case 4a] ${iterationMessage}`); // ## DEV ##
-          right = editRightChild(tree._group, sibling);
+          right = editRightChild(tree, sibling);
           rotateLeft(gp, parent, sibling, tree);
           sibling._red = parent._red;
           parent._red = false;
@@ -182,14 +182,14 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
         }
       }
       else {
-        if((sibling = editLeftChild(tree._group, parent))._red) {
+        if((sibling = editLeftChild(tree, parent))._red) {
           log(`[remove (${key})] Case 1b. Sibling (${sibling.key}) is red.`); // ## DEV ##
           log(tree, false, `[#${loopCounter}: Case 1b] ${iterationMessage}`); // ## DEV ##
           rotateRight(gp, parent, sibling, tree);
           swapNodeColors(parent, sibling /* ## DEV [[ */, tree /* ]] ## */);
           p.node = sibling;
           gp = p;
-          p = PathNode.next(parent, p, BRANCH.RIGHT /* ## DEV [[ */, tree /* ]] ## */);
+          p = PathNode.next(parent, p, BRANCH.RIGHT);
         }
 
 
@@ -219,7 +219,7 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
           if(!sibling._left._red && right._red) {
             log(`[remove (${key})] Case 3b. Sibling ${sibling.key}'s right child (${right.key}) is red.`); // ## DEV ##
             log(tree, false, `[#${loopCounter}: Case 3b] ${iterationMessage}`); // ## DEV ##
-            right = editRightChild(tree._group, sibling);
+            right = editRightChild(tree, sibling);
             p.next = BRANCH.LEFT;
             swapNodeColors(sibling, right /* ## DEV [[ */, tree /* ]] ## */);
             rotateLeft(p, sibling, right, tree);
@@ -229,7 +229,7 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
 
           log(`[remove (${key})] Case 4b. Sibling's left child (${left.key}) is red.`); // ## DEV ##
           log(tree, false, `[#${loopCounter}: Case 4b] ${iterationMessage}`); // ## DEV ##
-          left = editLeftChild(tree._group, sibling);
+          left = editLeftChild(tree, sibling);
           rotateRight(gp, parent, sibling, tree);
           sibling._red = parent._red;
           parent._red = false;
@@ -259,5 +259,5 @@ export function remove<K, V>(key: K, tree: RedBlackTreeImpl<K, V>): RedBlackTree
 
   checkInvalidNilAssignment(); // ## DEV ##
 
-  return immutable ? doneMutating(tree) : tree;
+  return  Mutation.commit(tree);
 }

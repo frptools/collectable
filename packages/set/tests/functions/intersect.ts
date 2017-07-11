@@ -1,16 +1,17 @@
 import {assert} from 'chai';
-import {Set as HashSet, fromArray, intersect, thaw, isThawed, has, size, isFrozen} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {HashSetStructure, fromArray, intersect, has, size} from '../../src';
 import {snapshot} from '../test-utils';
 
-suite('[Set]', () => {
+suite('[HashSet]', () => {
   const mainValues = ['A', 'B', 'C', 'D', 'E'];
   const otherValues = ['D', 'E', 'F', 'G'];
   const expectedValues = ['D', 'E'];
 
-  let main: HashSet<string>, mainSnapshot: object, result: HashSet<string>;
+  let main: HashSetStructure<string>, mainSnapshot: object, result: HashSetStructure<string>;
 
-  suite('intersect(HashSet)', () => {
-    let other: HashSet<string>, otherSnapshot: object;
+  suite('intersect(HashSetStructure)', () => {
+    let other: HashSetStructure<string>, otherSnapshot: object;
 
     setup(() => {
       other = fromArray(otherValues);
@@ -19,7 +20,7 @@ suite('[Set]', () => {
 
     suite('when the main set is mutable', () => {
       setup(() => {
-        main = thaw(fromArray(mainValues));
+        main = modify(fromArray(mainValues));
         mainSnapshot = snapshot(main);
         result = intersect(other, main);
       });
@@ -29,7 +30,7 @@ suite('[Set]', () => {
       });
 
       test('the main set is still mutable', () => {
-        assert.isTrue(isThawed(result));
+        assert.isTrue(isMutable(result));
       });
 
       test('the other input set is not modified', () => {
@@ -61,7 +62,7 @@ suite('[Set]', () => {
 
       test('a new immutable set is returned', () => {
         assert.notStrictEqual(result, main);
-        assert.isTrue(isFrozen(result));
+        assert.isTrue(isImmutable(result));
       });
 
       test('the main input set is not modified', () => {
@@ -98,7 +99,7 @@ suite('[Set]', () => {
 
     suite('when the input set is mutable', () => {
       setup(() => {
-        main = thaw(fromArray(mainValues));
+        main = modify(fromArray(mainValues));
         mainSnapshot = snapshot(main);
         result = intersect(other, main);
       });
@@ -108,7 +109,7 @@ suite('[Set]', () => {
       });
 
       test('the input set is still mutable', () => {
-        assert.isTrue(isThawed(result));
+        assert.isTrue(isMutable(result));
       });
 
       test('the input array is not modified', () => {
@@ -140,7 +141,7 @@ suite('[Set]', () => {
 
       test('a new immutable set is returned', () => {
         assert.notStrictEqual(result, main);
-        assert.isTrue(isFrozen(result));
+        assert.isTrue(isImmutable(result));
       });
 
       test('the input set is not modified', () => {
@@ -181,7 +182,7 @@ suite('[Set]', () => {
 
     suite('when the input set is mutable', () => {
       setup(() => {
-        main = thaw(fromArray(mainValues));
+        main = modify(fromArray(mainValues));
         mainSnapshot = snapshot(main);
         result = intersect(other, main);
       });
@@ -191,7 +192,7 @@ suite('[Set]', () => {
       });
 
       test('the input set is still mutable', () => {
-        assert.isTrue(isThawed(result));
+        assert.isTrue(isMutable(result));
       });
 
       test('the input set excludes items that are not also members of the other input', () => {
@@ -219,7 +220,7 @@ suite('[Set]', () => {
 
       test('a new immutable set is returned', () => {
         assert.notStrictEqual(result, main);
-        assert.isTrue(isFrozen(result));
+        assert.isTrue(isImmutable(result));
       });
 
       test('the input set is not modified', () => {

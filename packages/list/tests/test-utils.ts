@@ -1,13 +1,13 @@
 import {assert} from 'chai';
-import {CONST, COMMIT_MODE, List, Slot, View, TreeWorker} from '../src/internals';
+import {CONST, COMMIT_MODE, ListStructure, Slot, View, TreeWorker} from '../src/internals';
 import {fromArray} from '../src';
 
 export const BRANCH_FACTOR = CONST.BRANCH_FACTOR;
 export const BRANCH_INDEX_BITCOUNT = CONST.BRANCH_INDEX_BITCOUNT;
 
-export type ListOrView<T> = List<T>|View<T>;
+export type ListOrView<T> = ListStructure<T>|View<T>;
 export type ViewOrSlot<T> = View<T>|Slot<T>;
-export type AnyListType<T> = List<T>|ViewOrSlot<T>;
+export type AnyListType<T> = ListStructure<T>|ViewOrSlot<T>;
 
 export function rootSlot<T>(arg: ListOrView<T>): Slot<any> {
   return rootView(arg).slot;
@@ -23,7 +23,7 @@ export function firstView<T>(arg: ListOrView<T>): View<T> {
   return arg instanceof View ? arg : firstActiveView(arg);
 }
 
-export function firstActiveView<T>(state: List<T>): View<T> {
+export function firstActiveView<T>(state: ListStructure<T>): View<T> {
   return state._left.isNone() ? state._right : state._left;
 }
 
@@ -63,7 +63,7 @@ export function slotValues<T>(arg: ViewOrSlot<T>): (T|Slot<T>)[] {
   return (arg instanceof View ? arg.slot : arg).slots;
 }
 
-export function listOf(size: number, offset = 0): List<string> {
+export function listOf(size: number, offset = 0): ListStructure<string> {
   return fromArray<string>(makeValues(size, offset));
 }
 
@@ -130,7 +130,7 @@ export function makeValues(count: number, valueOffset = 0): string[] {
   return values;
 }
 
-export function commitToRoot<T>(state: List<T>) {
+export function commitToRoot<T>(state: ListStructure<T>) {
   var worker = TreeWorker.defaultPrimary().reset(state, firstActiveView(state), state._group, COMMIT_MODE.RELEASE);
   while(!worker.isRoot()) {
     worker.ascend(COMMIT_MODE.RELEASE);

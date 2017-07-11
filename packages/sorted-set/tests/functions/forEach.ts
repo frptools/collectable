@@ -1,10 +1,10 @@
 import {assert} from 'chai';
-import {SortedSet, forEach} from '../../src';
+import {SortedSetStructure, forEach} from '../../src';
 import {fromNumericArray} from '../test-utils';
 
 suite('[SortedSet]', () => {
   suite('forEach()', () => {
-    let set: SortedSet<number>, values: number[];
+    let set: SortedSetStructure<number>, values: number[];
     suiteSetup(() => {
       values = [1, 2, 3, 5, 8, 13, 21, 34, 55];
       set = fromNumericArray(values);

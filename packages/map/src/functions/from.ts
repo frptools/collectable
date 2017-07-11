@@ -1,49 +1,56 @@
-import {HashMap, HashMapImpl, refreeze} from '../internals/HashMap';
+import {Mutation, ChangeFlag} from '@collectable/core';
+import {HashMapStructure} from '../internals/HashMap';
+import {setKeyValue} from '../internals/primitives';
 import {empty} from './empty';
-import {set} from './set';
-import {thaw} from './thaw';
 
-export function fromArray<K, V>(array: Array<[K, V]>): HashMap<K, V> {
-  let map = thaw(empty<K, V>());
-
+export function fromArray<K, V>(array: Array<[K, V]>): HashMapStructure<K, V> {
+  let map = <HashMapStructure<K, V>>empty<K, V>(true);
+  // console.log('EMPTY ROOT A:', map._root);
+  const change = ChangeFlag.get();
   for(let i = 0; i < array.length; ++i) {
     var entry = array[i];
-    set(entry[0], entry[1], map);
+    setKeyValue(entry[0], entry[1], change, map);
+    change.reset();
   }
-
-  return refreeze(<HashMapImpl<K, V>>map);
+  // console.log('EMPTY ROOT B:', empty()._root);
+  map = Mutation.commit(map);
+  return map;
 }
 
-export function fromIterable<K, V>(iterable: Iterable<[K, V]>): HashMap<K, V> {
-  let map = thaw(empty<K, V>());
+export function fromIterable<K, V>(iterable: Iterable<[K, V]>): HashMapStructure<K, V> {
+  let map = <HashMapStructure<K, V>>empty<K, V>(true);
   let current: IteratorResult<[K, V]>;
   let it = iterable[Symbol.iterator]();
 
   while(!(current = it.next()).done) {
     var entry = current.value;
-    set(entry[0], entry[1], map);
+    const change = ChangeFlag.get();
+    setKeyValue(entry[0], entry[1], change, map);
+    change.release();
   }
 
-  return refreeze(<HashMapImpl<K, V>>map);
+  return Mutation.commit(map);
 }
 
-export function fromNativeMap<K, V>(map: Map<K, V>): HashMap<K, V> {
+export function fromNativeMap<K, V>(map: Map<K, V>): HashMapStructure<K, V> {
   return fromIterable(map);
 }
 
-export function fromObject<V>(object: { [key: number ]: V }): HashMap<number, V>;
-export function fromObject<V>(object: { [key: string ]: V }): HashMap<string, V>;
-export function fromObject<V>(object: any): HashMap<any, V> {
+export function fromObject<V>(object: { [key: number ]: V }): HashMapStructure<number, V>;
+export function fromObject<V>(object: { [key: string ]: V }): HashMapStructure<string, V>;
+export function fromObject<V>(object: any): HashMapStructure<any, V> {
   const keys = Object.keys(object);
 
-  let map = empty<string, V>();
+  let map = <HashMapStructure<string, V>>empty<string, V>(true);
 
   for(let i = 0; i < keys.length; ++i) {
     const key = keys[i];
     const value = object[key];
 
-    map = set(key, value, map);
+    const change = ChangeFlag.get();
+    setKeyValue(keys[i], value, change, map);
+    change.release();
   }
 
-  return map;
+  return Mutation.commit(map);
 }

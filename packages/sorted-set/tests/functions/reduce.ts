@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {SortedSet as SortedSet, reduce} from '../../src';
+import {SortedSetStructure as SortedSet, reduce} from '../../src';
 import {fromStringArray} from '../test-utils';
 
 suite('[SortedSet]', () => {

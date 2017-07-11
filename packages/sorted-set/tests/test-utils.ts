@@ -1,11 +1,22 @@
-import {getOwner, getGroup} from '@collectable/core';
-import {SortedSet, isFrozen, fromArray as _fromArray} from '../src';
+import {SortedSetStructure, fromArray as _fromArray} from '../src';
+import {isMutable, isUndefined} from '@collectable/core';
 
-export function snapshot<T>(set: SortedSet<T>): object {
+let _id = 0;
+const CACHE = new WeakMap<object, number>();
+function ctxid(obj: object): number {
+  var id = CACHE.get(obj);
+  if(isUndefined(id)) {
+    id = ++_id;
+    CACHE.set(obj, id);
+  }
+  return id;
+}
+
+export function snapshot(set: SortedSetStructure<any>): object {
   return {
-    owner: getOwner(set),
-    group: getGroup(set),
-    frozen: isFrozen(set),
+    token: ctxid(set['@@mctx'].token),
+    context: ctxid(set['@@mctx']),
+    mutable: isMutable(set),
     values: Array.from(set)
   };
 }
@@ -18,10 +29,10 @@ function compareNumbers(a: number, b: number): number {
   return a - b;
 }
 
-export function fromStringArray(values: string[]): SortedSet<string> {
+export function fromStringArray(values: string[]): SortedSetStructure<string> {
   return _fromArray(values, compareStrings);
 }
 
-export function fromNumericArray(values: number[]): SortedSet<number> {
+export function fromNumericArray(values: number[]): SortedSetStructure<number> {
   return _fromArray(values, compareNumbers);
 }

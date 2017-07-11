@@ -8,9 +8,9 @@ export function setCallback(callback: Function): void {
   __logCallback = callback;
 }
 
-declare var window;
+declare var window: any;
 if(typeof window !== 'undefined') {
-  window.addEventListener('error', ev => {
+  window.addEventListener('error', (ev: any) => {
     log(ev.error);
   });
 }

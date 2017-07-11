@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import {SortedSet as SortedSet, subtract, thaw, isThawed, has, size, isFrozen} from '../../src';
+import {modify, isMutable, isImmutable} from '@collectable/core';
+import {SortedSetStructure as SortedSet, subtract, has, size} from '../../src';
 import {snapshot, fromStringArray} from '../test-utils';
 
 suite('[SortedSet]', () => {
@@ -19,7 +20,7 @@ suite('[SortedSet]', () => {
 
     suite('when the main set is mutable', () => {
       setup(() => {
-        main = thaw(fromStringArray(mainValues));
+        main = modify(fromStringArray(mainValues));
         result = subtract(other, main);
       });
 
@@ -28,7 +29,7 @@ suite('[SortedSet]', () => {
       });
 
       test('the main set is still mutable', () => {
-        assert.isTrue(isThawed(result));
+        assert.isTrue(isMutable(result));
       });
 
       test('the other input set is not modified', () => {
@@ -60,7 +61,7 @@ suite('[SortedSet]', () => {
 
       test('a new immutable set is returned', () => {
         assert.notStrictEqual(result, main);
-        assert.isTrue(isFrozen(result));
+        assert.isTrue(isImmutable(result));
       });
 
       test('the main input set is not modified', () => {
@@ -93,7 +94,7 @@ suite('[SortedSet]', () => {
 
     suite('when the input set is mutable', () => {
       setup(() => {
-        main = thaw(fromStringArray(mainValues));
+        main = modify(fromStringArray(mainValues));
         result = subtract(other, main);
       });
 
@@ -102,7 +103,7 @@ suite('[SortedSet]', () => {
       });
 
       test('the input set is still mutable', () => {
-        assert.isTrue(isThawed(result));
+        assert.isTrue(isMutable(result));
       });
 
       test('the input array is not modified', () => {
@@ -134,7 +135,7 @@ suite('[SortedSet]', () => {
 
       test('a new immutable set is returned', () => {
         assert.notStrictEqual(result, main);
-        assert.isTrue(isFrozen(result));
+        assert.isTrue(isImmutable(result));
       });
 
       test('the input set is not modified', () => {
@@ -171,7 +172,7 @@ suite('[SortedSet]', () => {
 
     suite('when the input set is mutable', () => {
       setup(() => {
-        main = thaw(fromStringArray(mainValues));
+        main = modify(fromStringArray(mainValues));
         result = subtract(other, main);
       });
 
@@ -180,7 +181,7 @@ suite('[SortedSet]', () => {
       });
 
       test('the input set is still mutable', () => {
-        assert.isTrue(isThawed(result));
+        assert.isTrue(isMutable(result));
       });
 
       test('the input set no longer includes any items that were emitted by the input iterable', () => {
@@ -208,7 +209,7 @@ suite('[SortedSet]', () => {
 
       test('a new immutable set is returned', () => {
         assert.notStrictEqual(result, main);
-        assert.isTrue(isFrozen(result));
+        assert.isTrue(isImmutable(result));
       });
 
       test('the input set is not modified', () => {

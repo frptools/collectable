@@ -5,3 +5,4 @@ export * from './node';
 export * from './ops';
 export * from './iterator';
 export * from './find';
+export * from './unwrap';

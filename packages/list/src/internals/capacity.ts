@@ -1,10 +1,10 @@
-import {log, publish} from './debug'; // ## DEV ##
+import {log, publish} from './_dev'; // ## DEV ##
 import {min} from '@collectable/core';
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, modulo, shiftDownRoundUp} from './common';
 import {TreeWorker} from './traversal';
 import {Slot, ExpansionParameters} from './slot';
 import {View} from './view';
-import {List, setView} from './list';
+import {ListStructure, setView} from './List';
 
 export class Collector<T> {
   private static _default = new Collector<any>();
@@ -57,7 +57,7 @@ export class Collector<T> {
  *
  * @export
  * @template T The type of elements present in the list
- * @param {List<T>} list The list to be modified
+ * @param {ListStructure<T>} list The list to be modified
  * @param {number} increaseBy The additional capacity to add to the list
  * @param {boolean} prepend true if the capacity should be added to the front of the list
  * @returns {T[][]} An array of leaf node element arrays (one per leaf node, in left-to-right sequential order) to which
@@ -65,7 +65,7 @@ export class Collector<T> {
  *     prepending) will be a reference to a pre-existing head or tail leaf node element array if that node was expanded
  *     with additional elements as part of the operation.
  */
-export function increaseCapacity<T>(list: List<T>, increaseBy: number, prepend: boolean): Collector<T> {
+export function increaseCapacity<T>(list: ListStructure<T>, increaseBy: number, prepend: boolean): Collector<T> {
   var view = prepend ? list._left : list._right;
   var slot = view.slot;
   var group = list._group;
@@ -102,7 +102,7 @@ export function increaseCapacity<T>(list: List<T>, increaseBy: number, prepend: 
   return increaseUpperCapacity(list, increaseBy, numberOfAddedSlots, prepend);
 }
 
-function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAddedSlots: number, prepend: boolean): Collector<T> {
+function increaseUpperCapacity<T>(list: ListStructure<T>, increaseBy: number, numberOfAddedSlots: number, prepend: boolean): Collector<T> {
   var view = prepend ? list._left : list._right;
   var slot = view.slot;
 
@@ -197,7 +197,7 @@ function increaseUpperCapacity<T>(list: List<T>, increaseBy: number, numberOfAdd
  * @param {number} remaining The total capacity represented by this set of subtrees
  * @returns {number} An updated `nodeIndex` value to be used in subsequent subtree population operations
  */
-function populateSubtrees<T>(list: List<T>, collector: Collector<T>, view: View<T>, topLevelIndex: number, slotIndexBoundary: number, capacity: number, isFinalStage: boolean): void {
+function populateSubtrees<T>(list: ListStructure<T>, collector: Collector<T>, view: View<T>, topLevelIndex: number, slotIndexBoundary: number, capacity: number, isFinalStage: boolean): void {
   publish(list, false, `Subtrees are about to be populated`); // ## DEV ##
   var levelIndex = topLevelIndex - 1;
   var remaining = capacity;

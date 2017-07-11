@@ -1,11 +1,10 @@
-import {isImmutable} from '@collectable/core';
-import {SortedSet, SortedSetImpl, isSortedSet, isIterable, refreeze, cloneSortedSet, setItem, iterateValues} from '../internals';
+import {isImmutable, commit} from '@collectable/core';
+import {SortedSetStructure, isSortedSet, isIterable, cloneSortedSet, setItem, iterateValues} from '../internals';
 import {has, size} from '.';
 
-export function intersect<T>(other: SortedSet<T>|T[]|Iterable<T>, main: SortedSet<T>): SortedSet<T>;
-export function intersect<T>(other: SortedSetImpl<T>|T[]|Iterable<T>, main: SortedSetImpl<T>): SortedSetImpl<T> {
-  var immutable = isImmutable(main._owner);
-  var outputSet: SortedSetImpl<T>,
+export function intersect<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: SortedSetStructure<T>): SortedSetStructure<T> {
+  var immutable = isImmutable(main);
+  var outputSet: SortedSetStructure<T>,
       it: Iterator<T>;
 
   if(Array.isArray(other)) {
@@ -38,7 +37,7 @@ export function intersect<T>(other: SortedSetImpl<T>|T[]|Iterable<T>, main: Sort
   }
 
   if(immutable) {
-    return refreeze(outputSet);
+    return commit(outputSet);
   }
 
   main._map = outputSet._map;
@@ -46,7 +45,7 @@ export function intersect<T>(other: SortedSetImpl<T>|T[]|Iterable<T>, main: Sort
   return main;
 }
 
-function intersectArray<T>(inputSet: SortedSetImpl<T>, outputSet: SortedSetImpl<T>, array: T[]): void {
+function intersectArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, array: T[]): void {
   var {_map: map, _tree: tree, _select: select} = outputSet;
   for(var i = 0; i < array.length; i++) {
     if(has(array[i], inputSet)) {
@@ -55,7 +54,7 @@ function intersectArray<T>(inputSet: SortedSetImpl<T>, outputSet: SortedSetImpl<
   }
 }
 
-function intersectIterable<T>(inputSet: SortedSetImpl<T>, outputSet: SortedSetImpl<T>, it: Iterator<T>): void {
+function intersectIterable<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, it: Iterator<T>): void {
   var {_map: map, _tree: tree, _select: select} = outputSet;
   var current: IteratorResult<T>;
   while(!(current = it.next()).done) {
