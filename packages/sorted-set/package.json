@@ -1,6 +1,6 @@
 {
   "name": "@collectable/sorted-set",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "[Collectable.js] Immutable Sorted Set",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -20,9 +20,9 @@
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
     "@typed/curry": "^1.0.1",
-    "@collectable/core": "4.0.0",
-    "@collectable/map": "3.0.0",
-    "@collectable/red-black-tree": "4.0.0"
+    "@collectable/core": "4.0.1",
+    "@collectable/map": "3.0.1",
+    "@collectable/red-black-tree": "4.0.1"
   },
   "collectable": {
     "tag": "SSET"

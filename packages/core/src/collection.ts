@@ -1,5 +1,4 @@
-import {modify, commit, UpdaterFn, update as _update} from '@collectable/core';
-import {RecursiveDataStructure} from '@collectable/core';
+import {RecursiveDataStructure, modify, commit, UpdaterFn, update as _update} from '@frptools/core';
 
 export type CollectionEntry<K, V> = [K, V]|{key: K, value: V}|K|V;
 
