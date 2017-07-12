@@ -20,9 +20,9 @@
   dependencies:
     "@collectable/core" "4.0.1"
 
-"@collectable/red-black-tree@4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-4.0.1.tgz#a26034264562aa2383e3d30f188da530972f7552"
+"@collectable/red-black-tree@4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@collectable/red-black-tree/-/red-black-tree-4.1.0.tgz#57d96619259a5be0a44dcdd16b3aeffc8c0fd0a1"
   dependencies:
     "@collectable/core" "4.0.1"
 
@@ -34,22 +34,22 @@
     "@collectable/map" "3.0.1"
     "@typed/curry" "^1.0.1"
 
-"@collectable/sorted-map@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-2.0.1.tgz#efe519d94056c60ad4a4b4e38d08e9d5d0762e05"
+"@collectable/sorted-map@2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-map/-/sorted-map-2.1.0.tgz#fc56f282de7ce83e6c0fad50a002c04bbcfa7db9"
   dependencies:
     "@collectable/core" "4.0.1"
     "@collectable/map" "3.0.1"
-    "@collectable/red-black-tree" "4.0.1"
+    "@collectable/red-black-tree" "4.1.0"
     "@typed/curry" "^1.0.1"
 
-"@collectable/sorted-set@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-2.0.1.tgz#cae2d6f832ebd94dd0936b017160b84f9cc89e1b"
+"@collectable/sorted-set@2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@collectable/sorted-set/-/sorted-set-2.1.0.tgz#e66572a9f5c2af85971459632546150eb8e8b492"
   dependencies:
     "@collectable/core" "4.0.1"
     "@collectable/map" "3.0.1"
-    "@collectable/red-black-tree" "4.0.1"
+    "@collectable/red-black-tree" "4.1.0"
     "@typed/curry" "^1.0.1"
 
 "@frptools/core@^3.0.0":
