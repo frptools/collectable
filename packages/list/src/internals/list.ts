@@ -112,7 +112,10 @@ export function cloneList<T>(list: ListStructure<T>, group: number, mutable: boo
   );
 }
 
-export function getView<T>(list: ListStructure<T>, anchor: OFFSET_ANCHOR, asWriteTarget: boolean, preferredOrdinal: number = -1): View<T> {
+export function getView<T>(list: ListStructure<T>, anchor: OFFSET_ANCHOR, asWriteTarget: boolean, preferredOrdinal?: number): View<T> {
+  if (isUndefined(preferredOrdinal)) {
+    preferredOrdinal = -1;
+  }
   var view = anchor === OFFSET_ANCHOR.LEFT ? list._left : list._right;
   log(`[ListState#getView (id:${list.id} a:${anchor === OFFSET_ANCHOR.LEFT ? 'L' : 'R'} g:${list._group})] Attempting to retrieve the ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view from the state object.`); // ## DEV ##
   if(view.isNone()) {

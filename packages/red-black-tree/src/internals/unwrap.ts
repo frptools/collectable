@@ -32,7 +32,9 @@ export function unwrap<K, V>(tree: RedBlackTreeStructure<K, V>, target: Associat
       }
     }
     if(branch === BRANCH.NONE && i > 0) {
-      [node, branch] = stack[--i];
+      --i;
+      node = stack[i][0];
+      branch = stack[i][1];
     }
   } while(i > 0 || branch !== BRANCH.NONE);
   return target;

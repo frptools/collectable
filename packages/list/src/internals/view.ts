@@ -128,7 +128,7 @@ export class View<T> {
     }
   }
 
-  ensureEditable(group: number, ensureSlotEditable = false): View<T> {
+  ensureEditable(group: number, ensureSlotEditable?: boolean): View<T> {
     var view = <View<T>>this;
     if(!view.isEditable(group)) {
       view = view.cloneToGroup(group);
@@ -140,7 +140,7 @@ export class View<T> {
     return view;
   }
 
-  ensureSlotEditable(shallow = false): Slot<T> {
+  ensureSlotEditable(shallow?: boolean): Slot<T> {
     return this.slot.isEditable(this.group) ? this.slot
       : (this.slot = this.slot.cloneToGroup(this.group, true));
   }

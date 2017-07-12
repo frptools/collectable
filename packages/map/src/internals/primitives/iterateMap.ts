@@ -19,7 +19,8 @@ class HashMapIterator<R> implements IterableIterator<R> {
       return {done: true, value: null} as any as IteratorResult<R>;
     }
 
-    const {value, rest} = this._iterate;
+    const value = this._iterate.value;
+    const rest = this._iterate.rest;
 
     this._iterate = continuation(rest);
 

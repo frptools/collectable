@@ -110,7 +110,7 @@ export function isSortedMap<K, V, U>(arg: any): arg is SortedMapStructure<K, V, 
   return isObject(arg) && arg instanceof SortedMapStructure;
 }
 
-export function cloneSortedMap<K, V, U>(map: SortedMapStructure<K, V, U>, clear = false, mutability?: Mutation.PreferredContext): SortedMapStructure<K, V, U> {
+export function cloneSortedMap<K, V, U>(map: SortedMapStructure<K, V, U>, clear?: boolean, mutability?: Mutation.PreferredContext): SortedMapStructure<K, V, U> {
   var mctx = Mutation.selectContext(mutability);
   var sctx = Mutation.asSubordinateContext(mctx);
   var keys: HashMap.Instance<K, Entry<K, V, any>>;

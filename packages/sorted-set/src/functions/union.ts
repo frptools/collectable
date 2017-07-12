@@ -25,14 +25,18 @@ export function union<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: Sor
 }
 
 function unionArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, array: T[]): void {
-  var {_map: map, _tree: tree, _select: select} = outputSet;
+  var map = outputSet._map;
+  var tree = outputSet._tree;
+  var select = outputSet._select;
   for(var i = 0; i < array.length; i++) {
     setItem(array[i], map, tree, select);
   }
 }
 
 function unionIterable<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, it: Iterator<T>): void {
-  var {_map: map, _tree: tree, _select: select} = outputSet;
+  var map = outputSet._map;
+  var tree = outputSet._tree;
+  var select = outputSet._select;
   var current: IteratorResult<T>;
   while(!(current = it.next()).done) {
     setItem(current.value, map, tree, select);

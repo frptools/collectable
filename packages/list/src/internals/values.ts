@@ -97,7 +97,9 @@ export function createIterator<T>(list: ListStructure<T>): IterableIterator<T> {
 
 export function arrayFrom<T>(list: ListStructure<T>): T[] {
   var map = new Map<Slot<T>, Map<number, Slot<T>>>();
-  var [root, depth] = getRoot(list, map);
+  var rootInfo = getRoot(list, map);
+  var root = rootInfo[0];
+  var depth = rootInfo[1];
   if(depth === 0) {
     return copyArray(<T[]>root.slots);
   }
@@ -108,7 +110,9 @@ export function arrayFrom<T>(list: ListStructure<T>): T[] {
 
 export function mapArrayFrom<T, U>(mapper: MapFn<T, U>, list: ListStructure<T>, array: U[]): U[] {
   var map = new Map<Slot<T>, Map<number, Slot<T>>>();
-  var [root, depth] = getRoot(list, map);
+  var rootInfo = getRoot(list, map);
+  var root = rootInfo[0];
+  var depth = rootInfo[1];
   if(depth === 0) {
     blockCopyMapped(mapper, <T[]>root.slots, array, 0, 0, array.length);
   }
@@ -133,11 +137,15 @@ function getRoot<T>(list: ListStructure<T>, map: Map<Slot<T>, Map<number, Slot<T
     if(right.isNone() && left.isRoot()) {
       return [left.slot, 0];
     }
-    [root, depth] = populateViewMap(left, map);
+    const result = populateViewMap(left, map);
+    root = result[0];
+    depth = result[1];
   }
 
   if(!right.isNone()) {
-    [root, depth] = populateViewMap(right, map);
+    var result = populateViewMap(right, map);
+    root = result[0];
+    depth = result[1];
   }
 
   return [root, depth];

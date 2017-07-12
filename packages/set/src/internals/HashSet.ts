@@ -109,7 +109,7 @@ export function extractMap<T>(set: HashSetStructure<T>): HashMap.Instance<T, nul
   return set._map;
 }
 
-export function emptySet<T>(mutability: Mutation.PreferredContext = false): HashSetStructure<T> {
+export function emptySet<T>(mutability?: Mutation.PreferredContext): HashSetStructure<T> {
   if(mutability) {
     var mctx = Mutation.selectContext(mutability);
     return new HashSetStructure<T>(mctx, empty<T, null>(Mutation.asSubordinateContext(mctx)));

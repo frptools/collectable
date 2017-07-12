@@ -268,10 +268,18 @@ function rightOf<K, V>(node: Node<K, V>): Node<K, V> {
 }
 
 export function findNext<K, V>(compare: ComparatorFn<K>, reversed: boolean, inclusive: boolean, key: K, current: PathNode<K, V>): PathNode<K, V>|undefined {
-  const [alreadyVisited, findPath, childOf] = reversed
-    ? [BRANCH.LEFT, findPathToMaxNodeLeftOfKey, leftOf]
-    : [BRANCH.RIGHT, findPathToMinNodeRightOfKey, rightOf];
 
+  let alreadyVisited, findPath, childOf;
+
+  if (reversed) {
+    alreadyVisited = BRANCH.LEFT;
+    findPath = findPathToMaxNodeLeftOfKey;
+    childOf = leftOf;
+  } else {
+    alreadyVisited = BRANCH.RIGHT;
+    findPath = findPathToMinNodeRightOfKey;
+    childOf = rightOf;
+  }
   if(inclusive && compare(key, current.node.key) === 0) {
     inclusive = false;
   }

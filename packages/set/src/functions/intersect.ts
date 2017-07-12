@@ -28,7 +28,15 @@ export function intersect<T>(other: HashSetStructure<T>|T[]|Iterable<T>, main: H
 }
 
 function intersectHashSet<T>(a: HashMap.Instance<T, null>, b: HashMap.Instance<T, null>, outputMap: HashMap.Instance<T, null>): void {
-  var [inputMap, otherMap] = HashMap.size(b) <= HashMap.size(a) ? [b, a] : [a, b];
+  var inputMap, otherMap;
+
+  if (HashMap.size(b) <= HashMap.size(a)) {
+    inputMap = b;
+    otherMap = a;
+  } else {
+    inputMap = a;
+    otherMap = b;
+  }
   return intersectIterable(inputMap, HashMap.keys(otherMap), outputMap);
 }
 

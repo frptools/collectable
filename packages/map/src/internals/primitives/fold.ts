@@ -5,7 +5,7 @@ export function fold<K, V, R>(
   f: (accum: R, value: V, key: K, index: number) => R,
   seed: R,
   map: HashMapStructure<K, V>,
-  cancelOnFalse = false): R {
+  cancelOnFalse?: boolean): R {
 
   const node = map._root;
 

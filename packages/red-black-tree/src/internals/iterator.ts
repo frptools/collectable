@@ -4,11 +4,11 @@ import {PathNode, clonePath} from './path';
 import {findNext} from './find';
 
 export class RedBlackTreeIterator<K, V> implements IterableIterator<RedBlackTreeEntry<K, V>> {
-  static create<K, V>(current: PathNode<K, V>, compare: ComparatorFn<K>, reversed = false): RedBlackTreeIterator<K, V> {
+  static create<K, V>(current: PathNode<K, V>, compare: ComparatorFn<K>, reversed?: boolean): RedBlackTreeIterator<K, V> {
     if(current.isActive()) {
       current.next = reversed ? BRANCH.RIGHT : BRANCH.LEFT; // indicates the already-traversed branch
     }
-    return new RedBlackTreeIterator(current, compare, reversed);
+    return new RedBlackTreeIterator(current, compare, !!reversed);
   }
 
   private _begun = false;
@@ -124,12 +124,12 @@ export class RedBlackTreeIterator<K, V> implements IterableIterator<RedBlackTree
     return result;
   }
 
-  next(key?: K, inclusive = true): IteratorResult<RedBlackTreeEntry<K, V>> {
-    return isUndefined(key) ? this._next(this._reversed) : this._findNext(this._reversed, inclusive, key);
+  next(key?: K, inclusive?: boolean): IteratorResult<RedBlackTreeEntry<K, V>> {
+    return isUndefined(key) ? this._next(this._reversed) : this._findNext(this._reversed, inclusive !== false, key);
   }
 
-  previous(key?: K, inclusive = true): IteratorResult<RedBlackTreeEntry<K, V>> {
-    return isUndefined(key) ? this._next(!this._reversed) : this._findNext(!this._reversed, inclusive, key);
+  previous(key?: K, inclusive?: boolean): IteratorResult<RedBlackTreeEntry<K, V>> {
+    return isUndefined(key) ? this._next(!this._reversed) : this._findNext(!this._reversed, inclusive !== false, key);
   }
 
   clone(): RedBlackTreeIterator<K, V> {
@@ -144,12 +144,12 @@ export class RedBlackTreeIterator<K, V> implements IterableIterator<RedBlackTree
 export class RedBlackTreeKeyIterator<K, V = null> implements IterableIterator<K> {
   constructor(private _it: RedBlackTreeIterator<K, V>) {}
 
-  next(key?: K, inclusive = true): IteratorResult<K> {
+  next(key?: K, inclusive?: boolean): IteratorResult<K> {
     const result: any = this._it.next(key, inclusive);
     return (result.value = result.value.key, result);
   }
 
-  previous(key?: K, inclusive = true): IteratorResult<RedBlackTreeEntry<K, V>> {
+  previous(key?: K, inclusive?: boolean): IteratorResult<RedBlackTreeEntry<K, V>> {
     const result: any = this._it.previous(key, inclusive);
     return (result.value = result.value.key, result);
   }
@@ -166,12 +166,12 @@ export class RedBlackTreeKeyIterator<K, V = null> implements IterableIterator<K>
 export class RedBlackTreeValueIterator<K, V> implements IterableIterator<V> {
   constructor(private _it: RedBlackTreeIterator<K, V>) {}
 
-  next(key?: K, inclusive = true): IteratorResult<V> {
+  next(key?: K, inclusive?: boolean): IteratorResult<V> {
     const result: any = this._it.next(key, inclusive);
     return (result.value = result.value.value, result);
   }
 
-  previous(key?: K, inclusive = true): IteratorResult<RedBlackTreeEntry<K, V>> {
+  previous(key?: K, inclusive?: boolean): IteratorResult<RedBlackTreeEntry<K, V>> {
     const result: any = this._it.previous(key, inclusive);
     return (result.value = result.value.value, result);
   }

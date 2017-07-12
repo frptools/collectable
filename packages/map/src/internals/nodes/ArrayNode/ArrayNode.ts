@@ -28,7 +28,8 @@ export class ArrayNode<K, V> implements ListNode<K, V> {
     hash: number,
     key: K): AnyNode<K, V> {
 
-    const {size: count, children} = this;
+    const count = this.size;
+    const children = this.children;
     const fragment = hashFragment(shift, hash);
     const child = children[fragment];
     const newChild =

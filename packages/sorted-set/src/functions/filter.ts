@@ -5,10 +5,8 @@ import {size} from './size';
 
 export function filter<T>(fn: FilterFn<T>, set: SortedSetStructure<T>): SortedSetStructure<T> {
   var nextSet = modify(set);
-  var {
-    _map: map,
-    _tree: tree,
-  } = nextSet;
+  var map = nextSet._map;
+  var tree = nextSet._tree;
 
   var it = iterateValues(set);
   var current: IteratorResult<any>;
