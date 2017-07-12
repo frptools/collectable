@@ -1,6 +1,6 @@
 {
   "name": "@collectable/sorted-set",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "[Collectable.js] Immutable Sorted Set",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -22,7 +22,7 @@
     "@typed/curry": "^1.0.1",
     "@collectable/core": "4.0.1",
     "@collectable/map": "3.0.1",
-    "@collectable/red-black-tree": "4.0.1"
+    "@collectable/red-black-tree": "4.1.0"
   },
   "collectable": {
     "tag": "SSET"
