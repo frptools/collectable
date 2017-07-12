@@ -5,10 +5,8 @@ import {size} from './size';
 
 export function filter<K, V, U = any>(fn: KeyedFilterFn<K, V>, map: SortedMapStructure<K, V, U>): SortedMapStructure<K, V, U> {
   var nextSet = modify(map);
-  var {
-    _indexed: keyMap,
-    _sorted: sortedValues,
-  } = nextSet;
+  var keyMap = nextSet._indexed;
+  var sortedValues = nextSet._sorted;
 
   var it = iterate(map);
   var current: IteratorResult<Entry<K, V, U>>;

@@ -35,7 +35,7 @@ export class Slot<T> {
     return slot;
   }
 
-  cloneToGroup(group: number, preserveStatus: boolean = false): Slot<T> {
+  cloneToGroup(group: number, preserveStatus?: boolean): Slot<T> {
     if(preserveStatus && this.group < 0) {
       group = -abs(group);
     }
@@ -55,7 +55,7 @@ export class Slot<T> {
     return new Slot<T>(-abs(group), this.size, this.sum, this.recompute, this.subcount, new Array<T>(this.slots.length));
   }
 
-  cloneWithAdjustedRange(group: number, padLeft: number, padRight: number, isLeaf: boolean, preserveStatus: boolean = false): Slot<T> {
+  cloneWithAdjustedRange(group: number, padLeft: number, padRight: number, isLeaf: boolean, preserveStatus?: boolean): Slot<T> {
     if(preserveStatus && this.group < 0) {
       group = -abs(group);
     }

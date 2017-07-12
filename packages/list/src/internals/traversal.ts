@@ -181,7 +181,10 @@ export class TreeWorker<T> {
     return !this.other.isNone();
   }
 
-  reset(list: ListStructure<T>, view: View<T>, group: number, otherCommitMode = COMMIT_MODE.NO_CHANGE): TreeWorker<T> {
+  reset(list: ListStructure<T>, view: View<T>, group: number, otherCommitMode?: COMMIT_MODE): TreeWorker<T> {
+    if (isUndefined(otherCommitMode)) {
+      otherCommitMode = COMMIT_MODE.NO_CHANGE;
+    }
     log(`[TreeWorker#reset] RESET WORKER for view: ${view.id} (other view: ${getOtherView(list, view.anchor).isNone() ? 'NONE' : getOtherView(list, view.anchor).id})`); // ## DEV ##
     this.list = list;
     this.current = view;

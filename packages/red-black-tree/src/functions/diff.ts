@@ -19,8 +19,13 @@ export function diff<T extends DiffTracer<K, V>, K, V = null>(trace: T, before: 
     return trace;
   }
 
-  let {value: left_item, done: left_done} = left.next(),
-      {value: right_item, done: right_done} = right.next();
+  let leftNext = left.next();
+  let left_item = leftNext.value;
+  let left_done = leftNext.done;
+
+  let rightNext = right.next();
+  let right_item = rightNext.value;
+  let right_done = rightNext.done;
 
   while(!left_done && !right_done) {
     const c = compare(left_item.key, right_item.key);
@@ -36,11 +41,15 @@ export function diff<T extends DiffTracer<K, V>, K, V = null>(trace: T, before: 
     }
 
     if(c <= 0) {
-      ({value: left_item, done: left_done} = traceRemove ? left.next() : left.next(right_item.key));
+      leftNext = traceRemove ? left.next() : left.next(right_item.key);
+      left_item = leftNext.value;
+      left_done = leftNext.done;
     }
 
     if(c >= 0) {
-      ({value: right_item, done: right_done} = traceAdd ? right.next() : right.next(left_item.key));
+      rightNext = traceAdd ? right.next() : right.next(left_item.key);
+      right_item = rightNext.value;
+      right_done = rightNext.done;
     }
   }
 
@@ -48,14 +57,18 @@ export function diff<T extends DiffTracer<K, V>, K, V = null>(trace: T, before: 
     if(traceAdd) {
       while(!right_done) {
         if(trace.added!(right_item) === false) break;
-        ({value: right_item, done: right_done} = right.next());
+        rightNext = right.next();
+        right_item = rightNext.value;
+        right_done = rightNext.done;
       }
     }
   }
   else if(traceRemove) {
     while(!left_done) {
       if(trace.removed!(left_item) === false) break;
-      ({value: left_item, done: left_done} = left.next());
+      leftNext = left.next();
+      left_item = leftNext.value;
+      left_done = leftNext.done;
     }
   }
 

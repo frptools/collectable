@@ -34,7 +34,8 @@ export class IndexedNode<K, V> implements Indexed<K, V> {
     hash: number,
     key: K): AnyNode<K, V> {
 
-    const {mask, children} = this;
+    const mask = this.mask;
+    const children = this.children;
     const fragment: number = hashFragment(shift, hash);
     const bit: number = toBitmap(fragment);
     const index: number = bitmapToIndex(mask, bit);

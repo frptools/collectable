@@ -30,7 +30,10 @@ export class PathNode<K, V> {
     return p;
   }
 
-  static release<K, V>(p: PathNode<K, V>, node: Node<K, V> = NONE): Node<K, V> {
+  static release<K, V>(p: PathNode<K, V>, node?: Node<K, V>): Node<K, V> {
+    if (isUndefined(node)) {
+      node = NONE;
+    }
     do {
       p.node = NONE;
     }

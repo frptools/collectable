@@ -28,14 +28,16 @@ export function subtract<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: 
 }
 
 function subtractArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, omissions: T[]): void {
-  var {_map: map, _tree: tree} = outputSet;
+  var map = outputSet._map;
+  var tree = outputSet._tree;
   for(var i = 0; i < omissions.length; i++) {
     unsetItem(omissions[i], map, tree);
   }
 }
 
 function subtractIterable<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, omissions: Iterator<T>): void {
-  var {_map: map, _tree: tree} = outputSet;
+  var map = outputSet._map;
+  var tree = outputSet._tree;
   var current: IteratorResult<T>;
   while(!(current = omissions.next()).done) {
     unsetItem(current.value, map, tree);

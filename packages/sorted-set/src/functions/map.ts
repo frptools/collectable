@@ -6,11 +6,9 @@ export function map<T, R>(fn: MapFn<T, R>, set: SortedSetStructure<T>): SortedSe
 export function map(fn: MapFn<any, any>, set: SortedSetStructure<any>): SortedSetStructure<any> {
   var immutable = isImmutable(set);
   var nextSet = cloneSortedSet(true, set, true);
-  var {
-    _map: map,
-    _tree: tree,
-    _select: select
-  } = nextSet;
+  var map = nextSet._map;
+  var tree = nextSet._tree;
+  var select = nextSet._select;
 
   var it = iterateValues(set);
   var current: IteratorResult<any>;

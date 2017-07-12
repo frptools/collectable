@@ -4,11 +4,9 @@ import {iterate, setItem} from '../internals';
 
 export function map<K, V, R, U = any>(fn: KeyedMapFn<K, V, R>, map: SortedMapStructure<K, V, U>): SortedMapStructure<K, R, U> {
   var nextMap = cloneSortedMap<K, any, U>(map, true, true);
-  var {
-    _indexed: keyMap,
-    _sorted: sortedValues,
-    _select: select
-  } = nextMap;
+  var keyMap = nextMap._indexed;
+  var sortedValues = nextMap._sorted;
+  var select = nextMap._select;
 
   var it = iterate(map);
   var current: IteratorResult<Entry<K, V, U>>;

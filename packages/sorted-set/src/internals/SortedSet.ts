@@ -4,6 +4,7 @@ import {
   ComparatorFn,
   SelectorFn,
   isDefined,
+  isUndefined,
   isObject,
   hashIterator,
   unwrap,
@@ -88,7 +89,7 @@ export function isSortedSet<T>(arg: any): arg is SortedSetStructure<T> {
   return isObject(arg) && arg instanceof SortedSetStructure;
 }
 
-export function cloneSortedSet<T>(mutable: boolean, set: SortedSetStructure<T>, clear = false): SortedSetStructure<T> {
+export function cloneSortedSet<T>(mutable: boolean, set: SortedSetStructure<T>, clear?: boolean): SortedSetStructure<T> {
   var mctx = Mutation.selectContext(mutable);
   var sctx = Mutation.asSubordinateContext(mctx);
   var map: HashMapStructure<T, SortedSetItem<T>>;
@@ -156,7 +157,10 @@ function createValueComparatorFn<T>(compare: ComparatorFn<T>): ComparatorFn<Sort
 
 export function emptySet<T>(mutable: boolean|Mutation.Context, compare?: ComparatorFn<T>): SortedSetStructure<T>;
 export function emptySet<T, K>(mutable: boolean|Mutation.Context, compare?: ComparatorFn<K>, select?: SelectorFn<T, K>): SortedSetStructure<T>;
-export function emptySet<T, K>(mutable: boolean|Mutation.Context = false, compare?: ComparatorFn<K>|ComparatorFn<T>, select?: SelectorFn<T, K>): SortedSetStructure<T> {
+export function emptySet<T, K>(mutable?: boolean|Mutation.Context, compare?: ComparatorFn<K>|ComparatorFn<T>, select?: SelectorFn<T, K>): SortedSetStructure<T> {
+  if (isUndefined(mutable)) {
+    mutable = false;
+  }
   var comparator: ComparatorFn<SortedSetItem<T>>
     = isDefined(select) ? createViewComparatorFn<T, K>(<ComparatorFn<K>>compare)
     : isDefined(compare) ? createValueComparatorFn<T>(<ComparatorFn<T>>compare)
