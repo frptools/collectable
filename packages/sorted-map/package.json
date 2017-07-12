@@ -1,6 +1,6 @@
 {
   "name": "@collectable/sorted-map",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "[Collectable.js] Immutable Sorted Map",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -20,9 +20,9 @@
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
     "@typed/curry": "^1.0.1",
-    "@collectable/core": "4.0.1",
-    "@collectable/map": "3.0.1",
-    "@collectable/red-black-tree": "4.1.0"
+    "@collectable/core": "4.0.2",
+    "@collectable/map": "3.1.0",
+    "@collectable/red-black-tree": "4.2.0"
   },
   "collectable": {
     "tag": "SMAP"
