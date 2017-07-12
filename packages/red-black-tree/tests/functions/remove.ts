@@ -85,6 +85,11 @@ suite('[RedBlackTree]', () => {
       assert.isTrue(isNone(tree2._root._right));
     });
 
+    test('should successfully remove the root from a balanced three-node tree', () => {
+      const tree = remove(2, set(2, 'two', set(3, 'three', set(1, 'one', emptyWithNumericKeys<string>()))));
+      assert.strictEqual(get(3, tree), 'three');
+    });
+
     test('should preserve the order of the rest of the tree after a key is removed', () => {
       var tree = createTree();
       for(var i = 0; i < unsortedValues.length; i++) {
