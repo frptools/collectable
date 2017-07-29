@@ -7,6 +7,7 @@ export * from './get';
 export * from './hasIndex';
 export * from './insert';
 export * from './iterate';
+export * from './map';
 export * from './prepend';
 export * from './remove';
 export * from './unwrap';
