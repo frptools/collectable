@@ -1,3 +1,5 @@
+'use strict';
+
 const gulp = require(`gulp`);
 const argv = require(`yargs`).argv;
 const createGulpEnv = require('./scripts/lib/gulp').createGulpEnv;
