@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@collectable/core": "4.0.2",
-    "@collectable/list": "4.1.0",
+    "@collectable/list": "4.2.0",
     "@collectable/map": "3.1.0",
     "@collectable/red-black-tree": "4.2.0",
     "@collectable/set": "3.1.0",
