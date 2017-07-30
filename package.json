@@ -8,7 +8,7 @@
   "typings": "lib/typings/index.d.ts",
   "scripts": {
     "start": "node ./scripts/index.js",
-    "build-all": "gulp build --pkg core && gulp build --pkg list && gulp build --pkg red-black-tree && gulp build --pkg map && gulp build --pkg set && gulp build --pkg sorted-map && gulp build --pkg sorted-set && gulp build",
+    "build-all": "npm ls -depth=0 && node node_modules/typescript/lib/tsc -v && gulp build --pkg core && gulp build --pkg list && gulp build --pkg red-black-tree && gulp build --pkg map && gulp build --pkg set && gulp build --pkg sorted-map && gulp build --pkg sorted-set && gulp build",
     "test": "mocha --opts ./mocha.opts",
     "test-dev": "mocha --opts ./mocha.opts --watch --bail",
     "test-dev-mem": "node --max_old_space_size=8192 ./node_modules/mocha/bin/_mocha --opts ./mocha.opts --watch --bail"
