@@ -1,6 +1,6 @@
 import {log, publish} from './_dev'; // ## DEV ##
 import {COMMIT_MODE, OFFSET_ANCHOR, invertOffset, normalizeIndex} from './common';
-import {ListStructure, getView, setView} from './List';
+import {ListStructure, getView, setView} from './list';
 import {View} from './view';
 import {ExpansionParameters} from './slot';
 import {TreeWorker, isViewInRange} from './traversal';

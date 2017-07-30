@@ -2,7 +2,7 @@ import {log} from './_dev'; // ## DEV ##
 import {abs, isUndefined} from '@collectable/core';
 import {OFFSET_ANCHOR, invertOffset, invertAnchor} from './common';
 import {Slot, emptySlot} from './slot';
-import {nextId} from './List'; // ## DEV ##
+import {nextId} from './list'; // ## DEV ##
 
 export class View<T> {
   static popReusableView<T>(group: number): View<T>|undefined {

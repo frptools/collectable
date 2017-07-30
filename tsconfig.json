@@ -12,7 +12,8 @@
     "noUnusedLocals": true,
     "outDir": "./.build",
     "lib": ["dom", "es5", "es6", "es2015"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "./src/**/*.ts",

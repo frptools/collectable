@@ -1,4 +1,4 @@
-import * as List from './List';
+import * as List from './list';
 export {List};
 
 export * from './functions';
