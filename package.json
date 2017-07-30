@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -41,7 +41,6 @@
     "inquirer": "^3.2.0",
     "merge2": "^1.1.0",
     "mocha": "^3.4.2",
-    "nodegit": "^0.18.3",
     "rimraf": "^2.6.1",
     "source-map-support": "^0.4.15",
     "string-format": "^0.5.0",
