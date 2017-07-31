@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {empty, fromArray, concat, concatAll, concatLeft} from '../../src';
+import {alt, empty, fromArray, concat, concatAll, concatLeft} from '../../src';
 import {arrayFrom} from '../../src//internals';
 import {BRANCH_FACTOR, makeValues} from '../test-utils';
 
@@ -83,6 +83,12 @@ suite('[List]', () => {
       assert.deepEqual(arrayFrom(concatAll([list2, list3])), values2.concat(values3));
       assert.deepEqual(arrayFrom(concatAll([list1, list2, list3])), values1.concat(values2.concat(values3)));
       assert.deepEqual(arrayFrom(concatAll([list3, list2, list1])), values3.concat(values2).concat(values1));
+    });
+  });
+
+  suite('alt()', () => {
+    test('is an alias for concat', () => {
+      assert.strictEqual(concat, alt);
     });
   });
 });
