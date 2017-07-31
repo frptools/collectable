@@ -1,6 +1,6 @@
 import {assert} from 'chai';
-import {fromArray} from '../../src';
-import {arrayFrom} from '../../src/internals';
+import {fromArray, of} from '../../src';
+import {arrayFrom, getAtOrdinal} from '../../src/internals';
 import {BRANCH_FACTOR, makeValues} from '../test-utils';
 
 suite('[List]', () => {
@@ -26,6 +26,12 @@ suite('[List]', () => {
       values = makeValues(BRANCH_FACTOR*BRANCH_FACTOR);
       list = fromArray(values);
       assert.deepEqual(arrayFrom(list), values);
+    });
+  });
+  suite('of()', () => {
+    test('should return a list containing the value', () => {
+      var list = of('A');
+      assert.strictEqual(getAtOrdinal(list, 0), 'A');
     });
   });
 });
