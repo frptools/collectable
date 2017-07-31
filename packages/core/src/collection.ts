@@ -1,8 +1,8 @@
-import {RecursiveDataStructure, modify, commit, UpdaterFn, update as _update} from '@frptools/core';
+import {PersistentStructure, Equatable, Hashable, RecursiveUnwrappable, modify, commit, UpdaterFn, update as _update} from '@frptools/core';
 
 export type CollectionEntry<K, V> = [K, V]|{key: K, value: V}|K|V;
 
-export interface Collection<T, U = any> extends RecursiveDataStructure<U>, Iterable<T> {
+export interface Collection<T, U = any> extends PersistentStructure, Equatable, Hashable, RecursiveUnwrappable<U>, Iterable<T> {
   readonly '@@is-collection': true;
   readonly '@@size': number;
 }

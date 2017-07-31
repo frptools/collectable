@@ -4,7 +4,7 @@ import {CONST, COMMIT_MODE, OFFSET_ANCHOR, modulo, shiftDownRoundUp} from './com
 import {TreeWorker} from './traversal';
 import {Slot, ExpansionParameters} from './slot';
 import {View} from './view';
-import {ListStructure, setView} from './List';
+import {ListStructure, setView} from './list';
 
 export class Collector<T> {
   private static _default = new Collector<any>();

@@ -10,8 +10,8 @@ const plumber = require(`gulp-plumber`);
 const transform = require(`gulp-transform`);
 const rimraf = require(`rimraf`);
 const merge = require(`merge2`);
-const {preprocess} = require(`tiny-preprocessor`);
-const {stripScopeName} = require('./util');
+const preprocess = require(`tiny-preprocessor`).preprocess;
+const stripScopeName = require('./util').stripScopeName;
 
 function createGulpEnv(pkgname) {
   const path = pkgname ? `./packages/${pkgname}` : `.`;
@@ -94,7 +94,7 @@ function createGulpEnv(pkgname) {
   function clean() {
     const paths = [`${path}/lib`, `${path}/.build`];
     return function(cb) {
-      const next = (i = 0) => rimraf(paths[i], done(i + 1));
+      const next = (i) => rimraf(paths[(i || 0)], done((i || 0) + 1));
       const done = i => err => err ? cb(err) : i === paths.length ? cb() : next(i);
       return next();
     }

@@ -1,6 +1,6 @@
 import {log, publish} from './_dev'; // ## DEV ##
-import {ListStructure} from './List'; // ## DEV ##
-import {nextId} from './List'; // ## DEV ##
+import {ListStructure} from './list'; // ## DEV ##
+import {nextId} from './list'; // ## DEV ##
 import {abs, max, copyArray} from '@collectable/core';
 import {CONST, COMMIT_MODE} from './common';
 

@@ -1,7 +1,7 @@
 import {log} from './_dev'; // ## DEV ##
 import {isMutable, isUndefined, MapFn, blockCopy, blockCopyMapped, copyArray} from '@collectable/core';
 import {CONST, OFFSET_ANCHOR, normalizeIndex, verifyIndex} from './common';
-import {ListStructure, cloneList, createList, nextId} from './List';
+import {ListStructure, cloneList, createList, nextId} from './list';
 import {View} from './view';
 import {Slot} from './slot';
 import {increaseCapacity} from './capacity';

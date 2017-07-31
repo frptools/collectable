@@ -5,7 +5,7 @@ import {TreeWorker} from './traversal';
 import {compact} from './compact';
 import {Slot} from './slot';
 import {View} from './view';
-import {ListStructure, cloneList, setView, nextId} from './List';
+import {ListStructure, cloneList, setView, nextId} from './list';
 
 export function concatLists<T>(leftList: ListStructure<T>, rightList: ListStructure<T>): ListStructure<T> {
   if(leftList._size === 0) {

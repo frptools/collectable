@@ -3,7 +3,7 @@ import {max, isDefined, isUndefined} from '@collectable/core';
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, invertOffset, invertAnchor, normalizeIndex, verifyIndex} from './common';
 import {View} from './view';
 import {Slot, ExpansionParameters} from './slot';
-import {ListStructure, createList, getView, getOtherView, setView} from './List';
+import {ListStructure, createList, getView, getOtherView, setView} from './list';
 
 /**
  * Checks whether a list ordinal position lies within the absolute range of a slot within the list
