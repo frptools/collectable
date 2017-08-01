@@ -19,3 +19,9 @@ export function fromIterable<T>(values: Iterable<T>): ListStructure<T> {
 export const fromArgs: <T>(...values: T[]) => ListStructure<T> = function() {
   return fromArray(Array.from(arguments));
 };
+
+export function of<T>(value: T): ListStructure<T> {
+  var state = createList<T>(true);
+  appendValues(state, [value]);
+  return commit(state);
+}

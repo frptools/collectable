@@ -6,3 +6,5 @@ var EMPTY: ListStructure<any>|undefined;
 export function empty<T>(): ListStructure<T> {
   return isDefined(EMPTY) ? EMPTY : (EMPTY = createList<any>(false));
 }
+
+export const zero: <T>() => ListStructure<T> = empty;

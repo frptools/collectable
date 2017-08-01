@@ -2,6 +2,7 @@ export * from './common';
 export * from './capacity';
 export * from './compact';
 export * from './concat';
+export * from './fold';
 export * from './slice';
 export * from './slot';
 export * from './list';

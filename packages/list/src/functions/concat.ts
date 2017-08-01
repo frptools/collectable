@@ -22,3 +22,5 @@ export function concatAll<T>(lists: ListStructure<T>[]): ListStructure<T> {
   }
   return commit(list);
 }
+
+export const alt: <T>(left: ListStructure<T>, right: ListStructure<T>) => ListStructure<T> = concat;
