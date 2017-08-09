@@ -138,9 +138,9 @@ It is recommended that you symlink local `@collectable/*` packages before instal
 
 ```bash
 $ cd packages/core
-$ yarn link
+$ npm link
 $ cd ../..
-$ yarn link @collectable/core
+$ npm link @collectable/core
 $ gulp build --pkg core        # see further below for more information about the gulp setup
 ```
 
@@ -289,8 +289,6 @@ The project is **optimised for development and testing using [VS Code](https://c
 
 **The main gulp process is for production builds,** and is designed to be used **when development and testing is finished**. It lints, builds and tests the distributable modules for each package. It also runs **a simple preprocessor** over TypeScript source in order to **remove certain patterns of debug-only code**, which means you can fill your code with logging and debug statements and leave them there for ongoing development **without compromising production builds.**
 
-Collectable prefers Yarn, so you should probably [make sure it is installed](https://yarnpkg.com/).
-
 ### Building with Gulp
 
 To build with Gulp, which you should do at least to ensure that any debug-only code has been correctly stripped from the production build, just use the raw gulp command to build the main package, or specify an individual package name as an option:
@@ -306,7 +304,7 @@ The settings for VS Code are preconfigured to build all Collectable packages to 
 
 ```bash
 $ cd packages/whatever
-$ yarn run test-dev
+$ npm run test-dev
 ```
 
 Mocha tests will now quickly run and re-run whenever the code rebuilds, without all the extraneous build processes that occur when building using Gulp. Due a to a bug somewhere in the toolchain between Mocha and TypeScript, if you use `.only(...)` on any of your suites or tests, and then remove them, the watch process will default to thinking you have no tests. To fix, just restart the test process.
