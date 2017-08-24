@@ -80,7 +80,7 @@ const input = {
 };
 const map0 = C.from(input); // <{foo: 'abc', xyz: <[3, [5, 6], 7, 9]>}>
 const map1 = C.updateIn(['xyz', 1, 0], n => 4, map0); // <{foo: 'abc', xyz: <[3, [4, 6], 7, 9]>}>
-const map2 = C.setIn(['foo', 'bar'], x => 'baz', map1); // <{foo: <{bar: 'baz'}>, xyz: ...>
+const map2 = C.setIn(['foo', 'bar'], 'baz', map1); // <{foo: <{bar: 'baz'}>, xyz: ...>
 const map3 = C.updateIn(['xyz', 1], curry2(List.append)(42)); // <{..., xyz: <[3, [5, 6, 42], 7, 9]>}>
 ```
 
