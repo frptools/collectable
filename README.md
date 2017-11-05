@@ -10,16 +10,16 @@ An all-you-can-eat buffet of high-performance, [persistent](https://en.wikipedia
 
 ## Features
 
-- A robust suite of **high-performance data structures** for most use cases
-- Full **ES2015 module support** so that your application bundle only need grow in size according to what you actually use
-- **Functional API**, prioritising an order of parameters best suited for currying and composition
-- API for **deep operations** on **nested structures**
-- Deep and shallow **conversion to and from native types**, including arrays, objects, iterables, Maps and Sets
-- Complete set of **TypeScript definitions**
-- Extensive **documentation** and **examples**
-- **One package import** to access everything, **or isolated npm packages** for each individual data structure
-- Comprehensive unit test suite, consisting of hundreds of tests for every data structure
-- Strong focus on a code style that **emphasises high performance** internally
+- [x] A robust suite of **high-performance data structures** for most use cases
+- [x] Full **ES2015 module support** so that your application bundle only need grow in size according to what you actually use
+- [x] **Functional API**, prioritising an order of parameters best suited for currying and composition
+- [ ] :construction: API for **deep operations** on **nested structures**
+- [x] Deep and shallow **conversion to and from native types**, including arrays, objects, iterables, Maps and Sets
+- [x] Complete set of **TypeScript definitions**
+- [ ] Extensive **documentation** and **examples**
+- [x] **One package import** to access everything, **or isolated npm packages** for each individual data structure
+- [x] Comprehensive unit test suite, consisting of hundreds of tests for every data structure
+- [x] Strong focus on a code style that **emphasises high performance** internally
 
 ## Data Structures
 
