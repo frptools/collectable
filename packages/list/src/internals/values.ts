@@ -22,30 +22,41 @@ export function setValueAtOrdinal<T>(list: ListStructure<T>, ordinal: number, va
   view.slot.slots[index] = value;
 }
 
-export function appendValues<T>(list: ListStructure<T>, values: T[]): ListStructure<T> {
+export function appendValues(list: ListStructure<any>, values: any[], fn?: MapFn<any, any>) {
   var tail = TreeWorker.focusTail(list, true);
   log(`[appendValues] Tail view ${tail.id} retrieved prior to appending values`); // ## DEV ##
   var innerIndex = tail.slot.size % CONST.BRANCH_FACTOR;
-  increaseCapacity(list, values.length, false).populate(values, innerIndex);
-  list._lastWrite = OFFSET_ANCHOR.RIGHT;
+  var collector = increaseCapacity(list, values.length, false);
+  if(isUndefined(fn)) {
+    collector.populate(values, innerIndex);
+  }
+  else {
+    collector.populateMapped(fn, values, innerIndex);
+  }
   return list;
 }
 
-export function prependValues<T>(list: ListStructure<T>, values: T[]): ListStructure<T> {
+export function prependValues(list: ListStructure<any>, values: any[], fn?: MapFn<any, any>): ListStructure<any> {
   TreeWorker.focusHead(list, true);
-  increaseCapacity(list, values.length, true).populate(values, 0);
+  var collector = increaseCapacity(list, values.length, true);
+  if(isUndefined(fn)) {
+    collector.populate(values, 0);
+  }
+  else {
+    collector.populateMapped(fn, values, 0);
+  }
   list._lastWrite = OFFSET_ANCHOR.LEFT;
   return list;
 }
 
-export function insertValues<T>(list: ListStructure<T>, ordinal: number, values: T[]): ListStructure<T> {
+export function insertValues(list: ListStructure<any>, ordinal: number, values: any[], fn?: MapFn<any, any>): ListStructure<any> {
   ordinal = normalizeIndex(list._size, ordinal);
-  if(ordinal === 0) return prependValues(list, values);
-  if(ordinal >= list._size) return appendValues(list, values);
+  if(ordinal === 0) return prependValues(list, values, fn);
+  if(ordinal >= list._size) return appendValues(list, values, fn);
   var right = cloneList(list, nextId(), true);
   sliceList(right, ordinal, right._size);
   sliceList(list, 0, ordinal);
-  appendValues(list, values);
+  appendValues(list, values, fn);
   return concatLists(list, right);
 }
 

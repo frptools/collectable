@@ -1,5 +1,5 @@
 import {log} from '../internals/_dev'; // ## DEV ##
-import {modify, commit} from '@collectable/core';
+import {MapFn, modify, commit} from '@collectable/core';
 import {CONST, OFFSET_ANCHOR, ListStructure, prependValues} from '../internals';
 
 export function prepend<T>(value: T, list: ListStructure<T>): ListStructure<T> {
@@ -35,6 +35,13 @@ export function prependArray<T>(values: T[], list: ListStructure<T>): ListStruct
   if(values.length === 0) return list;
   list = modify(list);
   prependValues(list, values);
+  return commit(list);
+}
+
+export function prependArrayMapped<T, U>(fn: MapFn<T, U>, values: T[], list: ListStructure<U>): ListStructure<U> {
+  if(values.length === 0) return list;
+  list = modify(list);
+  prependValues(list, values, fn);
   return commit(list);
 }
 

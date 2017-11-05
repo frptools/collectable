@@ -1,4 +1,4 @@
-import {modify, commit} from '@collectable/core';
+import {MapFn, modify, commit} from '@collectable/core';
 import {log} from '../internals/_dev'; // ## DEV ##
 import {CONST, OFFSET_ANCHOR, ListStructure, appendValues} from '../internals';
 
@@ -52,6 +52,13 @@ export function appendArray<T>(values: T[], list: ListStructure<T>): ListStructu
   if(values.length === 0) return list;
   list = modify(list);
   appendValues(list, values);
+  return commit(list);
+}
+
+export function appendArrayMapped<T, U>(fn: MapFn<T, U>, values: T[], list: ListStructure<U>): ListStructure<U> {
+  if(values.length === 0) return list;
+  list = modify(list);
+  appendValues(list, values, fn);
   return commit(list);
 }
 

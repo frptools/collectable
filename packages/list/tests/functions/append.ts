@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {empty, append, appendArray, appendIterable} from '../../src';
+import {empty, append, appendArray, appendArrayMapped, appendIterable} from '../../src';
 import {arrayFrom} from '../../src/internals';
 
 suite('[List]', () => {
@@ -39,6 +39,25 @@ suite('[List]', () => {
       const list = appendArray(values, empty<string>());
       assert.strictEqual(list._size, 3);
       assert.deepEqual(arrayFrom(list), values);
+    });
+  });
+
+  suite('appendArrayMapped()', () => {
+    const fn = (s: string, i: number) => `[${s}, ${i}]`;
+
+    test('should return the original list if called with an empty list', () => {
+      const list = empty<string>();
+      const appended = appendArrayMapped(fn, [], list);
+      assert.strictEqual(list._size, 0);
+      assert.strictEqual(list, appended);
+    });
+
+    test('should append each element in the array', () => {
+      var values = ['foo', 'bar', 'baz'];
+      const mappedValues = values.map(fn);
+      const list = appendArrayMapped(fn, values, empty<string>());
+      assert.strictEqual(list._size, 3);
+      assert.deepEqual(arrayFrom(list), mappedValues);
     });
   });
 

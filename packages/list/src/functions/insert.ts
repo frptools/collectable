@@ -1,4 +1,4 @@
-import {modify, commit} from '@collectable/core';
+import {MapFn, modify, commit} from '@collectable/core';
 import {ListStructure, insertValues} from '../internals';
 
 export function insert<T>(index: number, value: T, list: ListStructure<T>): ListStructure<T> {
@@ -9,6 +9,13 @@ export function insertArray<T>(index: number, values: T[], list: ListStructure<T
   if(values.length === 0) return list;
   list = modify(list);
   insertValues(list, index, values);
+  return commit(list);
+}
+
+export function insertArrayMapped<T, U>(fn: MapFn<T, U>, index: number, values: T[], list: ListStructure<U>): ListStructure<U> {
+  if(values.length === 0) return list;
+  list = modify(list);
+  insertValues(list, index, values, fn);
   return commit(list);
 }
 

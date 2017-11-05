@@ -1,5 +1,5 @@
 import {log, publish} from './_dev'; // ## DEV ##
-import {min} from '@collectable/core';
+import {MapFn, min} from '@collectable/core';
 import {CONST, COMMIT_MODE, OFFSET_ANCHOR, modulo, shiftDownRoundUp} from './common';
 import {TreeWorker} from './traversal';
 import {Slot, ExpansionParameters} from './slot';
@@ -46,6 +46,15 @@ export class Collector<T> {
     for(var i = 0, outerIndex = 0, inner = elements[0]; i < values.length;
         i++, innerIndex >= inner.length - 1 ? (innerIndex = 0, inner = elements[++outerIndex]) : (++innerIndex)) {
       inner[innerIndex] = values[i];
+    }
+    this.elements = <any>void 0;
+  }
+
+  populateMapped<U>(fn: MapFn<U, T>, values: U[], innerIndex: number): void {
+    var elements = this.elements;
+    for(var i = 0, outerIndex = 0, inner = elements[0]; i < values.length;
+        i++, innerIndex >= inner.length - 1 ? (innerIndex = 0, inner = elements[++outerIndex]) : (++innerIndex)) {
+      inner[innerIndex] = fn(values[i], i);
     }
     this.elements = <any>void 0;
   }
