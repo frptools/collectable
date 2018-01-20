@@ -1,6 +1,6 @@
 {
   "name": "@collectable/core",
-  "version": "4.0.2",
+  "version": "5.0.1",
   "description": "[Collectable.js] Core Module",
   "main": "lib/commonjs/index.js",
   "module": "lib/es2015/index.js",

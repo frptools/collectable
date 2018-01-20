@@ -1,6 +1,6 @@
 {
   "name": "@collectable/red-black-tree",
-  "version": "4.2.0",
+  "version": "5.0.1",
   "description": "[Collectable.js] Immutable Red-Black Tree",
   "main": "lib/commonjs/index.js",
   "module": "lib/es2015/index.js",
@@ -26,7 +26,7 @@
   "bugs": "https://github.com/frptools/collectable/issues",
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
-    "@collectable/core": "4.0.2"
+    "@collectable/core": "^5.0.1"
   },
   "devDependencies": {
     "@frptools/config": "^1.0.0",
