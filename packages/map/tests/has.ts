@@ -1,30 +1,26 @@
-import {assert} from 'chai';
-import {empty, has, set, remove} from '../src';
+import test from 'ava';
+import { empty, has, remove, set } from '../src';
 
-suite('[HashMap]', () => {
-  suite('has()', () => {
-    test('returns true if the specified property exists', () => {
-      var map = set('x', 3, empty<string, number>());
-      assert.isTrue(has('x', map));
-    });
+test('returns true if the specified property exists', t => {
+  var map = set('x', 3, empty<string, number>());
+  t.true(has('x', map));
+});
 
-    test('returns false if the specified property is missing', () => {
-      var map = set('x', 3, empty<string, number>());
-      assert.isFalse(has('y', map));
-    });
+test('returns false if the specified property is missing', t => {
+  var map = set('x', 3, empty<string, number>());
+  t.false(has('y', map));
+});
 
-    test('returns true after assigning a property to a mutable map', () => {
-      var map = empty<string, number>(true);
-      assert.isFalse(has('x', map));
-      set('x', 3, map);
-      assert.isTrue(has('x', map));
-    });
+test('returns true after assigning a property to a mutable map', t => {
+  var map = empty<string, number>(true);
+  t.false(has('x', map));
+  set('x', 3, map);
+  t.true(has('x', map));
+});
 
-    test('return false after removing a property from a mutable map', () => {
-      var map = set('x', 3, empty<string, number>(true));
-      assert.isTrue(has('x', map));
-      remove('x', map);
-      assert.isFalse(has('x', map));
-    });
-  });
+test('return false after removing a property from a mutable map', t => {
+  var map = set('x', 3, empty<string, number>(true));
+  t.true(has('x', map));
+  remove('x', map);
+  t.false(has('x', map));
 });

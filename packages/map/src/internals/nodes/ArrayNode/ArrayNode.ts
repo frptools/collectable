@@ -1,27 +1,27 @@
-import {Mutation, ChangeFlag, replaceArrayElement} from '@collectable/core';
-import {NodeType, ListNode, AnyNode, GetValueFn} from '../types';
-import {empty} from '../EmptyNode';
-import {SIZE, MIN_ARRAY_NODE, hashFragment} from '../../common';
-import {toIndexNode} from './toIndexNode';
+import { ChangeFlag, MutationContext, Persistent, getSubordinateContext, isMutable, withArrayIndexUpdated } from '@collectable/core';
+import { AnyNode, GetValueFn, ListNode, NodeType } from '../types';
+import { empty } from '../EmptyNode';
+import { MIN_ARRAY_NODE, SIZE, hashFragment } from '../../common';
+import { toIndexNode } from './toIndexNode';
 
 export class ArrayNode<K, V> implements ListNode<K, V> {
-  public readonly '@@mctx': Mutation.Context;
+  public readonly '@@mctx': MutationContext;
   public type: NodeType.ARRAY = NodeType.ARRAY;
 
-  constructor(
-    mctx: Mutation.Context,
+  constructor (
+    mctx: MutationContext,
     public size: number,
     public children: Array<AnyNode<K, V>>
   ) {
     this['@@mctx'] = mctx;
   }
 
-  public '@@clone'(mctx: Mutation.Context): ArrayNode<K, V> {
+  public '@@clone' (mctx: MutationContext): ArrayNode<K, V> {
     return new ArrayNode(mctx, this.size, this.children);
   }
 
-  public modify(
-    owner: Mutation.PersistentStructure,
+  public modify (
+    owner: Persistent,
     change: ChangeFlag,
     shift: number,
     get: GetValueFn<V>,
@@ -40,35 +40,35 @@ export class ArrayNode<K, V> implements ListNode<K, V> {
     }
 
     if(isEmptyNode(child) && !isEmptyNode(newChild)) {
-      if(Mutation.isMutable(this)) {
+      if(isMutable(this)) {
         children[fragment] = newChild;
         this.size = count + 1;
         return this;
       }
-      return new ArrayNode(Mutation.getSubordinateContext(owner), count + 1, replaceArrayElement(fragment, newChild, children));
+      return new ArrayNode(getSubordinateContext(owner), count + 1, withArrayIndexUpdated(fragment, newChild, children));
     }
 
     if(!isEmptyNode(child) && isEmptyNode(newChild)) {
       if(count - 1 <= MIN_ARRAY_NODE) {
-        return toIndexNode(Mutation.getSubordinateContext(owner), count, fragment, children);
+        return toIndexNode(getSubordinateContext(owner), count, fragment, children);
       }
-      if(Mutation.isMutable(this)) {
+      if(isMutable(this)) {
         this.size = count - 1;
         children[fragment] = empty<K, V>();
         return this;
       }
-      return new ArrayNode<K, V>(Mutation.getSubordinateContext(owner), count - 1, replaceArrayElement(fragment, empty<K, V>(), children));
+      return new ArrayNode<K, V>(getSubordinateContext(owner), count - 1, withArrayIndexUpdated(fragment, empty<K, V>(), children));
     }
 
-    if(Mutation.isMutable(this)) {
+    if(isMutable(this)) {
       children[fragment] = newChild;
       return this;
     }
 
-    return new ArrayNode(Mutation.getSubordinateContext(owner), count, replaceArrayElement(fragment, newChild, children));
+    return new ArrayNode(getSubordinateContext(owner), count, withArrayIndexUpdated(fragment, newChild, children));
   }
 }
 
-function isEmptyNode(node: AnyNode<any, any>): boolean {
+function isEmptyNode (node: AnyNode<any, any>): boolean {
   return node && node.type === NodeType.EMPTY;
 }

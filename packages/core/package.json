@@ -3,11 +3,18 @@
   "version": "4.0.2",
   "description": "[Collectable.js] Core Module",
   "main": "lib/commonjs/index.js",
-  "module": "lib/module/index.js",
-  "jsnext:main": "lib/module/index.js",
-  "typings": "lib/typings/index.d.ts",
+  "module": "lib/es2015/index.js",
+  "jsnext:main": "lib/es2015/index.js",
+  "typings": "lib/es2015/index.d.ts",
   "scripts": {
-    "test-dev": "cd ../.. && mocha --require source-map-support/register --ui tdd --watch --bail .build/packages/core/tests/**/*.js"
+    "clean": "rimraf ./lib ./.build",
+    "build-cjs": "tsc -p tsconfig.commonjs.json",
+    "build-es2015": "tsc -p tsconfig.es2015.json",
+    "build-tests": "tsc -p tsconfig.tests.json",
+    "build": "npm run build-cjs && npm run build-es2015 && npm run build-tests",
+    "lint": "tslint -p tsconfig.es2015.json && tslint -p tsconfig.tests.json",
+    "test": "ava --timeout=30s --tap",
+    "test-dev": "ava --timeout=30s --fail-fast --watch"
   },
   "files": [
     "lib"
@@ -17,9 +24,23 @@
   "bugs": "https://github.com/frptools/collectable/issues",
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
-    "@frptools/core": "^3.0.1"
+    "@frptools/corelib": "^1.1.0",
+    "@frptools/structural": "^1.0.0"
   },
-  "collectable": {
-    "tag": "CORE"
+  "devDependencies": {
+    "@frptools/config": "^1.0.0",
+    "@types/node": "^9.3.0",
+    "ava": "^0.24.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.9.1",
+    "typescript": "^2.6.2"
+  },
+  "ava": {
+    "files": [
+      ".build/tests/{functions,internals}/*.js"
+    ],
+    "source": [
+      ".build/**/*.js"
+    ]
   }
 }

@@ -1,5 +1,5 @@
-import {HashMapStructure} from '@collectable/map';
-import {RedBlackTreeStructure} from '@collectable/red-black-tree';
+import { HashMapStructure } from '@collectable/map';
+import { RedBlackTreeStructure } from '@collectable/red-black-tree';
 
 export interface SortedSetItem<T> {
   index: number;

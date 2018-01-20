@@ -1,6 +1,6 @@
-import {max, min} from '@collectable/core';
-import {CONST} from './common';
-import {Slot, emptySlot} from './slot';
+import { max, min } from '@collectable/core';
+import { CONST } from './common';
+import { Slot, emptySlot } from './slot';
 
 interface Position<T> {
   upperIndex: number;
@@ -12,11 +12,11 @@ interface Position<T> {
   lower: Slot<T>;
 }
 
-function isCompactable<T>(node: Slot<T>): boolean {
+function isCompactable<T> (node: Slot<T>): boolean {
   return node.slots.length < CONST.BRANCH_INDEX_MASK;
 }
 
-function incrementPos<T>(pos: Position<T>, nodes: Slot<T>[]): void {
+function incrementPos<T> (pos: Position<T>, nodes: Slot<T>[]): void {
   if(pos.upperIndex === 1 && pos.lowerIndex === pos.upper.slots.length - 1) {
     return;
   }
@@ -36,7 +36,7 @@ function incrementPos<T>(pos: Position<T>, nodes: Slot<T>[]): void {
   }
 }
 
-function copySlotLeft<T>(left: Position<T>, right: Position<T>): void {
+function copySlotLeft<T> (left: Position<T>, right: Position<T>): void {
   var slot = <Slot<T>>right.upper.slots[right.lowerIndex];
   left.upper.slots[left.lowerIndex] = slot;
   left.lower = slot;
@@ -52,7 +52,7 @@ function copySlotLeft<T>(left: Position<T>, right: Position<T>): void {
   }
 }
 
-function ensureEditable<T>(pos: Position<T>): void {
+function ensureEditable<T> (pos: Position<T>): void {
   if(pos.lower.group !== pos.upper.group) {
     var lower = pos.lower.cloneToGroup(pos.upper.group, true);
     pos.lower = lower;
@@ -60,7 +60,7 @@ function ensureEditable<T>(pos: Position<T>): void {
   }
 }
 
-function makePosition<T>(node: Slot<T>, lastLowerIndex: number): Position<T> {
+function makePosition<T> (node: Slot<T>, lastLowerIndex: number): Position<T> {
   var slot = <Slot<T>>node.slots[0];
   return {
     upperIndex: 0,
@@ -73,7 +73,7 @@ function makePosition<T>(node: Slot<T>, lastLowerIndex: number): Position<T> {
   };
 }
 
-export function compact<T>(nodes: [Slot<T>, Slot<T>], shift: number, reductionTarget: number, lists?: any): void {
+export function compact<T> (nodes: [Slot<T>, Slot<T>], shift: number, reductionTarget: number, lists?: any): void {
   var isRecomputeUpdated = false;
   var isTreeBase = shift === CONST.BRANCH_INDEX_BITCOUNT;
   var finalSlotCount = nodes[0].slots.length + nodes[1].slots.length - reductionTarget;

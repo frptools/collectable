@@ -1,4 +1,4 @@
-import {Mutation, ChangeFlag} from '@collectable/core';
+import { ChangeFlag, Persistent } from '@collectable/core';
 
 export type AnyNode<K, V>
   = Empty<K, V>
@@ -10,7 +10,7 @@ export type AnyNode<K, V>
 export type GetValueFn<V> = (value?: V) => V;
 
 export type Modify<K, V> =
-  (owner: Mutation.PersistentStructure,
+  (owner: Persistent,
    change: ChangeFlag,
    shift: number,
    get: GetValueFn<V>,
@@ -22,7 +22,7 @@ export type ChildNode<K, V> =
 
 export type ChildrenNodes<K, V> = Array<ChildNode<K, V>>;
 
-export interface Node<K, V> extends Mutation.PersistentStructure {
+export interface Node<K, V> extends Persistent {
   type: NodeType;
   modify: Modify<K, V>;
 }

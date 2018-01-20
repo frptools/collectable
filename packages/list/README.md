@@ -17,7 +17,7 @@ This package provides a Clojure-style persistent vector based on a modified [RRB
 
 ```
 # via NPM
-npm install --save @collectable/list
+npm install @collectable/list
 
 # or Yarn
 yarn add @collectable/list
@@ -27,26 +27,26 @@ If you intend to use other data structures as well, install the main collectable
 
 ```
 # via NPM
-npm install --save collectable
+npm install collectable
 
 # or Yarn
 yarn add collectable
 ```
 
-TypeScript type definitions are included by default.
+TypeScript type definitions are built in.
 
 ## Usage
 
 Import and use the functions you need:
 
 ```js
-import {fromArray, arrayFrom} from '@collectable/list';
+import { fromArray, arrayFrom } from '@collectable/list';
 
 const list = fromArray(['X', 'Y']);
 const array = arrayFrom(list);
 ```
 
-Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to use what you need while excluding anything else from the final build.
+Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexibility to use what you need while excluding anything else from the final build.
 
 ## API
 
@@ -76,7 +76,7 @@ Appends a new value to the end of a list, growing the size of the list by one.
 
 ```ts
 // Primary API
-import {fromArray, append} from '@collectable/list';
+import { fromArray, append } from '@collectable/list';
 
 const two = fromArray(['X', 'Y']); // => [X, Y]
 const three = append('Z', two); // => [X, Y, Z]
@@ -84,7 +84,7 @@ const three = append('Z', two); // => [X, Y, Z]
 
 ```ts
 // Curried API
-import {fromArray, append} from '@collectable/list/curried';
+import { fromArray, append } from '@collectable/list/curried';
 
 const two = fromArray(['X', 'Y']); // => [X, Y]
 const addZ = append('Z');

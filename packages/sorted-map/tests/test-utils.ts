@@ -1,9 +1,9 @@
-import {SortedMapStructure as _SortedMap, SortedMapEntry, fromArray as _fromArray} from '../src';
-import {isMutable, isUndefined} from '@collectable/core';
+import { SortedMapEntry, SortedMapStructure as _SortedMap, fromArray as _fromArray } from '../src';
+import { isMutable, isUndefined } from '@collectable/core';
 
 let _id = 0;
 const CACHE = new WeakMap<object, number>();
-function ctxid(obj: object): number {
+function ctxid (obj: object): number {
   var id = CACHE.get(obj);
   if(isUndefined(id)) {
     id = ++_id;
@@ -12,7 +12,7 @@ function ctxid(obj: object): number {
   return id;
 }
 
-export function snapshot(map: SortedMap): object {
+export function snapshot (map: SortedMap): object {
   return {
     token: ctxid(map['@@mctx'].token),
     context: ctxid(map['@@mctx']),
@@ -22,9 +22,9 @@ export function snapshot(map: SortedMap): object {
 }
 export type SortedMap = _SortedMap<any, any>;
 
-export function pairsFrom(array: number[]): [number, string][];
-export function pairsFrom(array: string[]): [string, number][];
-export function pairsFrom(array: string[]|number[]): [string|number, string|number][] {
+export function pairsFrom (array: number[]): [number, string][];
+export function pairsFrom (array: string[]): [string, number][];
+export function pairsFrom (array: string[]|number[]): [string|number, string|number][] {
   if(array.length === 0) return [];
   return typeof array[0] === 'string'
     ? (<string[]>array).map((s: string) => (<[string, number]>[s, s.charCodeAt(0)]))
@@ -32,18 +32,18 @@ export function pairsFrom(array: string[]|number[]): [string|number, string|numb
 }
 
 type Entry<K, V> = SortedMapEntry<K, V, undefined>;
-function compareStrings(a: Entry<string, number>, b: Entry<string, number>): number {
+function compareStrings (a: Entry<string, number>, b: Entry<string, number>): number {
   return a.key.localeCompare(b.key);
 }
 
-function compareNumbers(a: Entry<number, string>, b: Entry<number, string>): number {
+function compareNumbers (a: Entry<number, string>, b: Entry<number, string>): number {
   return a.key - b.key;
 }
 
-export function fromStringArray(values: string[]): SortedMap {
+export function fromStringArray (values: string[]): SortedMap {
   return _fromArray(pairsFrom(values), compareStrings);
 }
 
-export function fromNumericArray(values: number[]): SortedMap {
+export function fromNumericArray (values: number[]): SortedMap {
   return _fromArray(pairsFrom(values), compareNumbers);
 }

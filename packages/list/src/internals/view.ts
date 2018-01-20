@@ -1,11 +1,9 @@
-import {log} from './_dev'; // ## DEV ##
-import {abs, isUndefined} from '@collectable/core';
-import {OFFSET_ANCHOR, invertOffset, invertAnchor} from './common';
-import {Slot, emptySlot} from './slot';
-import {nextId} from './list'; // ## DEV ##
+import { abs, isUndefined } from '@collectable/core';
+import { OFFSET_ANCHOR, invertAnchor, invertOffset } from './common';
+import { Slot, emptySlot } from './slot';
 
 export class View<T> {
-  static popReusableView<T>(group: number): View<T>|undefined {
+  static popReusableView<T> (group: number): View<T>|undefined {
     var view = _nextReusableView;
     if(view.isNone()) {
       return void 0;
@@ -16,8 +14,7 @@ export class View<T> {
     return view;
   }
 
-  static pushReusableView(view: View<any>): void {
-    log(`[View.pushReusableView] View ${view.id} is being cleared and cached for reuse by future operations.`); // ## DEV ##
+  static pushReusableView (view: View<any>): void {
     view.slot = Slot.empty<any>();
     var next = _nextReusableView;
     if(next.group > 50) return; // group property reused as stack size counter
@@ -26,7 +23,7 @@ export class View<T> {
     _nextReusableView = view;
   }
 
-  static create<T>(
+  static create<T> (
     group: number,
     offset: number,
     anchor: OFFSET_ANCHOR,
@@ -36,11 +33,10 @@ export class View<T> {
     parent: View<T>,
     slot: Slot<T>,
   ): View<T> {
-    var view = View.popReusableView<T>(group);
+    var view = View.popReusableView<T>(group)!;
     if(isUndefined(view)) {
       return new View<T>(group, offset, anchor, slotIndex, sizeDelta, slotsDelta, parent, slot);
     }
-    log(`[View.pushReusableView] View ${view.id} has been retrieved from the reusable view cache, rather than allocating a new view object.`); // ## DEV ##
     view.group = group;
     view.offset = offset;
     view.anchor = anchor;
@@ -52,8 +48,7 @@ export class View<T> {
     return view;
   }
 
-  public id = nextId(); // ## DEV ##
-  constructor(
+  constructor (
     public group: number,
     public offset: number,
     public anchor: OFFSET_ANCHOR,
@@ -65,70 +60,67 @@ export class View<T> {
   ) {
     this.parent = parent;
     this.slotIndex = slotIndex;
-    log(`[View#construct] ${anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} view ${this.id} constructed with parent view ${parent ? parent.id : '(void)'}, offset ${offset}, and slot index ${slotIndex}.`); // ## DEV ##
   }
 
-  static empty<T>(anchor: OFFSET_ANCHOR): View<T> {
+  static empty<T> (anchor: OFFSET_ANCHOR): View<T> {
     return anchor === OFFSET_ANCHOR.LEFT ? emptyLeftView : emptyRightView;
   }
 
-  static none<T>(): View<T> {
+  static none<T> (): View<T> {
     return voidView;
   }
 
-  isNone(): boolean {
+  isNone (): boolean {
     return this.group === 0;
   }
 
-  isAnchoredIncorrectly(prepend: boolean|number): boolean {
+  isAnchoredIncorrectly (prepend: boolean|number): boolean {
     return this.anchor === (prepend ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT);
   }
 
-  isDefaultEmpty(): boolean {
+  isDefaultEmpty (): boolean {
     return this === emptyLeftView || this === emptyRightView;
   }
 
-  isRoot(): boolean {
+  isRoot (): boolean {
     return this.parent === voidView;
   }
 
-  isEditable(group: number): boolean {
+  isEditable (group: number): boolean {
     return abs(this.group) === group;
   }
 
-  hasUncommittedChanges(): boolean {
+  hasUncommittedChanges (): boolean {
     return this.sizeDelta !== 0 || this.slotsDelta !== 0;
   }
 
-  bound(): number {
+  bound (): number {
     return this.offset + this.slot.size;
   }
 
-  slotCount(): number {
+  slotCount (): number {
     return this.slot.slots.length;
   }
 
-  recalculateDeltas(): void {
+  recalculateDeltas (): void {
     var upper = <Slot<T>>this.parent.slot.slots[this.slotIndex];
     if(this.slot === upper) return;
     this.slotsDelta = this.slot.slots.length - upper.slots.length;
     this.sizeDelta = this.slot.size - upper.size;
   }
 
-  cloneToGroup(group: number): View<T> {
-    log(`[View#cloneToGroup (id:${this.id})] Cloning to group ${group}.`); // ## DEV ##
+  cloneToGroup (group: number): View<T> {
     return View.create<T>(group, this.offset, this.anchor, this.slotIndex, this.sizeDelta, this.slotsDelta, this.parent, this.slot);
   }
 
-  flipAnchor(listSize: number): void {
+  flipAnchor (listSize: number): void {
     this.anchor = invertAnchor(this.anchor);
-    log(`[View#flipAnchor (id:${this.id})] Flipped anchor ${this.anchor === OFFSET_ANCHOR.LEFT ? 'LEFT' : 'RIGHT'} (based on list size: ${listSize})`); // ## DEV ##
     if(!this.isRoot()) {
       this.offset = invertOffset(this.offset, this.slot.size, listSize);
     }
   }
 
-  ensureEditable(group: number, ensureSlotEditable?: boolean): View<T> {
+  ensureEditable (group: number, ensureSlotEditable?: boolean): View<T> {
     var view = <View<T>>this;
     if(!view.isEditable(group)) {
       view = view.cloneToGroup(group);
@@ -140,12 +132,12 @@ export class View<T> {
     return view;
   }
 
-  ensureSlotEditable(shallow?: boolean): Slot<T> {
+  ensureSlotEditable (shallow?: boolean): Slot<T> {
     return this.slot.isEditable(this.group) ? this.slot
       : (this.slot = this.slot.cloneToGroup(this.group, true));
   }
 
-  setAsRoot(): void {
+  setAsRoot (): void {
     if(this.slot.isReserved()) {
       if(this.slot.isReservedFor(this.group)) {
         this.slot.group = -this.slot.group;
@@ -161,11 +153,11 @@ export class View<T> {
     this.slotIndex = 0;
   }
 
-  replaceSlot(slot: Slot<T>): void {
+  replaceSlot (slot: Slot<T>): void {
     this.slot = slot;
   }
 
-  adjustSlotRange(padLeft: number, padRight: number, isLeaf: boolean): void {
+  adjustSlotRange (padLeft: number, padRight: number, isLeaf: boolean): void {
     var slot = this.slot;
     var oldSize = slot.size;
     if(slot.isEditable(this.group)) {
@@ -180,8 +172,8 @@ export class View<T> {
     }
   }
 
-  disposeIfInGroup(...group: number[]): void;
-  disposeIfInGroup(): void {
+  disposeIfInGroup (...group: number[]): void;
+  disposeIfInGroup (): void {
     for(var i = 0; i < arguments.length; i++) {
       if(this.group === arguments[i]) {
         View.pushReusableView(this);
@@ -196,20 +188,6 @@ export class View<T> {
  * @export
  * */
 var voidView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, <any>void 0, emptySlot);
-voidView.id = 0; // ## DEV ##
 var emptyLeftView = new View<any>(0, 0, OFFSET_ANCHOR.LEFT, 0, 0, 0, voidView, emptySlot);
-emptyLeftView.id = 0; // ## DEV ##
 var emptyRightView = new View<any>(0, 0, OFFSET_ANCHOR.RIGHT, 0, 0, 0, voidView, emptySlot);
-emptyRightView.id = 0; // ## DEV ##
 var _nextReusableView = voidView;
-
-// // ## DEV [[
-// const READONLY_VIEW_INTERCEPTOR: ProxyHandler<any> = {
-//   set(target: any, p: PropertyKey, value: any, receiver: any): boolean {
-//     throw new Error(`Attempted to write property "${p}" of read-only view`);
-//   }
-// };
-// voidView = new Proxy(voidView, READONLY_VIEW_INTERCEPTOR);
-// emptyLeftView = new Proxy(voidView, READONLY_VIEW_INTERCEPTOR);
-// emptyRightView = new Proxy(voidView, READONLY_VIEW_INTERCEPTOR);
-// // ]] ##

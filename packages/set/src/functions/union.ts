@@ -1,8 +1,8 @@
-import {modify, commit} from '@collectable/core';
-import {HashMap, size, set as setValue} from '@collectable/map';
-import {HashSetStructure, isIterable} from '../internals';
+import { commit, modify } from '@collectable/core';
+import { HashMap, set as setValue, size } from '@collectable/map';
+import { HashSetStructure, isIterable } from '../internals';
 
-export function union<T>(other: HashSetStructure<T>|T[]|Iterable<T>, main: HashSetStructure<T>): HashSetStructure<T> {
+export function union<T> (other: HashSetStructure<T>|T[]|Iterable<T>, main: HashSetStructure<T>): HashSetStructure<T> {
   var outputSet = modify(main);
   var outputMap = outputSet._map;
 
@@ -25,13 +25,13 @@ export function union<T>(other: HashSetStructure<T>|T[]|Iterable<T>, main: HashS
   return outputSet;
 }
 
-function unionArray<T>(inputMap: HashMap.Instance<T, null>, array: T[], outputMap: HashMap.Instance<T, null>): void {
+function unionArray<T> (inputMap: HashMap.Instance<T, null>, array: T[], outputMap: HashMap.Instance<T, null>): void {
   for(var i = 0; i < array.length; i++) {
     setValue(array[i], null, outputMap);
   }
 }
 
-function unionIterable<T>(inputMap: HashMap.Instance<T, null>, it: Iterator<T>, outputMap: HashMap.Instance<T, null>): void {
+function unionIterable<T> (inputMap: HashMap.Instance<T, null>, it: Iterator<T>, outputMap: HashMap.Instance<T, null>): void {
   var current: IteratorResult<T>;
   while(!(current = it.next()).done) {
     setValue(current.value, null, outputMap);

@@ -1,13 +1,8 @@
-.docs/
 .build/
 .devnotes/
-.vscode/settings.json
 .assets/working-files/
+.vscode/
 node_modules/
 lib/
-!scripts/lib/
-perf/
-packages/cuckoo-filter/
-scripts/.cache.json
 .npmrc
 *.log

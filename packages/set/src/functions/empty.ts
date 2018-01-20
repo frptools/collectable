@@ -1,10 +1,6 @@
-import {Mutation} from '@collectable/core';
-import {HashSetStructure, isHashSet, emptySet} from '../internals';
+import { MutationContext } from '@collectable/core';
+import { HashSetStructure, emptySet } from '../internals';
 
-export function empty<T>(mutability?: Mutation.Context): HashSetStructure<T> {
+export function empty<T> (mutability?: MutationContext): HashSetStructure<T> {
   return emptySet<T>(mutability);
-}
-
-export function isSet<T>(arg: any): arg is HashSetStructure<T> {
-  return isHashSet(arg);
 }

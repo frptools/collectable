@@ -1,11 +1,11 @@
-import {ChangeFlag, isUndefined, hash as _hash} from '@collectable/core';
-import {AnyNode} from '../nodes';
-import {HashMapStructure} from '../HashMap';
-import {NOTHING} from '../nodes/constants';
+import { ChangeFlag, hash as _hash, isUndefined } from '@collectable/core';
+import { AnyNode } from '../nodes';
+import { HashMapStructure } from '../HashMap';
+import { NOTHING } from '../nodes/constants';
 
 const constant = <T>(x: T) => () => x;
 
-export function setKeyValue<K, V>(
+export function setKeyValue<K, V> (
   key: K,
   value: V,
   change: ChangeFlag,

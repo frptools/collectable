@@ -1,13 +1,13 @@
-import {isDefined} from '@collectable/core';
-import {RedBlackTreeStructure, RedBlackTreeEntry} from '../internals';
+import { isDefined } from '@collectable/core';
+import { RedBlackTreeEntry, RedBlackTreeStructure } from '../internals';
 
 export interface DiffTracer<K, V = null> {
-  added?(entry: RedBlackTreeEntry<K, V>): boolean|void;
-  removed?(entry: RedBlackTreeEntry<K, V>): boolean|void;
-  retained?(before: RedBlackTreeEntry<K, V>, after: RedBlackTreeEntry<K, V>): boolean|void;
+  added? (entry: RedBlackTreeEntry<K, V>): boolean|void;
+  removed? (entry: RedBlackTreeEntry<K, V>): boolean|void;
+  retained? (before: RedBlackTreeEntry<K, V>, after: RedBlackTreeEntry<K, V>): boolean|void;
 }
 
-export function diff<T extends DiffTracer<K, V>, K, V = null>(trace: T, before: RedBlackTreeStructure<K, V>, after: RedBlackTreeStructure<K, V>): T {
+export function diff<T extends DiffTracer<K, V>, K, V = null> (trace: T, before: RedBlackTreeStructure<K, V>, after: RedBlackTreeStructure<K, V>): T {
   const left = before[Symbol.iterator](),
         right = after[Symbol.iterator](),
         compare = after._compare,

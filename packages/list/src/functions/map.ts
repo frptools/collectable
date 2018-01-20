@@ -1,7 +1,7 @@
-import {MapFn, modify, commit} from '@collectable/core';
-import {ListStructure, createIterator, setValueAtOrdinal} from '../internals';
+import { MapFn, commit, modify } from '@collectable/core';
+import { ListStructure, createIterator, setValueAtOrdinal } from '../internals';
 
-export function map<T, R>(fn: MapFn<T, R>, list: ListStructure<T>): ListStructure<R> {
+export function map<T, R> (fn: MapFn<T, R>, list: ListStructure<T>): ListStructure<R> {
   list = modify(list);
   var it = createIterator(list);
   var current: IteratorResult<T>;

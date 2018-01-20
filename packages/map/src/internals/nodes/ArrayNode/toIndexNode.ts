@@ -1,8 +1,8 @@
-import {MutationContext} from '@collectable/core';
-import {NodeType, AnyNode} from '../types';
-import {IndexedNode} from '../IndexedNode';
+import { MutationContext } from '@collectable/core';
+import { AnyNode, NodeType } from '../types';
+import { IndexedNode } from '../IndexedNode';
 
-export function toIndexNode<K, V>(mctx: MutationContext, count: number, index: number, children: Array<AnyNode<K, V>>): IndexedNode<K, V> {
+export function toIndexNode<K, V> (mctx: MutationContext, count: number, index: number, children: Array<AnyNode<K, V>>): IndexedNode<K, V> {
   const newChildren = new Array(count - 1);
   let g = 0;
   let bitmap = 0;

@@ -1,3 +1,8 @@
+.vscode/
 .build/
+node_modules/
 src/
 tests/
+tsconfig.*
+tslint.json
+*.log

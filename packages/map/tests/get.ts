@@ -1,26 +1,22 @@
-import {Mutation} from '@collectable/core';
-import {unwrap} from '@collectable/core';
-import {assert} from 'chai';
-import {empty, get, set} from '../src';
+import { isMutable } from '@collectable/core';
+import { unwrap } from '@collectable/core';
+import test from 'ava';
+import { empty, get, set } from '../src';
 
-suite('[HashMap]', () => {
-  suite('get()', () => {
-    test('returns the value with the specified key', () => {
-      var map = set('x', 3, empty<string, number>());
+test('returns the value with the specified key', t => {
+  var map = set('x', 3, empty<string, number>());
 
-      assert.strictEqual(get('x', map), 3);
+  t.is(get('x', map), 3);
 
-      assert.isFalse(Mutation.isMutable(map));
-      assert.deepEqual(unwrap(map), {x: 3});
-    });
+  t.false(isMutable(map));
+  t.deepEqual(unwrap(map), { x: 3 });
+});
 
-    test('returns undefined if the specified key is missing', () => {
-      var map = set('x', 3, empty<string, number>());
+test('returns undefined if the specified key is missing', t => {
+  var map = set('x', 3, empty<string, number>());
 
-      assert.isUndefined(get('y', map));
+  t.is(get('y', map), void 0);
 
-      assert.isFalse(Mutation.isMutable(map));
-      assert.deepEqual(unwrap(map), {x: 3});
-    });
-  });
+  t.false(isMutable(map));
+  t.deepEqual(unwrap(map), { x: 3 });
 });

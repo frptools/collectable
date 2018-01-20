@@ -1,9 +1,9 @@
-import {isEqual as equals} from '@collectable/core';
-import {iterateFromFirst} from '@collectable/red-black-tree';
-import {SortedMapStructure} from '../internals';
-import {size} from './size';
+import { isEqual as equals } from '@collectable/core';
+import { iterateFromFirst } from '@collectable/red-black-tree';
+import { SortedMapStructure } from '../internals';
+import { size } from './size';
 
-export function isEqual<K, V, U = any>(set: SortedMapStructure<K, V, U>, other: SortedMapStructure<K, V, U>): boolean {
+export function isEqual<K, V, U = any> (set: SortedMapStructure<K, V, U>, other: SortedMapStructure<K, V, U>): boolean {
   if(set === other) return true;
   if(size(set) !== size(other) ||
      set._select !== other._select ||

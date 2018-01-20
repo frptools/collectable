@@ -1,6 +1,5 @@
-import {MapFn, modify, commit} from '@collectable/core';
-import {log} from '../internals/_dev'; // ## DEV ##
-import {CONST, OFFSET_ANCHOR, ListStructure, appendValues} from '../internals';
+import { commit, modify } from '@collectable/core';
+import { CONST, ListStructure, OFFSET_ANCHOR, appendValues } from '../internals';
 
 /**
  * Appends a new value to the end of a list, growing the size of the list by one.
@@ -10,11 +9,10 @@ import {CONST, OFFSET_ANCHOR, ListStructure, appendValues} from '../internals';
  * @param list - The list to which the value should be appended
  * @returns A list containing the appended value
  */
-export function append<T>(value: T, list: ListStructure<T>): ListStructure<T> {
+export function append<T> (value: T, list: ListStructure<T>): ListStructure<T> {
   list = modify(list);
   var tail = list._right;
   var slot = tail.slot;
-  log(`Begin append of value "${value}" to list of size ${list._size}`); // ## DEV ##
   if(tail.group !== 0 && tail.offset === 0 && slot.group !== 0 && slot.size < CONST.BRANCH_FACTOR) {
     list._lastWrite = OFFSET_ANCHOR.RIGHT;
     list._size++;
@@ -37,40 +35,4 @@ export function append<T>(value: T, list: ListStructure<T>): ListStructure<T> {
     appendValues(list, [value]);
   }
   return commit(list);
-}
-
-/**
- * Appends an array of values to the end of a list, growing the size of the list by the number of
- * elements in the array.
- *
- * @template T - The type of value contained by the list
- * @param value - The values to append to the list
- * @param list - The list to which the values should be appended
- * @returns A list containing the appended values
- */
-export function appendArray<T>(values: T[], list: ListStructure<T>): ListStructure<T> {
-  if(values.length === 0) return list;
-  list = modify(list);
-  appendValues(list, values);
-  return commit(list);
-}
-
-export function appendArrayMapped<T, U>(fn: MapFn<T, U>, values: T[], list: ListStructure<U>): ListStructure<U> {
-  if(values.length === 0) return list;
-  list = modify(list);
-  appendValues(list, values, fn);
-  return commit(list);
-}
-
-/**
- * Appends a set of values to the end of a list, growing the size of the list by the number of
- * elements iterated over.
- *
- * @template T - The type of value contained by the list
- * @param value - The values to append to the list
- * @param list - The list to which the values should be appended
- * @returns A list containing the appended values
- */
-export function appendIterable<T>(values: Iterable<T>, list: ListStructure<T>): ListStructure<T> {
-  return appendArray(Array.from(values), list);
 }

@@ -1,12 +1,10 @@
-import {log, publish} from './_dev'; // ## DEV ##
-import {COMMIT_MODE, OFFSET_ANCHOR, invertOffset, normalizeIndex} from './common';
-import {ListStructure, getView, setView} from './list';
-import {View} from './view';
-import {ExpansionParameters} from './slot';
-import {TreeWorker, isViewInRange} from './traversal';
+import { COMMIT_MODE, OFFSET_ANCHOR, invertOffset, normalizeIndex } from './common';
+import { ListStructure, getView, setView } from './list';
+import { View } from './view';
+import { ExpansionParameters } from './slot';
+import { TreeWorker, isViewInRange } from './traversal';
 
-export function sliceList<T>(list: ListStructure<T>, start: number, end: number): void {
-  publish(list, false, `Begin slice (using state id: ${list.id}, size ${list._size}) from indices ${start} to ${end}`); // ## DEV ##
+export function sliceList<T> (list: ListStructure<T>, start: number, end: number): void {
   start = normalizeIndex(list._size, start);
   end = normalizeIndex(list._size, end);
 
@@ -17,12 +15,10 @@ export function sliceList<T>(list: ListStructure<T>, start: number, end: number)
       list._size = 0;
       list._lastWrite = OFFSET_ANCHOR.RIGHT;
     }
-    log(`[slice] The slice parameters exclude all list elements, so an empty state object will be returned.`); // ## DEV ##
     return;
   }
 
   if(end >= list._size && start <= 0) {
-    log(`[slice] The slice parameters specify a superset of list state, so no further mutations are required`); // ## DEV ##
     return;
   }
 
@@ -32,27 +28,22 @@ export function sliceList<T>(list: ListStructure<T>, start: number, end: number)
   sliceInternal(list, start, end);
 }
 
-function sliceInternal<T>(list: ListStructure<T>, start: number, end: number): void {
-  log(`[sliceInternal] Slice state (of size ${list._size}) from indices ${start} to ${end}`); // ## DEV ##
+function sliceInternal<T> (list: ListStructure<T>, start: number, end: number): void {
   var doneLeft = start === 0,
       doneRight = end === list._size,
       focusedLeft = false, focusedRight = false;
 
   var left: View<T>, right: View<T>;
   if(list._left.isNone()) {
-    log(`[sliceInternal] The left view is empty, so the right view will be range-checked.`); // ## DEV ##
     right = getView(list, OFFSET_ANCHOR.RIGHT, true);
     if(!isViewInRange(right, end - 1, list._size)) {
-      log(`[sliceInternal] The right view is not in range of the end position, so the left view will be activated and the right view refocused.`); // ## DEV ##
       left = getView(list, OFFSET_ANCHOR.LEFT, true, start);
       right = isViewInRange(left, end - 1, list._size) ? left : TreeWorker.refocusView(list, right, end - 1, false, true);
     }
     else if(isViewInRange(right, start, list._size)) {
-      log(`[sliceInternal] The right view is in range of the start position, which means the full slice is a subset of this node.`); // ## DEV ##
       left = right;
     }
     else {
-      log(`[sliceInternal] The right view is not in range of the start position, which means a left view will be focused to the start position.`); // ## DEV ##
       left = getView(list, OFFSET_ANCHOR.LEFT, true, start);
       right = list._right;
     }
@@ -61,18 +52,14 @@ function sliceInternal<T>(list: ListStructure<T>, start: number, end: number): v
   }
   else if(list._right.isNone()) {
     left = getView(list, OFFSET_ANCHOR.LEFT, true, start);
-    log(`[sliceInternal] The right view is empty, so the left view will be range-checked.`); // ## DEV ##
     if(!isViewInRange(left, start, list._size)) {
-      log(`[sliceInternal] The left view is not in range of the start position, so the right view will be activated and the left view refocused.`); // ## DEV ##
       right = getView(list, OFFSET_ANCHOR.RIGHT, true, end - 1);
       left = isViewInRange(right, start, list._size) ? right : TreeWorker.refocusView(list, left, start, false, true);
     }
     else if(isViewInRange(left, end - 1, list._size)) {
-      log(`[sliceInternal] The left view is in range of the end position, which means the full slice is a subset of this node.`); // ## DEV ##
       right = left;
     }
     else {
-      log(`[sliceInternal] The left view is not in range of the end position, which means a right view will be focused to the end position.`); // ## DEV ##
       right = getView(list, OFFSET_ANCHOR.RIGHT, true, end - 1);
       left = list._left;
     }
@@ -86,13 +73,11 @@ function sliceInternal<T>(list: ListStructure<T>, start: number, end: number): v
 
   if(!focusedLeft) {
     if(!isViewInRange(left, start, list._size)) {
-      log(`[sliceInternal] The left view has not yet been focused, and is not in range of the start position, and so will be refocused now.`); // ## DEV ##
       left = TreeWorker.refocusView(list, left, start, false, true);
       right = list._right;
     }
     focusedLeft = true;
     if(isViewInRange(left, end - 1, list._size)) {
-      log(`[sliceInternal] The left view is now in range of the end position also, and so the entire slice will be a subset of the left node.`); // ## DEV ##
       right = left;
       focusedRight = true;
     }
@@ -100,7 +85,6 @@ function sliceInternal<T>(list: ListStructure<T>, start: number, end: number): v
 
   var areSame = left === right;
   if(!focusedRight && !isViewInRange(right, end - 1, list._size)) {
-    log(`[sliceInternal] The right view has not yet been focused, and is not in range of the end position, and so will be refocused now.`); // ## DEV ##
     right = TreeWorker.refocusView(list, right, end - 1, false, true);
     left = list._left;
   }
@@ -124,8 +108,6 @@ function sliceInternal<T>(list: ListStructure<T>, start: number, end: number): v
     }
   }
 
-  log(`[sliceInternal] Left and right views (${left.id} and ${right.id}) selected and ready for slicing. Done left: ${doneLeft}, done right: ${doneRight}, are same: ${left === right}`); // ## DEV ##
-  publish(list, false, `Views prepared and ready for slicing`); // ## DEV ##
 
   var rightBound = doneRight ? 0 : calculateRightEnd(right, list._size);
   leftOffset = getOffset(left, OFFSET_ANCHOR.LEFT, list._size);
@@ -161,11 +143,7 @@ function sliceInternal<T>(list: ListStructure<T>, start: number, end: number): v
   }
 
   var noAscent = doneLeft && doneRight;
-  var debugLoopCounter = 0; // ## DEV ##
   while(!doneLeft || !doneRight) {
-    if(++debugLoopCounter > 10) throw new Error('Infinite slice loop'); // ## DEV ##
-    log(`[sliceInternal] Begin slice loop iteration. Done left: ${doneLeft}, done right: ${doneRight}`); // ## DEV ##
-
     if(!doneRight) {
       rightBound = calculateRightEnd(right, list._size);
     }
@@ -211,15 +189,14 @@ function sliceInternal<T>(list: ListStructure<T>, start: number, end: number): v
   list._size = end - start;
   list._lastWrite = start > 0 ? OFFSET_ANCHOR.LEFT : OFFSET_ANCHOR.RIGHT;
 
-  publish(list, true, `Slice completed. List state size: ${list._size}`); // ## DEV ##
 }
 
-function calculateRightEnd<T>(view: View<T>, listSize: number): number {
+function calculateRightEnd<T> (view: View<T>, listSize: number): number {
   return view.anchor === OFFSET_ANCHOR.LEFT
     ? view.offset + view.slot.size
     : listSize - view.offset;
 }
 
-function getOffset(view: View<any>, anchor: OFFSET_ANCHOR, listSize: number): number {
+function getOffset (view: View<any>, anchor: OFFSET_ANCHOR, listSize: number): number {
   return view.anchor === anchor ? view.offset : invertOffset(view.offset, view.slot.size, listSize);
 }

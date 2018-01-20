@@ -1,8 +1,8 @@
-import {FilterFn} from '@collectable/core';
-import {SortedSetStructure} from '../internals';
-import {iterateValues} from '../internals';
+import { FilterFn } from '@collectable/core';
+import { SortedSetStructure } from '../internals';
+import { iterateValues } from '../internals';
 
-export function forEach<T>(fn: FilterFn<T>, set: SortedSetStructure<T>): SortedSetStructure<T> {
+export function forEach<T> (fn: FilterFn<T>, set: SortedSetStructure<T>): SortedSetStructure<T> {
   var it = iterateValues(set);
   var current: IteratorResult<T>;
   var index = 0;

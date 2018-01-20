@@ -1,8 +1,8 @@
-import {isImmutable, commit} from '@collectable/core';
-import {SortedSetStructure, isIterable, cloneSortedSet, unsetItem} from '../internals';
-import {size} from '.';
+import { commit, isImmutable } from '@collectable/core';
+import { SortedSetStructure, cloneSortedSet, isIterable, unsetItem } from '../internals';
+import { size } from '.';
 
-export function subtract<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: SortedSetStructure<T>): SortedSetStructure<T> {
+export function subtract<T> (other: SortedSetStructure<T>|T[]|Iterable<T>, main: SortedSetStructure<T>): SortedSetStructure<T> {
   var immutable = isImmutable(main);
   var outputSet = cloneSortedSet(true, main);
 
@@ -27,7 +27,7 @@ export function subtract<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: 
   return main;
 }
 
-function subtractArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, omissions: T[]): void {
+function subtractArray<T> (inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, omissions: T[]): void {
   var map = outputSet._map;
   var tree = outputSet._tree;
   for(var i = 0; i < omissions.length; i++) {
@@ -35,7 +35,7 @@ function subtractArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetS
   }
 }
 
-function subtractIterable<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, omissions: Iterator<T>): void {
+function subtractIterable<T> (inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, omissions: Iterator<T>): void {
   var map = outputSet._map;
   var tree = outputSet._tree;
   var current: IteratorResult<T>;

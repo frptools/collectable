@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "module": "es2015",
+    "declaration": true,
+    "strictNullChecks": true,
+    "target": "es6",
+    "sourceMap": true,
+    "preserveConstEnums": false,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "removeComments": false,
+    "noUnusedLocals": true,
+    "lib": ["es2015", "es2016", "es2017"],
+    "skipLibCheck": true,
+    "noEmit": true
+  }
+}

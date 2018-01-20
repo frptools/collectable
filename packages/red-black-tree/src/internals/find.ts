@@ -1,9 +1,9 @@
-import {ComparatorFn, isUndefined} from '@collectable/core';
-import {RedBlackTreeStructure} from './RedBlackTree';
-import {Node, NONE, BRANCH, isNone} from './node';
-import {PathNode} from './path';
+import { ComparatorFn, isUndefined } from '@collectable/core';
+import { RedBlackTreeStructure } from './RedBlackTree';
+import { BRANCH, NONE, Node, isNone } from './node';
+import { PathNode } from './path';
 
-export function findNodeByKey<K, V>(key: K, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
+export function findNodeByKey<K, V> (key: K, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
   var node = tree._root,
       compare = tree._compare,
       found = false;
@@ -27,7 +27,7 @@ export function findNodeByKey<K, V>(key: K, tree: RedBlackTreeStructure<K, V>): 
   return found ? node : void 0;
 }
 
-export function findIndex<K, V>(key: K, node: Node<K, V>, compare: ComparatorFn<K>): number {
+export function findIndex<K, V> (key: K, node: Node<K, V>, compare: ComparatorFn<K>): number {
   var found = false, i = node._left._count;
 
   var loopCounter = 0; // ## DEV ##
@@ -54,7 +54,7 @@ export function findIndex<K, V>(key: K, node: Node<K, V>, compare: ComparatorFn<
   return found ? i : -1;
 }
 
-export function findPathToNodeByKey<K, V>(key: K, node: Node<K, V>, compare: ComparatorFn<K>): PathNode<K, V> {
+export function findPathToNodeByKey<K, V> (key: K, node: Node<K, V>, compare: ComparatorFn<K>): PathNode<K, V> {
   var path = PathNode.NONE,
       found = false;
 
@@ -88,7 +88,7 @@ export function findPathToNodeByKey<K, V>(key: K, node: Node<K, V>, compare: Com
   return path;
 }
 
-export function findMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, key: K, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
+export function findMaxNodeLeftOfKey<K, V> (allowExactKeyMatch: boolean, key: K, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
   var node = tree._root,
       compare = tree._compare,
       found = NONE,
@@ -123,7 +123,7 @@ export function findMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, key: K, 
   return isNone(found) ? void 0 : found;
 }
 
-export function findPathToMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, parent: PathNode<K, V>, compare: ComparatorFn<K>): PathNode<K, V>|undefined {
+export function findPathToMaxNodeLeftOfKey<K, V> (allowExactKeyMatch: boolean, key: K, node: Node<K, V>, parent: PathNode<K, V>, compare: ComparatorFn<K>): PathNode<K, V>|undefined {
   var path: PathNode<K, V>,
       found: PathNode<K, V>|undefined,
       c = compare(key, node.key);
@@ -157,7 +157,7 @@ export function findPathToMaxNodeLeftOfKey<K, V>(allowExactKeyMatch: boolean, ke
   return found;
 }
 
-export function findMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, compare: ComparatorFn<K>): Node<K, V>|undefined {
+export function findMinNodeRightOfKey<K, V> (allowExactKeyMatch: boolean, key: K, node: Node<K, V>, compare: ComparatorFn<K>): Node<K, V>|undefined {
   var c = compare(key, node.key);
   if(c >= 0) {
     if(c === 0 && allowExactKeyMatch) {
@@ -177,7 +177,7 @@ export function findMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, key: K,
   return isUndefined(found) ? node : found;
 }
 
-export function findPathToMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, key: K, node: Node<K, V>, parent: PathNode<K, V>, compare: ComparatorFn<K>): PathNode<K, V>|undefined {
+export function findPathToMinNodeRightOfKey<K, V> (allowExactKeyMatch: boolean, key: K, node: Node<K, V>, parent: PathNode<K, V>, compare: ComparatorFn<K>): PathNode<K, V>|undefined {
   var path: PathNode<K, V>,
       found: PathNode<K, V>|undefined,
       c = compare(key, node.key);
@@ -211,7 +211,7 @@ export function findPathToMinNodeRightOfKey<K, V>(allowExactKeyMatch: boolean, k
   return found;
 }
 
-export function findByIndex<K, V>(index: number, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
+export function findByIndex<K, V> (index: number, tree: RedBlackTreeStructure<K, V>): Node<K, V>|undefined {
   var node = tree._root;
   var i = node._left._count;
   var loopCounter = 0; // ## DEV ##
@@ -234,7 +234,7 @@ export function findByIndex<K, V>(index: number, tree: RedBlackTreeStructure<K, 
   return node;
 }
 
-export function findPathToIndex<K, V>(index: number, node: Node<K, V>): PathNode<K, V> {
+export function findPathToIndex<K, V> (index: number, node: Node<K, V>): PathNode<K, V> {
   var path = PathNode.NONE;
   var i = node._left._count;
 
@@ -259,15 +259,15 @@ export function findPathToIndex<K, V>(index: number, node: Node<K, V>): PathNode
   return PathNode.next(node, path, BRANCH.NONE);
 }
 
-function leftOf<K, V>(node: Node<K, V>): Node<K, V> {
+function leftOf<K, V> (node: Node<K, V>): Node<K, V> {
   return node._left;
 }
 
-function rightOf<K, V>(node: Node<K, V>): Node<K, V> {
+function rightOf<K, V> (node: Node<K, V>): Node<K, V> {
   return node._right;
 }
 
-export function findNext<K, V>(compare: ComparatorFn<K>, reversed: boolean, inclusive: boolean, key: K, current: PathNode<K, V>): PathNode<K, V>|undefined {
+export function findNext<K, V> (compare: ComparatorFn<K>, reversed: boolean, inclusive: boolean, key: K, current: PathNode<K, V>): PathNode<K, V>|undefined {
 
   let alreadyVisited, findPath, childOf;
 

@@ -1,7 +1,7 @@
-import {Associative, unwrap as _unwrap, unwrapKey} from '@collectable/core';
-import {RedBlackTreeStructure, BRANCH, Node, isNone} from '../internals';
+import { Associative, unwrap as _unwrap, unwrapKey } from '@collectable/core';
+import { BRANCH, Node, RedBlackTreeStructure, isNone } from '../internals';
 
-export function unwrap<K, V>(tree: RedBlackTreeStructure<K, V>, target: Associative<V>): Associative<V> {
+export function unwrap<K, V> (tree: RedBlackTreeStructure<K, V>, target: Associative<V>): Associative<V> {
   if(tree._size === 0) {
     return {};
   }

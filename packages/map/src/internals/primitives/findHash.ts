@@ -1,6 +1,6 @@
-import {stringHash} from '../common';
+import { stringHash } from '../common';
 
-export function findHash(key: any): number {
+export function findHash (key: any): number {
   const hash: number = typeof key === 'number'
     ? key
     : typeof key === 'string'

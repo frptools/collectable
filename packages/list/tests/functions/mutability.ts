@@ -1,52 +1,46 @@
-import {assert} from 'chai';
-import {modify, commit} from '@collectable/core';
-import {fromArray, set, take, append, appendArray} from '../../src';
-import {arrayFrom} from '../../src/internals';
+import test from 'ava';
+import { commit, modify } from '@collectable/core';
+import { append, appendArray, fromArray, set, take } from '../../src';
+import { arrayFrom } from '../../src/internals';
 
-suite('[List]', () => {
-  suite('commit()', () => {
-    test('should return the same list if already frozen', () => {
-      const list = fromArray(['X', 'Y', 'Z']);
-      assert.strictEqual(commit(list), list);
-    });
+test('modifying should return the same list if already unfrozen', t => {
+  const list = modify(fromArray(['X', 'Y', 'Z']));
+  t.is(modify(list), list);
+});
 
-    test('should cause common operations to avoid mutating the input list', () => {
-      const values = ['X', 'Y', 'Z'];
-      const list = commit(modify(fromArray(values)));
-      const list1 = append('K', list);
-      const list2 = set(1, 'K', list);
-      const list3 = take(2, list);
-      assert.notStrictEqual(list1, list);
-      assert.notStrictEqual(list2, list);
-      assert.notStrictEqual(list3, list);
-      assert.deepEqual(arrayFrom(list), values);
-      assert.deepEqual(arrayFrom(list1), values.concat('K'));
-      assert.deepEqual(arrayFrom(list2), [values[0], 'K', values[2]]);
-      assert.deepEqual(arrayFrom(list3), values.slice(0, 2));
-    });
-  });
+test('modifying should return a new list if frozen', t => {
+  const list = fromArray(['X', 'Y', 'Z']);
+  t.not(modify(list), list);
+});
 
-  suite('modify()', () => {
-    test('should return the same list if already unfrozen', () => {
-      const list = modify(fromArray(['X', 'Y', 'Z']));
-      assert.strictEqual(modify(list), list);
-    });
+test('modifying should cause common operations to directly mutate the input list', t => {
+  const values = ['X', 'Y', 'Z'];
+  const list = modify(fromArray(values));
+  const list1 = appendArray(['A', 'B', 'C', 'D', 'E', 'F'], list);
+  const list2 = set(5, 'K', list);
+  const list3 = take(6, list);
+  t.is(list, list1);
+  t.is(list, list2);
+  t.is(list, list3);
+  t.deepEqual(arrayFrom(list), ['X', 'Y', 'Z', 'A', 'B', 'K']);
+});
 
-    test('should return a new list if frozen', () => {
-      const list = fromArray(['X', 'Y', 'Z']);
-      assert.notStrictEqual(modify(list), list);
-    });
+test('committing should return the same list if already frozen', t => {
+  const list = fromArray(['X', 'Y', 'Z']);
+  t.is(commit(list), list);
+});
 
-    test('should cause common operations to directly mutate the input list', () => {
-      const values = ['X', 'Y', 'Z'];
-      const list = modify(fromArray(values));
-      const list1 = appendArray(['A', 'B', 'C', 'D', 'E', 'F'], list);
-      const list2 = set(5, 'K', list);
-      const list3 = take(6, list);
-      assert.strictEqual(list, list1);
-      assert.strictEqual(list, list2);
-      assert.strictEqual(list, list3);
-      assert.deepEqual(arrayFrom(list), ['X', 'Y', 'Z', 'A', 'B', 'K']);
-    });
-  });
+test('committing should cause common operations to avoid mutating the input list', t => {
+  const values = ['X', 'Y', 'Z'];
+  const list = commit(modify(fromArray(values)));
+  const list1 = append('K', list);
+  const list2 = set(1, 'K', list);
+  const list3 = take(2, list);
+  t.not(list1, list);
+  t.not(list2, list);
+  t.not(list3, list);
+  t.deepEqual(arrayFrom(list), values);
+  t.deepEqual(arrayFrom(list1), values.concat('K'));
+  t.deepEqual(arrayFrom(list2), [values[0], 'K', values[2]]);
+  t.deepEqual(arrayFrom(list3), values.slice(0, 2));
 });

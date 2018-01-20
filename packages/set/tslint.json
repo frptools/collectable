@@ -1,0 +1,5 @@
+{
+  "extends": [
+    "@frptools/config/tslint-base"
+  ]
+}
