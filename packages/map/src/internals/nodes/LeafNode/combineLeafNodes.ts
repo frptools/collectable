@@ -1,12 +1,12 @@
-import {Mutation} from '@collectable/core';
-import {ChildrenNodes} from '../types';
-import {LeafNode} from './LeafNode';
-import {CollisionNode} from '../CollisionNode';
-import {IndexedNode} from '../IndexedNode';
-import {SIZE, hashFragment, toBitmap} from '../../common';
+import { MutationContext } from '@collectable/core';
+import { ChildrenNodes } from '../types';
+import { LeafNode } from './LeafNode';
+import { CollisionNode } from '../CollisionNode';
+import { IndexedNode } from '../IndexedNode';
+import { SIZE, hashFragment, toBitmap } from '../../common';
 
-export function combineLeafNodes<K, V>(
-  mctx: Mutation.Context,
+export function combineLeafNodes<K, V> (
+  mctx: MutationContext,
   shift: number,
   hash1: number,
   leafNode1: LeafNode<K, V>,

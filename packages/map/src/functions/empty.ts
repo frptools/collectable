@@ -1,14 +1,10 @@
-import {Mutation, isUndefined} from '@collectable/core';
-import {EMPTY} from '../internals/nodes';
-import {HashMapStructure, isHashMap} from '../internals/HashMap';
+import { PreferredContext, immutable, isUndefined, withMutability } from '@collectable/core';
+import { EMPTY } from '../internals/nodes';
+import { HashMapStructure } from '../internals/HashMap';
 
 var EMPTY_MAP: HashMapStructure<any, any>;
 
-export function empty<K, V>(mutability?: Mutation.PreferredContext): HashMapStructure<K, V> {
-  if(isUndefined(EMPTY_MAP)) EMPTY_MAP = new HashMapStructure<any, any>(Mutation.immutable(), EMPTY, 0);
-  return isUndefined(mutability) ? EMPTY_MAP : Mutation.withMutability(mutability, EMPTY_MAP);
-}
-
-export function isMap<K, V>(arg: any): arg is HashMapStructure<K, V> {
-  return isHashMap<K, V>(arg);
+export function empty<K, V> (mutability?: PreferredContext): HashMapStructure<K, V> {
+  if(isUndefined(EMPTY_MAP)) EMPTY_MAP = new HashMapStructure<any, any>(immutable(), EMPTY, 0);
+  return isUndefined(mutability) ? EMPTY_MAP : withMutability(mutability, EMPTY_MAP);
 }

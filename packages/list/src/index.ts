@@ -1,5 +1,5 @@
 import * as List from './List';
-export {List};
+export { List };
 
 export * from './functions';
-export {ListStructure} from './internals';
+export { ListStructure } from './internals';

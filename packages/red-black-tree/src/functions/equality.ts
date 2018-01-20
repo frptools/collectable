@@ -1,6 +1,7 @@
-import {isEqual as equals} from '@collectable/core';
-import {RedBlackTreeStructure} from '../internals';
-import {size, iterateFromFirst} from '../functions';
+import { isEqual as equals } from '@collectable/core';
+import { RedBlackTreeStructure } from '../internals';
+import { iterateFromFirst } from './iterateFromFirst';
+import { size } from './size';
 
 /**
  * Determines whether two trees have equivalent sets of keys and values. Though order of insertion can affect the
@@ -14,7 +15,7 @@ import {size, iterateFromFirst} from '../functions';
  * @returns {boolean} True if both trees are of the same size and have equivalent sets of keys and values for each entry
  *   at corresponding indices in each tree, otherwise false.
  */
-export function isEqual<K, V = null>(tree: RedBlackTreeStructure<K, V>, other: RedBlackTreeStructure<K, V>): boolean {
+export function isEqual<K, V = null> (tree: RedBlackTreeStructure<K, V>, other: RedBlackTreeStructure<K, V>): boolean {
   if(tree === other) return true;
   if(size(tree) !== size(other)) return false;
   // Iterator is required because two trees may have the same set of keys and values but slightly different structures

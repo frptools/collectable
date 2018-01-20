@@ -1,8 +1,8 @@
-import {MutationContext} from '@collectable/core';
-import {ChildNode, ChildrenNodes} from '../types';
-import {ArrayNode} from '../ArrayNode';
+import { MutationContext } from '@collectable/core';
+import { ChildNode, ChildrenNodes } from '../types';
+import { ArrayNode } from '../ArrayNode';
 
-export function toArrayNode<K, V>(
+export function toArrayNode<K, V> (
   mctx: MutationContext,
   fragment: number,
   child: ChildNode<K, V>,

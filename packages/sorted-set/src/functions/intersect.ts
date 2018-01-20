@@ -1,8 +1,8 @@
-import {isImmutable, commit} from '@collectable/core';
-import {SortedSetStructure, isSortedSet, isIterable, cloneSortedSet, setItem, iterateValues} from '../internals';
-import {has, size} from '.';
+import { commit, isImmutable } from '@collectable/core';
+import { SortedSetStructure, cloneSortedSet, isIterable, isSortedSet, iterateValues, setItem } from '../internals';
+import { has, size } from '.';
 
-export function intersect<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: SortedSetStructure<T>): SortedSetStructure<T> {
+export function intersect<T> (other: SortedSetStructure<T>|T[]|Iterable<T>, main: SortedSetStructure<T>): SortedSetStructure<T> {
   var immutable = isImmutable(main);
   var outputSet: SortedSetStructure<T>,
       it: Iterator<T>;
@@ -45,7 +45,7 @@ export function intersect<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main:
   return main;
 }
 
-function intersectArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, array: T[]): void {
+function intersectArray<T> (inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, array: T[]): void {
   var map = outputSet._map;
   var tree = outputSet._tree;
   var select = outputSet._select;
@@ -56,7 +56,7 @@ function intersectArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSet
   }
 }
 
-function intersectIterable<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, it: Iterator<T>): void {
+function intersectIterable<T> (inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, it: Iterator<T>): void {
   var map = outputSet._map;
   var tree = outputSet._tree;
   var select = outputSet._select;

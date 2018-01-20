@@ -13,7 +13,7 @@
 
 ```bash
 # via NPM
-npm install --save @collectable/sorted-map
+npm install @collectable/sorted-map
 
 # or Yarn
 yarn add @collectable/sorted-map
@@ -23,44 +23,26 @@ If you intend to use other data structures as well, install the main collectable
 
 ```bash
 # via NPM
-npm install --save collectable
+npm install collectable
 
 # or Yarn
 yarn add collectable
 ```
 
-TypeScript type definitions are included by default.
+TypeScript type definitions are built in.
 
 ## Usage
 
 Import and use the functions you need:
 
 ```js
-import {fromObject, unwrap} from '@collectable/sorted-map';
+import { fromObject, unwrap } from '@collectable/sorted-map';
 
-const map = fromObject({foo: 'bar'}); // => <{foo: 'bar'}>
-const pojo = unwrap(list); // => {foo: 'bar'}
+const map = fromObject({ foo: 'bar' }); // => SortedMap<{ foo: 'bar' }>
+const obj = unwrap(map); // => { foo: 'bar' }
 ```
 
-Pre-curried versions of all functions are available by appending `/curried` to the import path, like so, with non-curryable functions exported from the same path also, for convenience:
-
-```ts
-import {empty, set} from '@collectable/sorted-map/curried';
-
-const setFoo = set('foo');
-const map = setFoo('bar', empty()); // => <{foo: 'bar'}>
-
-const setFooBar = set('foo', 'bar');
-const map = setFooBar(empty()); // => <{foo: 'bar'}>
-```
-
-Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to use what you need while excluding anything else from the final build.
-
-## API
-
-All map-manipulation functions are available from module `@collectable/sorted-map`.
-
-Curried versions of each of these (where applicable) are available from module `@collectable/sorted-map/curried`. The curried versions of each function will suffer a minor performance hit due to the additional layers of indirection required to provide a curried interface. In most cases this is not worth worrying about, but if maximum performance is desired, consider using the non-curried API instead.
+Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexibility to use what you need while excluding anything else from the final build.
 
 ----
 

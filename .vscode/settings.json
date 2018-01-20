@@ -1,15 +1,22 @@
 {
+    "files.exclude": {
+        "**/.git": true,
+        "packages": true
+    },
     "files.watcherExclude": {
-        "**/.git/objects/**": true,
+        "**/.git/**": true,
+        "**/lib/**": true,
         "**/.build/**": true,
-        "**/lib/**": true
+        "**/.archive": true,
+        "packages": true
     },
     "search.exclude": {
+        "**/.git/**": true,
         "**/node_modules": true,
+        "**/lib/**": true,
         "**/.build/**": true,
-        "**/lib/**": true
-    },
-    "eslint.enable": false,
-    "typescript.tsdk": "node_modules/typescript/lib",
-    "editor.tabSize": 2
+        "**/*.d.ts": true,
+        "**/.archive": true,
+        "packages": true
+    }
   }

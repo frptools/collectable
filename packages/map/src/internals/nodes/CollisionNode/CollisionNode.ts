@@ -1,27 +1,27 @@
-import {Mutation, ChangeFlag} from '@collectable/core';
-import {Collision, NodeType, AnyNode, GetValueFn} from '../types';
-import {NOTHING} from '../constants';
-import {LeafNode, combineLeafNodes} from '../LeafNode';
-import {newCollisionList} from './newCollisionList';
+import { ChangeFlag, MutationContext, Persistent, getSubordinateContext, isMutable } from '@collectable/core';
+import { AnyNode, Collision, GetValueFn, NodeType } from '../types';
+import { NOTHING } from '../constants';
+import { LeafNode, combineLeafNodes } from '../LeafNode';
+import { newCollisionList } from './newCollisionList';
 
 export class CollisionNode<K, V> implements Collision<K, V> {
-  public readonly '@@mctx': Mutation.Context;
+  public readonly '@@mctx': MutationContext;
   public type: NodeType.COLLISION = NodeType.COLLISION;
 
-  constructor(
-    mctx: Mutation.Context,
+  constructor (
+    mctx: MutationContext,
     public hash: number,
     public children: Array<LeafNode<K, V>>,
   ) {
     this['@@mctx'] = mctx;
   }
 
-  public '@@clone'(mctx: Mutation.Context): CollisionNode<K, V> {
+  public '@@clone' (mctx: MutationContext): CollisionNode<K, V> {
     return new CollisionNode(mctx, this.hash, this.children);
   }
 
-  public modify(
-    owner: Mutation.PersistentStructure,
+  public modify (
+    owner: Persistent,
     change: ChangeFlag,
     shift: number,
     get: GetValueFn<V>,
@@ -30,7 +30,7 @@ export class CollisionNode<K, V> implements Collision<K, V> {
 
     if(hash === this.hash) {
       const list: Array<LeafNode<K, V>> =
-        newCollisionList(Mutation.getSubordinateContext(owner), change, this.hash, this.children, get, key);
+        newCollisionList(getSubordinateContext(owner), change, this.hash, this.children, get, key);
 
       if(list === this.children) {
         return this;
@@ -42,12 +42,12 @@ export class CollisionNode<K, V> implements Collision<K, V> {
         return list[0];
       }
 
-      if(Mutation.isMutable(this)) {
+      if(isMutable(this)) {
         this.children = list;
         return this;
       }
 
-      new CollisionNode(Mutation.getSubordinateContext(owner), this.hash, list);
+      new CollisionNode(getSubordinateContext(owner), this.hash, list);
     }
 
     const value = get();
@@ -58,7 +58,7 @@ export class CollisionNode<K, V> implements Collision<K, V> {
 
     change.dec();
 
-    var mctx = Mutation.getSubordinateContext(owner);
+    var mctx = getSubordinateContext(owner);
     return combineLeafNodes(mctx, shift, this.hash, this as any, hash, new LeafNode(mctx, hash, key, value));
   }
 }

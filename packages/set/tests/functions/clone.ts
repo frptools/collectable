@@ -1,65 +1,55 @@
-import {assert} from 'chai';
-import {modify, isMutable, isImmutable} from '@collectable/core';
-import {HashSetStructure, fromArray, add, remove, size, clone} from '../../src';
-import {extractMap} from '../../src/internals';
+import test from 'ava';
+import { isImmutable, isMutable, modify } from '@collectable/core';
+import { HashSetStructure, add, clone, fromArray, remove, size } from '../../src';
+import { extractMap } from '../../src/internals';
 
-suite('[HashSet]', () => {
-  suite('clone()', () => {
-    suite('when the input set is immutable', () => {
-      let set0: HashSetStructure<string>, set1: HashSetStructure<string>;
-      setup(() => {
-        set0 = fromArray(['A', 'B', 'C']);
-        set1 = clone(set0);
-      });
+let setA: HashSetStructure<string>, setB: HashSetStructure<string>;
+let setC: HashSetStructure<string>, setD: HashSetStructure<string>;
 
-      test('a new immutable set is returned', () => {
-        assert.notStrictEqual(set0, set1);
-        assert.isTrue(isImmutable(set1));
-      });
+test.beforeEach(() => {
+  setA = fromArray(['A', 'B', 'C']);
+  setB = clone(setA);
+  setC = modify(fromArray(['A', 'B', 'C']));
+  setD = clone(setC);
+});
 
-      test('the new set has the same size as the input set', () => {
-        assert.strictEqual(size(set1), size(set0));
-      });
+test('[immutable] a new immutable set is returned', t => {
+  t.not(setA, setB);
+  t.true(isImmutable(setB));
+});
 
-      test('the new set has all of the items in the input set', () => {
-        assert.sameMembers(Array.from(set0), Array.from(set1));
-      });
+test('[immutable] the new set has the same size as the input set', t => {
+  t.is(size(setB), size(setA));
+});
 
-      test('changes made to the new set do not affect the input set', () => {
-        const set2 = add('E', remove('A', set1));
-        assert.sameMembers(Array.from(set1), ['A', 'B', 'C']);
-        assert.sameMembers(Array.from(set2), ['B', 'C', 'E']);
-      });
-    });
+test('[immutable] the new set has all of the items in the input set', t => {
+  t.deepEqual(Array.from(setA).sort(), Array.from(setB).sort());
+});
 
-    suite('when the input set is mutable', () => {
-      let set0: HashSetStructure<string>, set1: HashSetStructure<string>;
-      setup(() => {
-        set0 = modify(fromArray(['A', 'B', 'C']));
-        set1 = clone(set0);
-      });
+test('[immutable] changes made to the new set do not affect the input set', t => {
+  const set2 = add('E', remove('A', setB));
+  t.deepEqual(Array.from(setB).sort(), ['A', 'B', 'C']);
+  t.deepEqual(Array.from(set2).sort(), ['B', 'C', 'E']);
+});
 
-      test('a new mutable set is returned', () => {
-        assert.isTrue(isMutable(set0));
-        assert.isTrue(isMutable(set1));
-        assert.notStrictEqual(set0, set1);
-        assert.notStrictEqual(extractMap(set0), extractMap(set1));
-      });
+test('[mutable] a new mutable set is returned', t => {
+  t.true(isMutable(setC));
+  t.true(isMutable(setD));
+  t.not(setC, setD);
+  t.not(extractMap(setC), extractMap(setD));
+});
 
-      test('the new set has the same size as the input set', () => {
-        assert.strictEqual(size(set1), size(set0));
-      });
+test('[mutable] the new set has the same size as the input set', t => {
+  t.is(size(setD), size(setC));
+});
 
-      test('the new set has all of the items in the input set', () => {
-        assert.sameMembers(Array.from(set0), Array.from(set1));
-      });
+test('[mutable] the new set has all of the items in the input set', t => {
+  t.deepEqual(Array.from(setC).sort(), Array.from(setD).sort());
+});
 
-      test('changes made to the new set do not affect the input set', () => {
-        remove('A', set1);
-        add('E', set1);
-        assert.sameMembers(Array.from(set0), ['A', 'B', 'C']);
-        assert.sameMembers(Array.from(set1), ['B', 'C', 'E']);
-      });
-    });
-  });
+test('[mutable] changes made to the new set do not affect the input set', t => {
+  remove('A', setD);
+  add('E', setD);
+  t.deepEqual(Array.from(setC).sort(), ['A', 'B', 'C']);
+  t.deepEqual(Array.from(setD).sort(), ['B', 'C', 'E']);
 });

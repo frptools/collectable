@@ -1,10 +1,10 @@
-import {Mutation, ChangeFlag, removeArrayElement, insertArrayElement} from '@collectable/core';
-import {NOTHING} from '../constants';
-import {LeafNode} from '../LeafNode';
-import {GetValueFn} from '../types';
+import { ChangeFlag, MutationContext, withArrayIndexInserted, withArrayIndexRemoved } from '@collectable/core';
+import { NOTHING } from '../constants';
+import { LeafNode } from '../LeafNode';
+import { GetValueFn } from '../types';
 
-export function newCollisionList<K, V>(
-  mctx: Mutation.Context,
+export function newCollisionList<K, V> (
+  mctx: MutationContext,
   change: ChangeFlag,
   hash: number,
   list: Array<LeafNode<K, V>>,
@@ -26,10 +26,10 @@ export function newCollisionList<K, V>(
 
       if(newValue === NOTHING) {
         change.dec();
-        return removeArrayElement(i, list);
+        return withArrayIndexRemoved(i, list);
       }
 
-      return insertArrayElement(i, new LeafNode(mctx, hash, key, newValue), list);
+      return withArrayIndexInserted(i, new LeafNode(mctx, hash, key, newValue), list);
     }
   }
 
@@ -41,5 +41,5 @@ export function newCollisionList<K, V>(
 
   change.inc();
 
-  return insertArrayElement(length, new LeafNode(mctx, hash, key, newValue), list);
+  return withArrayIndexInserted(length, new LeafNode(mctx, hash, key, newValue), list);
 }

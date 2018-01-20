@@ -1,15 +1,15 @@
-import {Mutation, ChangeFlag} from '@collectable/core';
-import {AnyNode, NodeType, Leaf, GetValueFn} from '../types';
-import {NOTHING} from '../constants';
-import {empty} from '../EmptyNode';
-import {combineLeafNodes} from './combineLeafNodes';
+import { ChangeFlag, MutationContext, Persistent, getSubordinateContext, isMutable } from '@collectable/core';
+import { AnyNode, GetValueFn, Leaf, NodeType } from '../types';
+import { NOTHING } from '../constants';
+import { empty } from '../EmptyNode';
+import { combineLeafNodes } from './combineLeafNodes';
 
 export class LeafNode<K, V> implements Leaf<K, V> {
-  public readonly '@@mctx': Mutation.Context;
+  public readonly '@@mctx': MutationContext;
   public type: NodeType.LEAF = NodeType.LEAF;
 
-  constructor(
-    mctx: Mutation.Context,
+  constructor (
+    mctx: MutationContext,
     public hash: number,
     public key: K,
     public value: V
@@ -17,12 +17,12 @@ export class LeafNode<K, V> implements Leaf<K, V> {
     this['@@mctx'] = mctx;
   }
 
-  public '@@clone'(mctx: Mutation.Context): LeafNode<K, V> {
+  public '@@clone' (mctx: MutationContext): LeafNode<K, V> {
     return new LeafNode<K, V>(mctx, this.hash, this.key, this.value);
   }
 
-  public modify(
-    owner: Mutation.PersistentStructure,
+  public modify (
+    owner: Persistent,
     change: ChangeFlag,
     shift: number,
     get: GetValueFn<V>,
@@ -43,12 +43,12 @@ export class LeafNode<K, V> implements Leaf<K, V> {
 
       change.confirmed = true;
 
-      if(Mutation.isMutable(this)) {
+      if(isMutable(this)) {
         this.value = value;
         return this;
       }
 
-      return new LeafNode(Mutation.getSubordinateContext(owner), hash, key, value);
+      return new LeafNode(getSubordinateContext(owner), hash, key, value);
     }
 
     const value = get();
@@ -59,7 +59,7 @@ export class LeafNode<K, V> implements Leaf<K, V> {
 
     change.inc();
 
-    const mctx = Mutation.getSubordinateContext(owner);
+    const mctx = getSubordinateContext(owner);
     return combineLeafNodes(mctx, shift, this.hash, this, hash, new LeafNode(mctx, hash, key, value));
   }
 }

@@ -1,15 +1,14 @@
-import {log} from './_dev'; // ## DEV ##
-import {isMutable, isUndefined, MapFn, blockCopy, blockCopyMapped, copyArray} from '@collectable/core';
-import {CONST, OFFSET_ANCHOR, normalizeIndex, verifyIndex} from './common';
-import {ListStructure, cloneList, createList, nextId} from './list';
-import {View} from './view';
-import {Slot} from './slot';
-import {increaseCapacity} from './capacity';
-import {sliceList} from './slice';
-import {concatLists} from './concat';
-import {TreeWorker, getLeafIndex, getAtOrdinal} from './traversal';
+import { MapFn, copyArrayShallow, isMutable, isUndefined, writeArrayElements, writeArrayElementsUsing } from '@collectable/core';
+import { CONST, OFFSET_ANCHOR, normalizeIndex, verifyIndex } from './common';
+import { ListStructure, cloneList, createList, nextId } from './list';
+import { View } from './view';
+import { Slot } from './slot';
+import { increaseCapacity } from './capacity';
+import { sliceList } from './slice';
+import { concatLists } from './concat';
+import { TreeWorker, getAtOrdinal, getLeafIndex } from './traversal';
 
-export function setValueAtOrdinal<T>(list: ListStructure<T>, ordinal: number, value: T): void {
+export function setValueAtOrdinal<T> (list: ListStructure<T>, ordinal: number, value: T): void {
   ordinal = verifyIndex(list._size, ordinal);
   if(ordinal === -1) {
     throw new Error(`Index ${ordinal} is out of range`);
@@ -22,9 +21,8 @@ export function setValueAtOrdinal<T>(list: ListStructure<T>, ordinal: number, va
   view.slot.slots[index] = value;
 }
 
-export function appendValues(list: ListStructure<any>, values: any[], fn?: MapFn<any, any>) {
+export function appendValues (list: ListStructure<any>, values: any[], fn?: MapFn<any, any>) {
   var tail = TreeWorker.focusTail(list, true);
-  log(`[appendValues] Tail view ${tail.id} retrieved prior to appending values`); // ## DEV ##
   var innerIndex = tail.slot.size % CONST.BRANCH_FACTOR;
   var collector = increaseCapacity(list, values.length, false);
   if(isUndefined(fn)) {
@@ -36,7 +34,7 @@ export function appendValues(list: ListStructure<any>, values: any[], fn?: MapFn
   return list;
 }
 
-export function prependValues(list: ListStructure<any>, values: any[], fn?: MapFn<any, any>): ListStructure<any> {
+export function prependValues (list: ListStructure<any>, values: any[], fn?: MapFn<any, any>): ListStructure<any> {
   TreeWorker.focusHead(list, true);
   var collector = increaseCapacity(list, values.length, true);
   if(isUndefined(fn)) {
@@ -49,7 +47,7 @@ export function prependValues(list: ListStructure<any>, values: any[], fn?: MapF
   return list;
 }
 
-export function insertValues(list: ListStructure<any>, ordinal: number, values: any[], fn?: MapFn<any, any>): ListStructure<any> {
+export function insertValues (list: ListStructure<any>, ordinal: number, values: any[], fn?: MapFn<any, any>): ListStructure<any> {
   ordinal = normalizeIndex(list._size, ordinal);
   if(ordinal === 0) return prependValues(list, values, fn);
   if(ordinal >= list._size) return appendValues(list, values, fn);
@@ -60,7 +58,7 @@ export function insertValues(list: ListStructure<any>, ordinal: number, values: 
   return concatLists(list, right);
 }
 
-export function deleteValues<T>(list: ListStructure<T>, start: number, end: number): ListStructure<T> {
+export function deleteValues<T> (list: ListStructure<T>, start: number, end: number): ListStructure<T> {
   start = normalizeIndex(list._size, start);
   end = normalizeIndex(list._size, end);
   if(start >= end) return list;
@@ -85,11 +83,11 @@ export function deleteValues<T>(list: ListStructure<T>, start: number, end: numb
 
 export class ListIterator<T> implements IterableIterator<T> {
   private _index = 0;
-  constructor(private _state: ListStructure<T>) {}
+  constructor (private _state: ListStructure<T>) {}
 
-  next(): IteratorResult<T> {
+  next (): IteratorResult<T> {
     if(this._index >= this._state._size) {
-      return {value: <any>void 0, done: true};
+      return { value: <any>void 0, done: true };
     }
     return {
       value: <any>getAtOrdinal(this._state, this._index++),
@@ -97,35 +95,35 @@ export class ListIterator<T> implements IterableIterator<T> {
     };
   }
 
-  [Symbol.iterator](): IterableIterator<T> {
+  [Symbol.iterator] (): IterableIterator<T> {
     return new ListIterator<T>(this._state);
   }
 }
 
-export function createIterator<T>(list: ListStructure<T>): IterableIterator<T> {
+export function createIterator<T> (list: ListStructure<T>): IterableIterator<T> {
   return new ListIterator(list);
 }
 
-export function arrayFrom<T>(list: ListStructure<T>): T[] {
+export function arrayFrom<T> (list: ListStructure<T>): T[] {
   var map = new Map<Slot<T>, Map<number, Slot<T>>>();
   var rootInfo = getRoot(list, map);
   var root = rootInfo[0];
   var depth = rootInfo[1];
   if(depth === 0) {
-    return copyArray(<T[]>root.slots);
+    return copyArrayShallow(<T[]>root.slots);
   }
   var array = new Array<T>(list._size);
   populateArray(array, root, map, depth - 1, 0);
   return array;
 }
 
-export function mapArrayFrom<T, U>(mapper: MapFn<T, U>, list: ListStructure<T>, array: U[]): U[] {
+export function mapArrayFrom<T, U> (mapper: MapFn<T, U>, list: ListStructure<T>, array: U[]): U[] {
   var map = new Map<Slot<T>, Map<number, Slot<T>>>();
   var rootInfo = getRoot(list, map);
   var root = rootInfo[0];
   var depth = rootInfo[1];
   if(depth === 0) {
-    blockCopyMapped(mapper, <T[]>root.slots, array, 0, 0, array.length);
+    writeArrayElementsUsing(mapper, <T[]>root.slots, array, 0, 0, array.length);
   }
   else {
     populateArrayMapped(mapper, array, root, map, depth - 1, 0);
@@ -133,7 +131,7 @@ export function mapArrayFrom<T, U>(mapper: MapFn<T, U>, list: ListStructure<T>, 
   return array;
 }
 
-function getRoot<T>(list: ListStructure<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): [Slot<T>, number] {
+function getRoot<T> (list: ListStructure<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): [Slot<T>, number] {
   var left = list._left;
   var right = list._right;
   var root: Slot<T> = <any>void 0;
@@ -162,7 +160,7 @@ function getRoot<T>(list: ListStructure<T>, map: Map<Slot<T>, Map<number, Slot<T
   return [root, depth];
 }
 
-function populateViewMap<T>(view: View<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): [Slot<T>, number] {
+function populateViewMap<T> (view: View<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): [Slot<T>, number] {
   var root: Slot<T>, depth = 0;
   do {
     addViewToMap(view, map);
@@ -173,8 +171,8 @@ function populateViewMap<T>(view: View<T>, map: Map<Slot<T>, Map<number, Slot<T>
   return [root, depth];
 }
 
-function addViewToMap<T>(view: View<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): void {
-  var item = map.get(view.parent.slot);
+function addViewToMap<T> (view: View<T>, map: Map<Slot<T>, Map<number, Slot<T>>>): void {
+  var item = map.get(view.parent.slot)!;
   if(isUndefined(item)) {
     item = new Map<number, Slot<T>>();
     map.set(view.parent.slot, item);
@@ -182,18 +180,18 @@ function addViewToMap<T>(view: View<T>, map: Map<Slot<T>, Map<number, Slot<T>>>)
   item.set(view.slotIndex, view.slot);
 }
 
-function getSlotFromMap<T>(map: Map<Slot<T>, Map<number, Slot<T>>>, slot: Slot<T>, slotIndex: number): Slot<T>|undefined {
+function getSlotFromMap<T> (map: Map<Slot<T>, Map<number, Slot<T>>>, slot: Slot<T>, slotIndex: number): Slot<T>|undefined {
   var item = map.get(slot);
   return item && item.get(slotIndex);
 }
 
-function populateArray<T>(array: T[], node: Slot<T>, map: Map<Slot<T>, Map<number, Slot<T>>>, level: number, offset: number): number {
+function populateArray<T> (array: T[], node: Slot<T>, map: Map<Slot<T>, Map<number, Slot<T>>>, level: number, offset: number): number {
   var slots = <Slot<T>[]>node.slots;
   for(var i = 0, c = 0; i < slots.length; i++) {
     var child = getSlotFromMap(map, node, i) || slots[i];
     if(level === 1) {
       var elements = child.slots;
-      blockCopy(elements, array, 0, offset + c, elements.length);
+      writeArrayElements(elements, array, 0, offset + c, elements.length);
       c += elements.length;
     }
     else {
@@ -203,13 +201,13 @@ function populateArray<T>(array: T[], node: Slot<T>, map: Map<Slot<T>, Map<numbe
   return c;
 }
 
-function populateArrayMapped<T, U>(mapper: MapFn<T, U>, array: U[], node: Slot<T>, map: Map<Slot<T>, Map<number, Slot<T>>>, level: number, offset: number): number {
+function populateArrayMapped<T, U> (mapper: MapFn<T, U>, array: U[], node: Slot<T>, map: Map<Slot<T>, Map<number, Slot<T>>>, level: number, offset: number): number {
   var slots = <Slot<T>[]>node.slots;
   for(var i = 0, c = 0; i < slots.length; i++) {
     var child = getSlotFromMap(map, node, i) || slots[i];
     if(level === 1) {
       var elements = child.slots;
-      blockCopyMapped<T, U>(mapper, <T[]>elements, array, 0, offset + c, elements.length);
+      writeArrayElementsUsing<T, U>(mapper, <T[]>elements, array, 0, offset + c, elements.length);
       c += elements.length;
     }
     else {

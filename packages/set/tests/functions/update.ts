@@ -1,72 +1,62 @@
-import {assert} from 'chai';
-import {modify, isMutable, isImmutable} from '@collectable/core';
-import {HashSetStructure, fromArray, update, clone} from '../../src';
+import test from 'ava';
+import { isImmutable, isMutable, modify } from '@collectable/core';
+import { HashSetStructure, clone, fromArray, update } from '../../src';
 
-suite('[HashSet]', () => {
-  suite('update()', () => {
-    let set: HashSetStructure<string>;
-    suite('if the input set is mutable', () => {
-      setup(() => {
-        set = modify(fromArray(['A', 'B', 'C']));
-      });
+let mutableSet: HashSetStructure<string>;
+let immutableSet: HashSetStructure<string>;
+test.before(() => {
+  mutableSet = modify(fromArray(['A', 'B', 'C']));
+  immutableSet = fromArray(['A', 'B', 'C']);
+});
 
-      test('the input set is passed to the predicate', () => {
-        let called = false;
-        update(s => {
-          called = true;
-          assert.strictEqual(s, set);
-        }, set);
-        assert.isTrue(called);
-      });
+test('[mutable] the input set is passed to the predicate', t => {
+  let called = false;
+  update(s => {
+    called = true;
+    t.is(s, mutableSet);
+  }, mutableSet);
+  t.true(called);
+});
 
-      test('returns the input set if nothing is returned from the predicate', () => {
-        const result = update(s => {}, set);
-        assert.strictEqual(result, set);
-      });
+test('[mutable] returns the input set if nothing is returned from the predicate', t => {
+  const result = update(s => {}, mutableSet);
+  t.is(result, mutableSet);
+});
 
-      test('returns the return value of the predicate, if defined', () => {
-        const result = update(s => clone(s), set);
-        assert.notStrictEqual(result, set);
-      });
+test('[mutable] returns the return value of the predicate, if defined', t => {
+  const result = update(s => clone(s), mutableSet);
+  t.not(result, mutableSet);
+});
 
-      test('if the input set is returned, it is still mutable', () => {
-        const result = update(s => s, set);
-        assert.isTrue(isMutable(result));
-      });
-    });
+test('[mutable] if the input set is returned, it is still mutable', t => {
+  const result = update(s => s, mutableSet);
+  t.true(isMutable(result));
+});
 
-    suite('if the input set is immutable', () => {
-      setup(() => {
-        set = fromArray(['A', 'B', 'C']);
-      });
+test('[immutable] a mutable clone of the input set is passed to the predicate', t => {
+  let called = false;
+  update(s => {
+    called = true;
+    t.not(s, immutableSet);
+    t.deepEqual(Array.from(s).sort(), Array.from(immutableSet).sort());
+  }, immutableSet);
+  t.true(called);
+});
 
-      test('a mutable clone of the input set is passed to the predicate', () => {
-        let called = false;
-        update(s => {
-          called = true;
-          assert.notStrictEqual(s, set);
-          assert.sameMembers(Array.from(s), Array.from(set));
-        }, set);
-        assert.isTrue(called);
-      });
+test('[immutable] the mutable set argument is made immutable and returned, if the predicate returns nothing', t => {
+  var inner: HashSetStructure<string> = <any>void 0;
+  const result = update(s => {
+    t.true(isMutable(s));
+    inner = s;
+  }, immutableSet);
+  t.is(result, inner);
+  t.true(isImmutable(result));
+});
 
-      test('the mutable set argument is made immutable and returned, if the predicate returns nothing', () => {
-        var inner: HashSetStructure<string> = <any>void 0;
-        const result = update(s => {
-          assert.isTrue(isMutable(s));
-          inner = s;
-        }, set);
-        assert.strictEqual(result, inner);
-        assert.isTrue(isImmutable(result));
-      });
-
-      test('if the predicate returns a set instance other than the original argument, an immutable clone of it is returned', () => {
-        const result = update(s => {
-          return modify(fromArray(['X', 'Y']));
-        }, set);
-        assert.isTrue(isImmutable(result));
-        assert.sameMembers(Array.from(result), ['X', 'Y']);
-      });
-    });
-  });
+test('[immutable] if the predicate returns a set instance other than the original argument, an immutable clone of it is returned', t => {
+  const result = update(s => {
+    return modify(fromArray(['X', 'Y']));
+  }, immutableSet);
+  t.true(isImmutable(result));
+  t.deepEqual(Array.from(result).sort(), ['X', 'Y']);
 });

@@ -1,59 +1,64 @@
 import {
-  Mutation,
   Collection,
-  isDefined,
-  isObject,
-  isEqual,
-  isUndefined,
+  MutationContext,
+  PreferredContext,
+  asSubordinateContext,
+  commit,
   hashIterator,
+  immutable,
+  isDefined,
+  isMutable,
+  isObject,
+  isUndefined,
+  selectContext,
   unwrap
 } from '@collectable/core';
-import {HashMap, empty, set as _set, size, keys, updateMap} from '@collectable/map';
-import {iterate} from './iterate';
+import { HashMap, clone, empty, isEqual, keys, set as _set, size, updateMap } from '@collectable/map';
+import { iterate } from './iterate';
 
 export class HashSetStructure<T> implements Collection<T, T[]> {
   /** @internal */
-  constructor(
-    mctx: Mutation.Context,
+  constructor (
+    mctx: MutationContext,
     public _map: HashMap.Instance<T, null>
   ) {
     this['@@mctx'] = mctx;
   }
 
   /** @internal */
-  get '@@size'() { return this._map['@@size']; }
+  get '@@size' () { return this._map['@@size']; }
 
   /** @internal */
-  readonly '@@mctx': Mutation.Context;
+  readonly '@@mctx': MutationContext;
 
   /** @internal */
-  get '@@is-collection'(): true { return true; }
+  get '@@is-collection' (): true { return true; }
 
   /** @internal */
-  '@@clone'(mctx: Mutation.Context): HashSetStructure<T> {
+  '@@clone' (mctx: MutationContext): HashSetStructure<T> {
     return new HashSetStructure<T>(
       mctx,
-      Mutation.clone(this._map, Mutation.asSubordinateContext(mctx))
+      clone(this._map, asSubordinateContext(mctx))
     );
   }
 
   /** @internal */
-  '@@equals'(other: HashSetStructure<T>): boolean {
-    return isEqual(this, other);
+  '@@equals' (other: HashSetStructure<T>): boolean {
+    return isEqual(this._map, other._map);
   }
 
   /** @internal */
-  '@@hash'(): number {
+  '@@hash' (): number {
     return hashIterator(iterate(this));
   }
 
   /** @internal */
-  '@@unwrap'(): T[] {
+  '@@unwrap' (): T[] {
     return unwrap(this);
   }
 
   /** @internal */
-  '@@unwrapInto'(target: T[]): T[] {
+  '@@unwrapInto' (target: T[]): T[] {
     var it = keys(this._map);
     var current: IteratorResult<T>;
     var i = 0;
@@ -64,29 +69,31 @@ export class HashSetStructure<T> implements Collection<T, T[]> {
   }
 
   /** @internal */
-  '@@createUnwrapTarget'(): T[] {
+  '@@createUnwrapTarget' (): T[] {
     return new Array<T>(size(this._map));
   }
 
-  [Symbol.iterator](): IterableIterator<T> {
+  [Symbol.iterator] (): IterableIterator<T> {
     return iterate<T>(this);
   }
 }
 
-export function isHashSet<T>(arg: any): arg is HashSetStructure<T> {
+export function isHashSet<T> (arg: any): arg is HashSetStructure<T> {
   return isObject(arg) && arg instanceof HashSetStructure;
 }
 
-export function cloneHashSet<T>(set: HashSetStructure<T>, mutability?: Mutation.PreferredContext): HashSetStructure<T> {
-  if(isUndefined(mutability)) mutability = Mutation.isMutable(set);
-  return Mutation.clone(set, Mutation.selectContext(mutability));
+export function cloneHashSet<T> (set: HashSetStructure<T>, mutability?: PreferredContext): HashSetStructure<T> {
+  if(isUndefined(mutability)) mutability = isMutable(set);
+  const mctx = selectContext(mutability);
+  const sctx = asSubordinateContext(mctx);
+  return new HashSetStructure(mctx, clone(set._map, sctx));
 }
 
-export function createSet<T>(values?: T[]|Iterable<T>): HashSetStructure<T> {
+export function createSet<T> (values?: T[]|Iterable<T>): HashSetStructure<T> {
   var map = empty<T, null>(true);
 
   if(isDefined(values)) {
-    map = updateMap(function(map) {
+    map = updateMap(function (map) {
       if(Array.isArray(values)) {
         for(var i = 0; i < values.length; i++) {
           _set(values[i], null, map);
@@ -102,17 +109,17 @@ export function createSet<T>(values?: T[]|Iterable<T>): HashSetStructure<T> {
     }, map);
   }
 
-  return new HashSetStructure<T>(Mutation.immutable(), Mutation.commit(map));
+  return new HashSetStructure<T>(immutable(), commit(map));
 }
 
-export function extractMap<T>(set: HashSetStructure<T>): HashMap.Instance<T, null> {
+export function extractMap<T> (set: HashSetStructure<T>): HashMap.Instance<T, null> {
   return set._map;
 }
 
-export function emptySet<T>(mutability?: Mutation.PreferredContext): HashSetStructure<T> {
+export function emptySet<T> (mutability?: PreferredContext): HashSetStructure<T> {
   if(mutability) {
-    var mctx = Mutation.selectContext(mutability);
-    return new HashSetStructure<T>(mctx, empty<T, null>(Mutation.asSubordinateContext(mctx)));
+    var mctx = selectContext(mutability);
+    return new HashSetStructure<T>(mctx, empty<T, null>(asSubordinateContext(mctx)));
   }
   return isDefined(_empty) ? _empty : (_empty = createSet<any>());
 }

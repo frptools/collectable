@@ -1,22 +1,21 @@
-import {log, publish} from './_dev'; // ## DEV ##
-import {MapFn, min} from '@collectable/core';
-import {CONST, COMMIT_MODE, OFFSET_ANCHOR, modulo, shiftDownRoundUp} from './common';
-import {TreeWorker} from './traversal';
-import {Slot, ExpansionParameters} from './slot';
-import {View} from './view';
-import {ListStructure, setView} from './list';
+import { MapFn, min } from '@collectable/core';
+import { COMMIT_MODE, CONST, OFFSET_ANCHOR, modulo, shiftDownRoundUp } from './common';
+import { TreeWorker } from './traversal';
+import { ExpansionParameters, Slot } from './slot';
+import { View } from './view';
+import { ListStructure, setView } from './list';
 
 export class Collector<T> {
   private static _default = new Collector<any>();
 
-  static default<T>(count: number, prepend: boolean) {
+  static default<T> (count: number, prepend: boolean) {
     var c = Collector._default;
     c.elements = new Array<T[]>(count);
     c.index = prepend ? count : 0;
     return c;
   }
 
-  static one<T>(elements: T[]): Collector<T> {
+  static one<T> (elements: T[]): Collector<T> {
     var c = this._default;
     c.elements = [elements];
     return c;
@@ -26,22 +25,22 @@ export class Collector<T> {
   index = 0;
   marker = 0;
 
-  private constructor() {}
+  private constructor () {}
 
-  set(elements: T[]): void {
+  set (elements: T[]): void {
     this.elements[this.index] = elements;
     this.index++;
   }
 
-  mark() {
+  mark () {
     this.marker = this.index;
   }
 
-  restore() {
+  restore () {
     this.index = this.marker;
   }
 
-  populate(values: T[], innerIndex: number): void {
+  populate (values: T[], innerIndex: number): void {
     var elements = this.elements;
     for(var i = 0, outerIndex = 0, inner = elements[0]; i < values.length;
         i++, innerIndex >= inner.length - 1 ? (innerIndex = 0, inner = elements[++outerIndex]) : (++innerIndex)) {
@@ -50,7 +49,7 @@ export class Collector<T> {
     this.elements = <any>void 0;
   }
 
-  populateMapped<U>(fn: MapFn<U, T>, values: U[], innerIndex: number): void {
+  populateMapped<U> (fn: MapFn<U, T>, values: U[], innerIndex: number): void {
     var elements = this.elements;
     for(var i = 0, outerIndex = 0, inner = elements[0]; i < values.length;
         i++, innerIndex >= inner.length - 1 ? (innerIndex = 0, inner = elements[++outerIndex]) : (++innerIndex)) {
@@ -74,7 +73,7 @@ export class Collector<T> {
  *     prepending) will be a reference to a pre-existing head or tail leaf node element array if that node was expanded
  *     with additional elements as part of the operation.
  */
-export function increaseCapacity<T>(list: ListStructure<T>, increaseBy: number, prepend: boolean): Collector<T> {
+export function increaseCapacity<T> (list: ListStructure<T>, increaseBy: number, prepend: boolean): Collector<T> {
   var view = prepend ? list._left : list._right;
   var slot = view.slot;
   var group = list._group;
@@ -111,7 +110,7 @@ export function increaseCapacity<T>(list: ListStructure<T>, increaseBy: number, 
   return increaseUpperCapacity(list, increaseBy, numberOfAddedSlots, prepend);
 }
 
-function increaseUpperCapacity<T>(list: ListStructure<T>, increaseBy: number, numberOfAddedSlots: number, prepend: boolean): Collector<T> {
+function increaseUpperCapacity<T> (list: ListStructure<T>, increaseBy: number, numberOfAddedSlots: number, prepend: boolean): Collector<T> {
   var view = prepend ? list._left : list._right;
   var slot = view.slot;
 
@@ -142,9 +141,7 @@ function increaseUpperCapacity<T>(list: ListStructure<T>, increaseBy: number, nu
   // appropriate size and depth, and the value arrays for added leaf nodes are saved to the `nodes` array for population
   // of list element values by the calling function. If the root is reached and additional capacity is still required,
   // additional nodes are added above the root, increasing the depth of the tree.
-  var debugLoopCounter = 0; // ## DEV ##
   do {
-    if(++debugLoopCounter > 10) throw new Error('Infinite capacity loop'); // ## DEV ##
     shift += CONST.BRANCH_INDEX_BITCOUNT;
     var isRoot = view.isRoot();
     numberOfAddedSlots = calculateSlotsToAdd(isRoot ? 1 : view.parent.slotCount(), shiftDownRoundUp(remainingSize, shift));
@@ -160,7 +157,6 @@ function increaseUpperCapacity<T>(list: ListStructure<T>, increaseBy: number, nu
     var ascendMode = worker.hasOtherView() && ((worker.other.slot.isReserved() && isRoot) || worker.committedOther)
       ? COMMIT_MODE.RESERVE : COMMIT_MODE.RELEASE_DISCARD;
     view = worker.ascend(ascendMode, expand);
-    log(`[increaseUpperCapacity] ascended tree to view ${view.id}`); // ## DEV ##
 
     var wasFlipped = numberOfAddedSlots && (prepend && view.anchor === OFFSET_ANCHOR.LEFT) || (!prepend && view.anchor === OFFSET_ANCHOR.RIGHT);
     if(wasFlipped) view.flipAnchor(list._size);
@@ -206,8 +202,7 @@ function increaseUpperCapacity<T>(list: ListStructure<T>, increaseBy: number, nu
  * @param {number} remaining The total capacity represented by this set of subtrees
  * @returns {number} An updated `nodeIndex` value to be used in subsequent subtree population operations
  */
-function populateSubtrees<T>(list: ListStructure<T>, collector: Collector<T>, view: View<T>, topLevelIndex: number, slotIndexBoundary: number, capacity: number, isFinalStage: boolean): void {
-  publish(list, false, `Subtrees are about to be populated`); // ## DEV ##
+function populateSubtrees<T> (list: ListStructure<T>, collector: Collector<T>, view: View<T>, topLevelIndex: number, slotIndexBoundary: number, capacity: number, isFinalStage: boolean): void {
   var levelIndex = topLevelIndex - 1;
   var remaining = capacity;
   var shift = CONST.BRANCH_INDEX_BITCOUNT * topLevelIndex;
@@ -220,16 +215,14 @@ function populateSubtrees<T>(list: ListStructure<T>, collector: Collector<T>, vi
   var slotCounts = new Array<number>(topLevelIndex);
   var slotPath = new Array<Slot<T>>(topLevelIndex);
   var group = list._group;
-  var delta = 0, subcount = 0;
+  var subcount = 0;
   var isEdge: boolean;
 
   slotIndices[levelIndex] = slotIndex;
   slotCounts[levelIndex] = slotCount;
   slotPath[levelIndex] = slot;
 
-  var debugLoopCounter = 0; // ## DEV ##
   do {
-    if(++debugLoopCounter > 1000000) throw new Error('Infinite subtree population loop'); // ## DEV ##
     // If the current subtree is fully populated, ascend to the next tree level to populate the next adjacent subtree.
     // The last slot at each level should be reserved for writing when remaining capacity to add reaches zero.
     if(slotIndex === slotCount) {
@@ -274,7 +267,6 @@ function populateSubtrees<T>(list: ListStructure<T>, collector: Collector<T>, vi
         }
 
         remaining -= elementCount;
-        delta += elementCount;
         subcount += elementCount;
         slotIndex++;
       }
@@ -283,7 +275,6 @@ function populateSubtrees<T>(list: ListStructure<T>, collector: Collector<T>, vi
       else {
         isEdge = isFinalStage && ((prepend && capacity === remaining) || (!prepend && slotIndex === slots.length - 1 && remaining <= (1 << shift)));
         shift -= CONST.BRANCH_INDEX_BITCOUNT;
-        delta = 0;
         subcount = 0;
         levelIndex--;
         var size = isEdge && modulo(remaining, shift) || min(remaining, CONST.BRANCH_FACTOR << shift);
@@ -307,10 +298,9 @@ function populateSubtrees<T>(list: ListStructure<T>, collector: Collector<T>, vi
         slotIndices[levelIndex] = slotIndex;
       }
     }
-    publish(list, false, `One cycle of subtree population has been completed`); // ## DEV ##
   } while(levelIndex < topLevelIndex);
 }
 
-function calculateSlotsToAdd(initialSlotCount: number, totalAdditionalSlots: number): number {
+function calculateSlotsToAdd (initialSlotCount: number, totalAdditionalSlots: number): number {
   return min(CONST.BRANCH_FACTOR - initialSlotCount, totalAdditionalSlots);
 }

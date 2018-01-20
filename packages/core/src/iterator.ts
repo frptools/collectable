@@ -1,13 +1,13 @@
 export class MappableIterator<T, U> implements IterableIterator<U> {
   private it: IterableIterator<T>;
-  constructor(
+  constructor (
     private iterable: Iterable<T>,
     private map: (value: T) => U
   ) {
     this.it = <IterableIterator<T>>this.iterable[Symbol.iterator]();
   }
 
-  next(value?: any): IteratorResult<U> {
+  next (value?: any): IteratorResult<U> {
     var result = <IteratorResult<any>>this.it.next(value);
     if(result.done) {
       result.value = void 0;
@@ -18,7 +18,7 @@ export class MappableIterator<T, U> implements IterableIterator<U> {
     return result;
   }
 
-  [Symbol.iterator](): IterableIterator<U> {
+  [Symbol.iterator] (): IterableIterator<U> {
     return this;
   }
 }

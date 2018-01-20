@@ -1,7 +1,7 @@
-import {isImmutable, commit} from '@collectable/core';
-import {SortedSetStructure, isIterable, cloneSortedSet, setItem} from '../internals';
+import { commit, isImmutable } from '@collectable/core';
+import { SortedSetStructure, cloneSortedSet, isIterable, setItem } from '../internals';
 
-export function union<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: SortedSetStructure<T>): SortedSetStructure<T> {
+export function union<T> (other: SortedSetStructure<T>|T[]|Iterable<T>, main: SortedSetStructure<T>): SortedSetStructure<T> {
   var immutable = isImmutable(main);
   var outputSet = cloneSortedSet(true, main);
 
@@ -24,7 +24,7 @@ export function union<T>(other: SortedSetStructure<T>|T[]|Iterable<T>, main: Sor
   return main;
 }
 
-function unionArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, array: T[]): void {
+function unionArray<T> (inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, array: T[]): void {
   var map = outputSet._map;
   var tree = outputSet._tree;
   var select = outputSet._select;
@@ -33,7 +33,7 @@ function unionArray<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStru
   }
 }
 
-function unionIterable<T>(inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, it: Iterator<T>): void {
+function unionIterable<T> (inputSet: SortedSetStructure<T>, outputSet: SortedSetStructure<T>, it: Iterator<T>): void {
   var map = outputSet._map;
   var tree = outputSet._tree;
   var select = outputSet._select;

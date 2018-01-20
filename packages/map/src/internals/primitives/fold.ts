@@ -1,7 +1,7 @@
-import {HashMapStructure} from '../HashMap';
-import {NodeType} from '../nodes';
+import { HashMapStructure } from '../HashMap';
+import { NodeType } from '../nodes';
 
-export function fold<K, V, R>(
+export function fold<K, V, R> (
   f: (accum: R, value: V, key: K, index: number) => R,
   seed: R,
   map: HashMapStructure<K, V>,

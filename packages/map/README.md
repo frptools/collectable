@@ -17,7 +17,7 @@
 
 ```bash
 # via NPM
-npm install --save @collectable/map
+npm install @collectable/map
 
 # or Yarn
 yarn add @collectable/map
@@ -27,26 +27,26 @@ If you intend to use other data structures as well, install the main collectable
 
 ```bash
 # via NPM
-npm install --save collectable
+npm install collectable
 
 # or Yarn
 yarn add collectable
 ```
 
-TypeScript type definitions are included by default.
+TypeScript type definitions are built in.
 
 ## Usage
 
 Import and use the functions you need:
 
 ```js
-import {fromObject, unwrap} from '@collectable/map';
+import { fromObject, unwrap } from '@collectable/map';
 
-const map = fromObject({foo: 'bar'}); // => <{foo: 'bar'}>
-const pojo = unwrap(list); // => {foo: 'bar'}
+const map = fromObject({ foo: 'bar' }); // => HashMap<{ foo: 'bar' }>
+const obj = unwrap(map); // => { foo: 'bar' }
 ```
 
-Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to use what you need while excluding anything else from the final build.
+Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexibility to use what you need while excluding anything else from the final build.
 
 ## API
 

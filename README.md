@@ -36,18 +36,18 @@ See the [road map](https://github.com/frptools/collectable/wiki) for information
 
 ```bash
 # via NPM
-npm install --save collectable
+npm install collectable
 
 # or Yarn
 yarn add collectable
 ```
 
-TypeScript type definitions are included by default.
+TypeScript type definitions are built in.
 
 ## Usage
 
 **API Reference:**
-[ [General](/docs/index.md#collectablejs-general-api)
+[ [General](/packages/collectable#collectablejs-main-package)
 | [List](/packages/list#collectablejs-immutable-list)
 | [Map](/packages/map#collectablejs-immutable-map)
 | [Sorted Map](/packages/sorted-map#collectablejs-immutable-sorted-map)
@@ -55,36 +55,6 @@ TypeScript type definitions are included by default.
 | [Sorted Set](/packages/sorted-set#collectablejs-immutable-sorted-set)
 | [Red Black Tree](/packages/red-black-tree#collectablejs-immutable-red-black-tree)
 | [Others...](https://github.com/frptools/collectable/wiki) ]
-
-Individual data structures are pulled in automatically as dependencies of the main package. By having your project take a dependency on `collectable` itself, all data structures are made available implicitly as scoped imports, and operations on deeply-nested data structures are available via the main package.
-
-For example, to use an immutable list:
-
-```js
-import {fromArray, unwrap} from '@collectable/list';
-
-const list = fromArray(['X', 'Y']);
-const array = unwrap(list);
-```
-
-To combine multiple data structures effectively, import [universal methods](/docs/index.md) from the main package and collection-specific methods from other relevant packages as needed:
-
-```js
-import * as C from 'collectable';
-import * as List from '@collectable/list';
-import {curry2} from '@typed/list';
-
-const input = {
-  foo: 'abc',
-  xyz: [3, [5, 6], 7, 9]
-};
-const map0 = C.from(input); // <{foo: 'abc', xyz: <[3, [5, 6], 7, 9]>}>
-const map1 = C.updateIn(['xyz', 1, 0], n => 4, map0); // <{foo: 'abc', xyz: <[3, [4, 6], 7, 9]>}>
-const map2 = C.setIn(['foo', 'bar'], 'baz', map1); // <{foo: <{bar: 'baz'}>, xyz: ...>
-const map3 = C.updateIn(['xyz', 1], curry2(List.append)(42)); // <{..., xyz: <[3, [5, 6, 42], 7, 9]>}>
-```
-
-Use a modern bundler such as Webpack 2 or Rollup in order to take advantage of tree shaking capabilities, giving you maximum flexbility to take the whole package as a dependency while excluding anything you don't use from the final build.
 
 ## Contributor Credits (Deliberate or Unwitting)
 

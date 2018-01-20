@@ -1,74 +1,62 @@
-import {assert} from 'chai';
-import {modify, isMutable, isImmutable} from '@collectable/core';
-import {ListStructure, map, size, fromArray} from '../../src';
+import test from 'ava';
+import { isImmutable, isMutable, modify } from '@collectable/core';
+import { ListStructure, fromArray, map, size } from '../../src';
 
 const toLower = (a: string) => a.toLowerCase();
+const values = ['A', 'B', 'C', 'D', 'E'];
 
-suite('[List]', () => {
-  suite('map()', () => {
-    const values = ['A', 'B', 'C', 'D', 'E'];
+let mutableList: ListStructure<string>;
+let immutableListA: ListStructure<string>, immutableListB: ListStructure<string>;
+test.beforeEach(() => {
+  immutableListA = fromArray(values);
+  immutableListB = map(toLower, immutableListA);
+  mutableList = modify(immutableListA);
+});
 
-    suite('if the input list is mutable', () => {
-      let list: ListStructure<string>;
-      setup(() => {
-        list = modify(fromArray(values));
-      });
+test('[immutable] the input list is not modified', t => {
+  t.is(size(immutableListA), values.length);
+  t.true(isImmutable(immutableListA));
+  t.deepEqual(Array.from(immutableListA).sort(), values);
+});
 
-      test('the input list is returned', () => {
-        assert.strictEqual(map(toLower, list), list);
-      });
+test('[immutable] a new immutable list is returned', t => {
+  t.true(isImmutable(immutableListB));
+  t.not(immutableListA, immutableListB);
+});
 
-      test('the input list is still mutable', () => {
-        map(toLower, list);
-        assert.isTrue(isMutable(list));
-      });
+test('[immutable] the size of the new list equals that of the input list', t => {
+  t.is(size(immutableListA), size(immutableListB));
+});
 
-      test('the list size remains unchanged', () => {
-        assert.strictEqual(size(map(toLower, list)), values.length);
-      });
+test('[immutable] the predicate is called for each member of the input list', t => {
+  let each: string[] = [];
+  map(c => (each.push(c), c), immutableListA);
+  t.deepEqual(each.sort(), values);
+});
 
-      test('the predicate is called for each member of the input list', () => {
-        let each: string[] = [];
-        map(c => (each.push(c), c), list);
-        assert.sameMembers(each, values);
-      });
+test('[immutable] the new list is populated by the predicate-transformed counterparts of each member of the input list', t => {
+  t.deepEqual(Array.from(map(toLower, immutableListB)).sort(), values.map(toLower));
+});
 
-      test('all members of list set are replaced by their transformed counterpart returned by the predicate', () => {
-        assert.sameMembers(Array.from(map(toLower, list)), values.map(toLower));
-      });
-    });
+test('[mutable] the input list is returned', t => {
+  t.is(map(toLower, mutableList), mutableList);
+});
 
-    suite('if the input list is immutable', () => {
-      let list0: ListStructure<string>, list1: ListStructure<string>;
-      setup(() => {
-        list0 = fromArray(values);
-        list1 = map(toLower, list0);
-      });
+test('[mutable] the input list is still mutable', t => {
+  map(toLower, mutableList);
+  t.true(isMutable(mutableList));
+});
 
-      test('the input list is not modified', () => {
-        assert.strictEqual(size(list0), values.length);
-        assert.isTrue(isImmutable(list0));
-        assert.sameMembers(Array.from(list0), values);
-      });
+test('[mutable] the list size remains unchanged', t => {
+  t.is(size(map(toLower, mutableList)), values.length);
+});
 
-      test('a new immutable list is returned', () => {
-        assert.isTrue(isImmutable(list1));
-        assert.notStrictEqual(list0, list1);
-      });
+test('[mutable] the predicate is called for each member of the input list', t => {
+  let each: string[] = [];
+  map(c => (each.push(c), c), mutableList);
+  t.deepEqual(each.sort(), values);
+});
 
-      test('the size of the new list equals that of the input list', () => {
-        assert.strictEqual(size(list0), size(list1));
-      });
-
-      test('the predicate is called for each member of the input list', () => {
-        let each: string[] = [];
-        map(c => (each.push(c), c), list0);
-        assert.sameMembers(each, values);
-      });
-
-      test('the new list is populated by the predicate-transformed counterparts of each member of the input list', () => {
-        assert.sameMembers(Array.from(map(toLower, list1)), values.map(toLower));
-      });
-    });
-  });
+test('[mutable] all members of list set are replaced by their transformed counterpart returned by the predicate', t => {
+  t.deepEqual(Array.from(map(toLower, mutableList)).sort(), values.map(toLower));
 });

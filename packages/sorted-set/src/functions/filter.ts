@@ -1,9 +1,9 @@
-import {FilterFn, isImmutable, modify, commit} from '@collectable/core';
-import {SortedSetStructure} from '../internals';
-import {iterateValues, unsetItem} from '../internals';
-import {size} from './size';
+import { FilterFn, commit, isImmutable, modify } from '@collectable/core';
+import { SortedSetStructure } from '../internals';
+import { iterateValues, unsetItem } from '../internals';
+import { size } from './size';
 
-export function filter<T>(fn: FilterFn<T>, set: SortedSetStructure<T>): SortedSetStructure<T> {
+export function filter<T> (fn: FilterFn<T>, set: SortedSetStructure<T>): SortedSetStructure<T> {
   var nextSet = modify(set);
   var map = nextSet._map;
   var tree = nextSet._tree;

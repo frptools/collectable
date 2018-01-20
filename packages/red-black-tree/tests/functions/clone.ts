@@ -1,63 +1,55 @@
-import {assert} from 'chai';
-import {isMutable, isImmutable, modify, unwrap} from '@collectable/core';
-import {RedBlackTreeStructure, fromPairsWithStringKeys, set, remove, size, clone} from '../../src';
+import test from 'ava';
+import { isImmutable, isMutable, modify, unwrap } from '@collectable/core';
+import { RedBlackTreeStructure, clone, fromPairsWithStringKeys, remove, set, size } from '../../src';
 
-suite('[RedBlackTree]', () => {
-  suite('clone()', () => {
-    suite('when the input set is immutable', () => {
-      let tree0: RedBlackTreeStructure<string, string>, tree1: RedBlackTreeStructure<string, string>;
-      setup(() => {
-        tree0 = fromPairsWithStringKeys([['A', 'a'], ['B', 'b'], ['C', 'c']]);
-        tree1 = clone(tree0);
-      });
+let treeA: RedBlackTreeStructure<string, string>,
+    treeB: RedBlackTreeStructure<string, string>,
+    treeC: RedBlackTreeStructure<string, string>,
+    treeD: RedBlackTreeStructure<string, string>;
 
-      test('a new immutable set is returned', () => {
-        assert.notStrictEqual(tree0, tree1);
-        assert.isTrue(isImmutable(tree1));
-      });
+test.beforeEach(() => {
+  treeA = fromPairsWithStringKeys([['A', 'a'], ['B', 'b'], ['C', 'c']]);
+  treeB = clone(treeA);
+  treeC = modify(treeA);
+  treeD = clone(treeC);
+});
 
-      test('the new set has the same size as the input set', () => {
-        assert.strictEqual(size(tree1), size(tree0));
-      });
+test('[immutable] a new mutable set is returned', t => {
+  t.true(isMutable(treeC));
+  t.true(isMutable(treeD));
+  t.not(treeC, treeD);
+});
 
-      test('the new set has all of the items in the input set', () => {
-        assert.deepEqual(unwrap(tree0), unwrap(tree1));
-      });
+test('[immutable] the new set has the same size as the input set', t => {
+  t.is(size(treeD), size(treeC));
+});
 
-      test('changes made to the new set do not affect the input set', () => {
-        const tree2 = set('E', 'e', remove('A', tree1));
-        assert.deepEqual(unwrap(tree1), {'A': 'a', 'B': 'b', 'C': 'c'});
-        assert.deepEqual(unwrap(tree2), {'B': 'b', 'C': 'c', 'E': 'e'});
-      });
-    });
+test('[immutable] the new set has all of the items in the input set', t => {
+  t.deepEqual(unwrap(treeC), unwrap(treeD));
+});
 
-    suite('when the input set is mutable', () => {
-      let tree0: RedBlackTreeStructure<string, string>, tree1: RedBlackTreeStructure<string, string>;
-      setup(() => {
-        tree0 = modify(fromPairsWithStringKeys([['A', 'a'], ['B', 'b'], ['C', 'c']]));
-        tree1 = clone(tree0);
-      });
+test('[immutable] changes made to the new set do not affect the input set', t => {
+  remove('A', treeD);
+  set('E', 'e', treeD);
+  t.deepEqual(unwrap(treeC), { 'A': 'a', 'B': 'b', 'C': 'c' });
+  t.deepEqual(unwrap(treeD), { 'B': 'b', 'C': 'c', 'E': 'e' });
+});
 
-      test('a new mutable set is returned', () => {
-        assert.isTrue(isMutable(tree0));
-        assert.isTrue(isMutable(tree1));
-        assert.notStrictEqual(tree0, tree1);
-      });
+test('[mutable] a new immutable set is returned', t => {
+  t.not(treeA, treeB);
+  t.true(isImmutable(treeB));
+});
 
-      test('the new set has the same size as the input set', () => {
-        assert.strictEqual(size(tree1), size(tree0));
-      });
+test('[mutable] the new set has the same size as the input set', t => {
+  t.is(size(treeB), size(treeA));
+});
 
-      test('the new set has all of the items in the input set', () => {
-        assert.deepEqual(unwrap(tree0), unwrap(tree1));
-      });
+test('[mutable] the new set has all of the items in the input set', t => {
+  t.deepEqual(unwrap(treeA), unwrap(treeB));
+});
 
-      test('changes made to the new set do not affect the input set', () => {
-        remove('A', tree1);
-        set('E', 'e', tree1);
-        assert.deepEqual(unwrap(tree0), {'A': 'a', 'B': 'b', 'C': 'c'});
-        assert.deepEqual(unwrap(tree1), {'B': 'b', 'C': 'c', 'E': 'e'});
-      });
-    });
-  });
+test('[mutable] changes made to the new set do not affect the input set', t => {
+  const tree2 = set('E', 'e', remove('A', treeB));
+  t.deepEqual(unwrap(treeB), { 'A': 'a', 'B': 'b', 'C': 'c' });
+  t.deepEqual(unwrap(tree2), { 'B': 'b', 'C': 'c', 'E': 'e' });
 });

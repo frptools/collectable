@@ -1,14 +1,6 @@
-import {Mutation} from '@collectable/core';
-import {ComparatorFn, numericCompare, stringCompare} from '@collectable/core';
-import {RedBlackTreeStructure, createTree, isRedBlackTree as _isRedBlackTree} from '../internals';
-
-export function emptyWithNumericKeys<V = null>(mutability?: Mutation.PreferredContext): RedBlackTreeStructure<number, V> {
-  return empty<number, V>(numericCompare, mutability);
-}
-
-export function emptyWithStringKeys<V = null>(mutability?: Mutation.PreferredContext): RedBlackTreeStructure<string, V> {
-  return empty<string, V>(stringCompare, mutability);
-}
+import { PreferredContext } from '@collectable/core';
+import { ComparatorFn } from '@collectable/core';
+import { RedBlackTreeStructure, createTree } from '../internals';
 
 /**
  * Creates an empty tree. If no ComparatorFn function is supplied, keys are compared using logical less-than and
@@ -23,17 +15,6 @@ export function emptyWithStringKeys<V = null>(mutability?: Mutation.PreferredCon
  * @param {boolean} [mutability] Indicates the desired mutability of the returned tree
  * @returns {RedBlackTreeStructure<K, V>} An empty tree
  */
-export function empty<K, V = null>(compare: ComparatorFn<K>, mutability?: Mutation.PreferredContext): RedBlackTreeStructure<K, V> {
+export function empty<K, V = null> (compare: ComparatorFn<K>, mutability?: PreferredContext): RedBlackTreeStructure<K, V> {
   return createTree<K, V>(compare, mutability);
-}
-
-/**
- * Determines whether the input argument is an instance of a Collectable.js RedBlackTree structure.
- *
- * @export
- * @param {RedBlackTreeStructure<K, V>} arg The input value to check
- * @returns {boolean} True if the input value is a RedBlackTree, otherwise false
- */
-export function isRedBlackTree<K, V = null>(arg: any): arg is RedBlackTreeStructure<K, V> {
-  return _isRedBlackTree<K, V>(arg);
 }

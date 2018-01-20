@@ -1,26 +1,11 @@
-import {assert} from 'chai';
-import {empty as emptyMap} from '@collectable/map';
-import {empty, size, isSet} from '../../src';
+import test from 'ava';
+import { empty, size } from '../../src';
 
-suite('[HashSet]', () => {
-  suite('empty()', () => {
-    test('returns a set with size 0', () => {
-      assert.strictEqual(size(empty()), 0);
-    });
+test('returns a set with size 0', t => {
+  t.is(size(empty()), 0);
+});
 
-    test('always returns the same set instance', () => {
-      const a = empty(), b = empty();
-      assert.strictEqual(a, b);
-    });
-  });
-
-  suite('isSet()', () => {
-    test('returns true if the argument is an instance of a Collectable.js Set class', () => {
-      assert.isTrue(isSet(empty()));
-    });
-
-    test('returns false if the argument is not an instance of a Collectable.js Set class', () => {
-      assert.isFalse(isSet(emptyMap()));
-    });
-  });
+test('always returns the same set instance', t => {
+  const a = empty(), b = empty();
+  t.is(a, b);
 });

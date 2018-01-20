@@ -1,8 +1,8 @@
-import {MapFn, modify, commit} from '@collectable/core';
-import {HashMap} from '@collectable/map';
-import {HashSetStructure} from '../internals';
+import { MapFn, commit, modify } from '@collectable/core';
+import { HashMap } from '@collectable/map';
+import { HashSetStructure } from '../internals';
 
-export function map<T, R>(fn: MapFn<T, R>, set: HashSetStructure<T>): HashSetStructure<R> {
+export function map<T, R> (fn: MapFn<T, R>, set: HashSetStructure<T>): HashSetStructure<R> {
   set = modify(set);
   var it = HashMap.keys(set._map);
   var current: IteratorResult<T>;

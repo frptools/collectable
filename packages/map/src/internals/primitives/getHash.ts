@@ -1,12 +1,12 @@
-import {isEqual} from '@collectable/core';
-import {NodeType, LeafNode, IndexedNode, ArrayNode} from '../nodes';
-import {SIZE, hashFragment, toBitmap, bitmapToIndex} from '../common';
-import {HashMapStructure} from './../HashMap';
+import { isEqual } from '@collectable/core';
+import { ArrayNode, IndexedNode, LeafNode, NodeType } from '../nodes';
+import { SIZE, bitmapToIndex, hashFragment, toBitmap } from '../common';
+import { HashMapStructure } from './../HashMap';
 
 /**
  * Tries to find the value of a hash and key in a HashMap
  */
-export function getHash<K, V, R>(defaultValue: R, hash: number, key: K, map: HashMapStructure<K, V>): V | R {
+export function getHash<K, V, R> (defaultValue: R, hash: number, key: K, map: HashMapStructure<K, V>): V | R {
   let node = map._root;
   let shift = 0;
 

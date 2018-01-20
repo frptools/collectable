@@ -1,9 +1,9 @@
-import {MapFn, isImmutable, commit} from '@collectable/core';
-import {SortedSetStructure, cloneSortedSet} from '../internals';
-import {iterateValues, setItem} from '../internals';
+import { MapFn, commit, isImmutable } from '@collectable/core';
+import { SortedSetStructure, cloneSortedSet } from '../internals';
+import { iterateValues, setItem } from '../internals';
 
-export function map<T, R>(fn: MapFn<T, R>, set: SortedSetStructure<T>): SortedSetStructure<R>;
-export function map(fn: MapFn<any, any>, set: SortedSetStructure<any>): SortedSetStructure<any> {
+export function map<T, R> (fn: MapFn<T, R>, set: SortedSetStructure<T>): SortedSetStructure<R>;
+export function map (fn: MapFn<any, any>, set: SortedSetStructure<any>): SortedSetStructure<any> {
   var immutable = isImmutable(set);
   var nextSet = cloneSortedSet(true, set, true);
   var map = nextSet._map;

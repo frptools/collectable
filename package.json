@@ -1,23 +1,11 @@
 {
-  "name": "collectable",
-  "version": "0.24.0",
+  "name": "collectable-monorepo",
+  "version": "0.0.0",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
-  "main": "lib/commonjs/index.js",
-  "module": "lib/module/index.js",
-  "jsnext:main": "lib/module/index.js",
-  "typings": "lib/typings/index.d.ts",
+  "private": true,
   "scripts": {
-    "start": "node ./scripts/index.js",
-    "clean": "gulp clean --pkg core && gulp clean --pkg list && gulp clean --pkg red-black-tree && gulp clean --pkg map && gulp clean --pkg set && gulp clean --pkg sorted-map && gulp clean --pkg sorted-set && gulp clean",
-    "build": "gulp build --pkg core && gulp build --pkg list && gulp build --pkg red-black-tree && gulp build --pkg map && gulp build --pkg set && gulp build --pkg sorted-map && gulp build --pkg sorted-set && gulp build",
-    "build-all": "npm run clean && npm run build",
-    "test": "mocha --opts ./mocha.opts",
-    "test-dev": "mocha --opts ./mocha.opts --watch --bail",
-    "test-dev-mem": "node --max_old_space_size=8192 ./node_modules/mocha/bin/_mocha --opts ./mocha.opts --watch --bail"
+    "ci-build": "mv lerna.default.json lerna.json && lerna bootstrap --hoist && lerna run lint && lerna run build && lerna run test"
   },
-  "files": [
-    "lib"
-  ],
   "contributors": [
     "Nathan Ridley <axefrog@gmail.com> (https://github.com/axefrog)",
     "Tylor Steinberger <tlsteinberger167@gmail.com> (https://github.com/TylorS)"
@@ -26,44 +14,7 @@
   "bugs": "https://github.com/frptools/collectable/issues",
   "repository": "git@github.com:frptools/collectable.git",
   "devDependencies": {
-    "@types/chai": "^4.0.1",
-    "@types/mocha": "^2.2.41",
-    "@types/node": "^8.0.10",
-    "chai": "^4.0.2",
-    "chalk": "^2.0.1",
-    "execa": "^0.7.0",
-    "fs-promise": "^2.0.3",
-    "gulp": "^3.9.1",
-    "gulp-mocha": "^4.3.1",
-    "gulp-plumber": "^1.1.0",
-    "gulp-sourcemaps": "^2.6.0",
-    "gulp-transform": "^2.0.0",
-    "gulp-tslint": "^8.1.1",
-    "gulp-typescript": "^3.2.0",
-    "inquirer": "^3.2.0",
-    "merge2": "^1.1.0",
-    "mocha": "^3.4.2",
-    "rimraf": "^2.6.1",
-    "source-map-support": "^0.4.15",
-    "string-format": "^0.5.0",
-    "tiny-preprocessor": "^1.0.0",
-    "tslint": "^5.5.0",
-    "tslint-eslint-rules": "^4.1.1",
-    "typescript": "^2.4.1",
-    "vorpal": "^1.12.0",
-    "yargs": "^8.0.2"
-  },
-  "dependencies": {
-    "@collectable/core": "4.0.2",
-    "@collectable/list": "4.5.0",
-    "@collectable/map": "3.1.0",
-    "@collectable/red-black-tree": "4.2.0",
-    "@collectable/set": "3.1.0",
-    "@collectable/sorted-map": "2.2.0",
-    "@collectable/sorted-set": "2.2.0",
-    "@typed/curry": "^1.0.1"
-  },
-  "collectable": {
-    "tag": "MAIN"
+    "@frptools/config": "^1.0.0",
+    "lerna": "^2.7.1"
   }
 }

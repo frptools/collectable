@@ -1,8 +1,8 @@
-import {isImmutable, modify, commit} from '@collectable/core';
-import {HashMap} from '@collectable/map';
-import {HashSetStructure, isHashSet, isIterable, emptySet} from '../internals';
+import { commit, isImmutable, modify } from '@collectable/core';
+import { HashMap } from '@collectable/map';
+import { HashSetStructure, emptySet, isHashSet, isIterable } from '../internals';
 
-export function intersect<T>(other: HashSetStructure<T>|T[]|Iterable<T>, main: HashSetStructure<T>): HashSetStructure<T> {
+export function intersect<T> (other: HashSetStructure<T>|T[]|Iterable<T>, main: HashSetStructure<T>): HashSetStructure<T> {
   var immutable = isImmutable(main);
   var outputSet = immutable ? emptySet<T>(true) : modify(main);
   var outputMap = immutable ? outputSet._map : HashMap.empty<T, null>(outputSet);
@@ -27,7 +27,7 @@ export function intersect<T>(other: HashSetStructure<T>|T[]|Iterable<T>, main: H
   return commit(outputSet);
 }
 
-function intersectHashSet<T>(a: HashMap.Instance<T, null>, b: HashMap.Instance<T, null>, outputMap: HashMap.Instance<T, null>): void {
+function intersectHashSet<T> (a: HashMap.Instance<T, null>, b: HashMap.Instance<T, null>, outputMap: HashMap.Instance<T, null>): void {
   var inputMap, otherMap;
 
   if (HashMap.size(b) <= HashMap.size(a)) {
@@ -40,7 +40,7 @@ function intersectHashSet<T>(a: HashMap.Instance<T, null>, b: HashMap.Instance<T
   return intersectIterable(inputMap, HashMap.keys(otherMap), outputMap);
 }
 
-function intersectArray<T>(inputMap: HashMap.Instance<T, null>, array: T[], outputMap: HashMap.Instance<T, null>): void {
+function intersectArray<T> (inputMap: HashMap.Instance<T, null>, array: T[], outputMap: HashMap.Instance<T, null>): void {
   for(var i = 0; i < array.length; i++) {
     if(HashMap.has(array[i], inputMap)) {
       HashMap.set(array[i], null, outputMap);
@@ -48,7 +48,7 @@ function intersectArray<T>(inputMap: HashMap.Instance<T, null>, array: T[], outp
   }
 }
 
-function intersectIterable<T>(inputMap: HashMap.Instance<T, null>, it: Iterator<T>, outputMap: HashMap.Instance<T, null>): void {
+function intersectIterable<T> (inputMap: HashMap.Instance<T, null>, it: Iterator<T>, outputMap: HashMap.Instance<T, null>): void {
   var current: IteratorResult<T>;
   while(!(current = it.next()).done) {
     if(HashMap.has(current.value, inputMap)) {

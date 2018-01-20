@@ -1,5 +1,5 @@
 import * as RedBlackTree from './RedBlackTree';
-export {RedBlackTree};
+export { RedBlackTree };
 
 export * from './functions';
 export {
