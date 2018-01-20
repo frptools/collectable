@@ -4,7 +4,7 @@
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
   "private": true,
   "scripts": {
-    "ci-build": "mv lerna.default.json lerna.json && lerna bootstrap --hoist && lerna run lint && lerna run build && lerna run test"
+    "ci-build": "mv lerna.default.json lerna.json && lerna bootstrap --hoist && ls -l node_modules && lerna run lint && lerna run build && lerna run test"
   },
   "contributors": [
     "Nathan Ridley <axefrog@gmail.com> (https://github.com/axefrog)",
