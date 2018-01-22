@@ -169,9 +169,9 @@ function createComparatorFn<K, V, U> (compare: ComparatorFn<Entry<K, V, U>>): Co
   }, COMPARATOR_CACHE.set(compare, fn), fn);
 }
 
-export function emptySortedMap<K, V, U = any> (compare?: ComparatorFn<Entry<K, V, U>>, select?: KeyedSelectorFn<V, K, U>, mutability?: PreferredContext): SortedMapStructure<K, V, U> {
+export function emptySortedMap<K, V, U = any> (compare?: ComparatorFn<Entry<K, V, U>>, select?: KeyedSelectorFn<V, K, U>, pctx?: PreferredContext): SortedMapStructure<K, V, U> {
   var comparator = isDefined(compare) ? createComparatorFn(compare) : DEFAULT_COMPARATOR;
-  var mctx = selectContext(mutability);
+  var mctx = selectContext(pctx);
 
   if(isImmutableContext(mctx) && comparator === DEFAULT_COMPARATOR) {
     return isDefined(EMPTY) ? EMPTY : (EMPTY = new SortedMapStructure<K, V, U>(mctx, HashMap.empty<any, any>(), RedBlackTree.empty<any, any>(comparator), comparator, void 0));

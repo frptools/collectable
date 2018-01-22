@@ -1,4 +1,4 @@
-import { IndexedCollection } from '@collectable/core';
+import { IndexedCollection, PreferredContext, isMutableContext } from '@collectable/core';
 import {
   MutationContext,
   hashIterator,
@@ -149,11 +149,14 @@ export function setView<T> (list: ListStructure<T>, view: View<T>): void {
   }
 }
 
-export function createList<T> (mutability: boolean|MutationContext): ListStructure<T> {
-  var list: ListStructure<T>;
-  if(mutability) {
+var _defaultEmpty: ListStructure<any>;
+
+export function createList<T> (pctx?: PreferredContext): ListStructure<T> {
+  let list: ListStructure<T>;
+  const mctx = selectContext(pctx);
+  if(isMutableContext(mctx)) {
     list = new ListStructure<T>(
-      selectContext(mutability),
+      mctx,
       nextId(),
       0,
       OFFSET_ANCHOR.RIGHT,
@@ -176,5 +179,3 @@ export function createList<T> (mutability: boolean|MutationContext): ListStructu
   }
   return list;
 }
-
-var _defaultEmpty: ListStructure<any>;

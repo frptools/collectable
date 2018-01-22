@@ -113,11 +113,11 @@ export function isRedBlackTree<K, V = any> (arg: any): arg is RedBlackTreeStruct
   return isObject(arg) && arg instanceof RedBlackTreeStructure;
 }
 
-export function createTree<K, V> (compare: ComparatorFn<K>, mutability?: PreferredContext): RedBlackTreeStructure<K, V> {
-  return new RedBlackTreeStructure<K, V>(selectContext(mutability), compare, NONE, 0);
+export function createTree<K, V> (compare: ComparatorFn<K>, pctx?: PreferredContext): RedBlackTreeStructure<K, V> {
+  return new RedBlackTreeStructure<K, V>(selectContext(pctx), compare, NONE, 0);
 }
 
-export function cloneTree<K, V> (tree: RedBlackTreeStructure<K, V>, mutability?: PreferredContext): RedBlackTreeStructure<K, V> {
-  if(isUndefined(mutability)) mutability = isMutable(tree);
-  return new RedBlackTreeStructure<K, V>(selectContext(mutability), tree._compare, tree._root, tree._size);
+export function cloneTree<K, V> (tree: RedBlackTreeStructure<K, V>, pctx?: PreferredContext): RedBlackTreeStructure<K, V> {
+  if(isUndefined(pctx)) pctx = isMutable(tree);
+  return new RedBlackTreeStructure<K, V>(selectContext(pctx), tree._compare, tree._root, tree._size);
 }

@@ -176,7 +176,7 @@ export function emptySet<T, K> (mutable?: boolean|MutationContext, compare?: Com
     return isDefined(EMPTY) ? EMPTY : (EMPTY = new SortedSetStructure<T>(immutable(), emptyMap<any, any>(), emptyTree<any, any>(comparator), comparator, void 0));
   }
 
-  var mctx = isMutationContext(mutable) ? mutable : selectContext(mutable);
+  var mctx = selectContext(mutable);
   var sctx = asSubordinateContext(mctx);
   var map = emptyMap<T, SortedSetItem<T>>(sctx);
   var tree = emptyTree<SortedSetItem<T>, null>(comparator, sctx);
