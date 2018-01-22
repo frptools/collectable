@@ -9,7 +9,6 @@ import {
   hashIterator,
   immutable,
   isDefined,
-  isMutationContext,
   isObject,
   isUndefined,
   selectContext,
