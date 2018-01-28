@@ -6,7 +6,7 @@ An all-you-can-eat buffet of high-performance, [persistent](https://en.wikipedia
 [![NPM version](https://badge.fury.io/js/collectable.svg)](http://badge.fury.io/js/collectable)
 [![Gitter](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/FRPTools/Lobby)
 
-> _Note: This library is an active **work in progress**. Some of the features and structures mentioned below are currently in progress, pending development, only partially-available, or flagged for cleanup/refactoring, prior to the first full 1.0 release. See the [project board](https://github.com/frptools/collectable/projects) for information on current development status. That all said, the library is very much usable, even at this early stage._
+> _Note: This library is an ongoing **work in progress**. The data structures mentioned below are all working nicely, but will probably have additional methods introduced as time goes on, and there may be some breaking changes in future versions when work commences to iron out API inconsistencies between data structures. Documentation is also somewhat lacking and out of date, but take a look at the `functions` folder for each data structure package, which is almost as good as actual documentation, due to the one-operation-per-file policy, and the comprehensive TypeScript annotations._
 
 ## Features
 
