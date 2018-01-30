@@ -1,6 +1,6 @@
 {
   "name": "collectable",
-  "version": "0.30.1",
+  "version": "0.31.0",
   "description": "An all-you-can-eat buffet of high-performance immutable/persistent data structures",
   "main": "lib/commonjs/index.js",
   "module": "lib/es2015/index.js",
@@ -28,7 +28,7 @@
   "repository": "git@github.com:frptools/collectable.git",
   "dependencies": {
     "@collectable/core": "^5.0.1",
-    "@collectable/list": "^5.0.1",
+    "@collectable/list": "^5.1.0",
     "@collectable/map": "^4.0.1",
     "@collectable/red-black-tree": "^5.0.1",
     "@collectable/set": "^4.0.1",
