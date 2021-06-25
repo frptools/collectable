@@ -1,7 +1,6 @@
 {
     "files.exclude": {
-        "**/.git": true,
-        "packages": true
+        "**/.git": true
     },
     "files.watcherExclude": {
         "**/.git/**": true,
