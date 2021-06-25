@@ -1,6 +1,6 @@
 import { RedBlackTreeStructure } from './RedBlackTree';
 import { rotateLeft, rotateLeftRight, rotateRight, rotateRightLeft, updateCount } from './ops';
-import { BRANCH, Node, editLeftChild, editRightChild, isNone } from './node';
+import { BRANCH, Node, editLeftChild, editRightChild } from './node';
 import { PathNode } from './path';
 
 export function rebalance<K, V> (tail: PathNode<K, V>, node: Node<K, V>, parent: Node<K, V>, tree: RedBlackTreeStructure<K, V>): void {
@@ -63,9 +63,7 @@ export function rebalance<K, V> (tail: PathNode<K, V>, node: Node<K, V>, parent:
 
     p = p.release();
   }
-  // End the while loop if the path is no longer active
-  // or if the node node that we're working on is undefined
-  while(p.isActive() && !isNone(p.node));
+  while(p.isActive());
 
   if(p.isActive()) {
     node = PathNode.release(p, node);
