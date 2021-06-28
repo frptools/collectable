@@ -67,6 +67,7 @@ export class PathNode<K, V> {
   release (): PathNode<K, V> {
     var p = this.parent;
     this.node = NONE;
+    this.next = BRANCH.NONE;
     this.parent = PathNode.cache;
     PathNode.cache = this;
     return p;
