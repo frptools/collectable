@@ -1,6 +1,6 @@
 {
   "name": "@collectable/red-black-tree",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "[Collectable.js] Immutable Red-Black Tree",
   "main": "lib/commonjs/index.js",
   "module": "lib/es2015/index.js",
@@ -20,7 +20,8 @@
     "lib"
   ],
   "contributors": [
-    "Nathan Ridley <axefrog@gmail.com>"
+    "Nathan Ridley <axefrog@gmail.com>",
+    "Eliran Eretz-Kedosha <eliranek@gmail.com>"
   ],
   "license": "MIT",
   "bugs": "https://github.com/frptools/collectable/issues",
