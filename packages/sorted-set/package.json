@@ -1,6 +1,6 @@
 {
   "name": "@collectable/sorted-set",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "[Collectable.js] Immutable Sorted Set",
   "main": "lib/commonjs/index.js",
   "module": "lib/es2015/index.js",
@@ -28,7 +28,7 @@
   "dependencies": {
     "@collectable/core": "^5.0.1",
     "@collectable/map": "^4.0.1",
-    "@collectable/red-black-tree": "^5.0.1"
+    "@collectable/red-black-tree": "^5.1.0"
   },
   "devDependencies": {
     "@frptools/config": "^1.0.0",
