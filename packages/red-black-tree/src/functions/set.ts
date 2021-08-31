@@ -51,6 +51,7 @@ export function set<K, V = null> (key: K, value: V, tree: RedBlackTreeStructure<
     if(tree._size > 1) {
       rebalance(p, node, p.node, tree);
     }
+    tree._root._red = false; // root must always be black.
     tree._size++;
   }
 

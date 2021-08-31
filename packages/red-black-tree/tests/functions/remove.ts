@@ -124,3 +124,19 @@ test('should maintain the correct subtree count at each updated node', t => {
     if(!isNone(node._right)) walk(node._right);
   }
 });
+
+test("should not have a red node with a red child", t => {
+  var tree = emptyWithNumericKeys<number>(true);
+  set(1, 10, tree);
+  set(2, 11, tree);
+  remove(1, tree);
+  set(3, 12, tree);
+  set(0, 13, tree);
+  set(1, 14, tree);
+  remove(1, tree);
+  remove(2, tree);
+  remove(0, tree);
+  set(4, 15, tree);
+  set(0, 16, tree); // SET key 0 to 16
+  t.is(get(0, tree), 16, "Get of key 0 should return 16")
+})
