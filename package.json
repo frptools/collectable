@@ -15,6 +15,6 @@
   "repository": "git@github.com:frptools/collectable.git",
   "devDependencies": {
     "@frptools/config": "^1.0.0",
-    "lerna": "^2.7.1"
+    "lerna": "^6.5.1"
   }
 }
